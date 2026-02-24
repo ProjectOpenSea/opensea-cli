@@ -14,6 +14,24 @@ Or use without installing:
 npx opensea-cli collections get boredapeyachtclub
 ```
 
+## Local Development
+
+To test locally without publishing:
+
+```bash
+git clone https://github.com/ProjectOpenSea/opensea-cli.git
+cd opensea-cli
+npm install && npm run build
+export OPENSEA_API_KEY=your-api-key
+
+# Run directly with Node
+node dist/cli.js collections get tiny-dinos-eth
+
+# Or link globally to use the `opensea` command
+npm link
+opensea collections get tiny-dinos-eth
+```
+
 ## Authentication
 
 Set your API key via environment variable or flag:
@@ -26,7 +44,7 @@ opensea collections get boredapeyachtclub
 opensea --api-key your-api-key collections get boredapeyachtclub
 ```
 
-Get an API key at [docs.opensea.io](https://docs.opensea.io/).
+Get an API key at [docs.opensea.io](https://docs.opensea.io/reference/api-keys).
 
 ## CLI Usage
 
@@ -73,7 +91,7 @@ opensea listings best-for-nft <collection> <token-id>
 opensea offers all <collection> [--limit <n>]
 opensea offers collection <collection> [--limit <n>]
 opensea offers best-for-nft <collection> <token-id>
-opensea offers traits <collection> [--type <type>] [--value <value>]
+opensea offers traits <collection> --type <type> --value <value>
 ```
 
 ### Events
@@ -122,6 +140,100 @@ Table - human-readable output:
 opensea --format table collections list --limit 5
 ```
 
+## Examples
+
+Here are real-world examples using the [tiny dinos](https://opensea.io/collection/tiny-dinos-eth) and [mfers](https://opensea.io/collection/mfers) collections:
+
+### Collections
+
+```bash
+# Get collection details
+opensea collections get tiny-dinos-eth
+
+# List collections with a limit
+opensea collections list --limit 2
+
+# Get collection stats (volume, floor price, etc.)
+opensea collections stats tiny-dinos-eth
+
+# Get collection traits
+opensea collections traits tiny-dinos-eth
+```
+
+### NFTs
+
+```bash
+# Get a specific NFT by chain/contract/token-id
+opensea nfts get ethereum 0xd9b78a2f1dafc8bb9c60961790d2beefebee56f4 1
+
+# List NFTs in a collection
+opensea nfts list-by-collection tiny-dinos-eth --limit 2
+
+# List NFTs by contract address
+opensea nfts list-by-contract ethereum 0xd9b78a2f1dafc8bb9c60961790d2beefebee56f4 --limit 2
+
+# List NFTs owned by an account
+opensea nfts list-by-account ethereum 0xde7fce3a1cba4a705f299ce41d163017f165d666 --limit 2
+
+# Get contract details
+opensea nfts contract ethereum 0xd9b78a2f1dafc8bb9c60961790d2beefebee56f4
+
+# Refresh NFT metadata
+opensea nfts refresh ethereum 0xd9b78a2f1dafc8bb9c60961790d2beefebee56f4 1
+```
+
+### Listings
+
+```bash
+# Get all listings for a collection
+opensea listings all tiny-dinos-eth --limit 2
+
+# Get best (cheapest) listings
+opensea listings best tiny-dinos-eth --limit 2
+
+# Get the best listing for a specific NFT
+opensea listings best-for-nft mfers 3490
+```
+
+### Offers
+
+```bash
+# Get all offers for a collection
+opensea offers all tiny-dinos-eth --limit 2
+
+# Get collection offers
+opensea offers collection tiny-dinos-eth --limit 2
+
+# Get best offer for a specific NFT
+opensea offers best-for-nft tiny-dinos-eth 1
+
+# Get trait offers (type and value are required)
+opensea offers traits tiny-dinos-eth --type background --value blue --limit 2
+```
+
+### Events
+
+```bash
+# List recent events across all collections
+opensea events list --limit 2
+
+# Get events for a collection
+opensea events by-collection tiny-dinos-eth --limit 2
+
+# Get events for a specific NFT
+opensea events by-nft ethereum 0xd9b78a2f1dafc8bb9c60961790d2beefebee56f4 1 --limit 2
+
+# Get events for an account
+opensea events by-account 0xde7fce3a1cba4a705f299ce41d163017f165d666 --limit 2
+```
+
+### Accounts
+
+```bash
+# Get account details
+opensea accounts get 0xde7fce3a1cba4a705f299ce41d163017f165d666
+```
+
 ## Exit Codes
 
 - `0` - Success
@@ -131,4 +243,4 @@ opensea --format table collections list --limit 5
 ## Requirements
 
 - Node.js >= 18.0.0
-- OpenSea API key
+- OpenSea API key ([get one here](https://docs.opensea.io/reference/api-keys))
