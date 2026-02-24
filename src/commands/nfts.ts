@@ -99,7 +99,7 @@ export function nftsCommand(
     .argument("<token-id>", "Token ID")
     .action(async (chain: string, contract: string, tokenId: string) => {
       const client = getClient()
-      await client.get(
+      await client.post(
         `/api/v2/chain/${chain}/contract/${contract}/nfts/${tokenId}/refresh`,
       )
       console.log(

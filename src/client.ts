@@ -40,6 +40,25 @@ export class OpenSeaClient {
     return response.json() as Promise<T>
   }
 
+  async post<T>(path: string): Promise<T> {
+    const url = new URL(`${this.baseUrl}${path}`)
+
+    const response = await fetch(url.toString(), {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "x-api-key": this.apiKey,
+      },
+    })
+
+    if (!response.ok) {
+      const body = await response.text()
+      throw new OpenSeaAPIError(response.status, body, path)
+    }
+
+    return response.json() as Promise<T>
+  }
+
   getDefaultChain(): string {
     return this.defaultChain
   }
