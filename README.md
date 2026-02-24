@@ -44,7 +44,7 @@ opensea collections get boredapeyachtclub
 opensea --api-key your-api-key collections get boredapeyachtclub
 ```
 
-Get an API key at [docs.opensea.io](https://docs.opensea.io/).
+Get an API key at [docs.opensea.io](https://docs.opensea.io/reference/api-keys).
 
 ## CLI Usage
 
@@ -243,4 +243,4 @@ opensea accounts get 0xde7fce3a1cba4a705f299ce41d163017f165d666
 ## Requirements
 
 - Node.js >= 18.0.0
-- OpenSea API key ([get one here](https://docs.opensea.io/))
+- OpenSea API key ([get one here](https://docs.opensea.io/reference/api-keys))
