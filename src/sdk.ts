@@ -120,7 +120,7 @@ class NFTsAPI {
     address: string,
     identifier: string,
   ): Promise<void> {
-    await this.client.get(
+    await this.client.post(
       `/api/v2/chain/${chain}/contract/${address}/nfts/${identifier}/refresh`,
     )
   }
@@ -191,9 +191,9 @@ class OffersAPI {
 
   async traits(
     collectionSlug: string,
-    options?: {
-      type?: string
-      value?: string
+    options: {
+      type: string
+      value: string
       limit?: number
       next?: string
     },
@@ -201,10 +201,10 @@ class OffersAPI {
     return this.client.get(
       `/api/v2/offers/collection/${collectionSlug}/traits`,
       {
-        type: options?.type,
-        value: options?.value,
-        limit: options?.limit,
-        next: options?.next,
+        type: options.type,
+        value: options.value,
+        limit: options.limit,
+        next: options.next,
       },
     )
   }

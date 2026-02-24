@@ -66,16 +66,16 @@ export function offersCommand(
     .command("traits")
     .description("Get trait offers for a collection")
     .argument("<collection>", "Collection slug")
-    .option("--type <type>", "Trait type")
-    .option("--value <value>", "Trait value")
+    .requiredOption("--type <type>", "Trait type (required)")
+    .requiredOption("--value <value>", "Trait value (required)")
     .option("--limit <limit>", "Number of results", "20")
     .option("--next <cursor>", "Pagination cursor")
     .action(
       async (
         collection: string,
         options: {
-          type?: string
-          value?: string
+          type: string
+          value: string
           limit: string
           next?: string
         },
