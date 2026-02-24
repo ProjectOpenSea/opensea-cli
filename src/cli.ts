@@ -9,12 +9,24 @@ import {
   offersCommand,
 } from "./commands/index.js"
 
+const BANNER = `
+   ____                   _____
+  / __ \\                 / ____|
+ | |  | |_ __   ___ _ _| (___   ___  __ _
+ | |  | | '_ \\ / _ \\ '_ \\___ \\ / _ \\/ _\` |
+ | |__| | |_) |  __/ | | |___) |  __/ (_| |
+  \\____/| .__/ \\___|_| |_|____/ \\___|\\__,_|
+        | |
+        |_|
+`
+
 const program = new Command()
 
 program
   .name("opensea")
   .description("OpenSea CLI - Query the OpenSea API from the command line")
   .version("0.1.0")
+  .addHelpText("before", BANNER)
   .option("--api-key <key>", "OpenSea API key (or set OPENSEA_API_KEY env var)")
   .option("--chain <chain>", "Default chain", "ethereum")
   .option("--format <format>", "Output format (json or table)", "json")
