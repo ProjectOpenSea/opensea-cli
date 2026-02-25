@@ -11,25 +11,7 @@ npm install -g opensea-cli
 Or use without installing:
 
 ```bash
-npx opensea-cli collections get boredapeyachtclub
-```
-
-## Local Development
-
-To test locally without publishing:
-
-```bash
-git clone https://github.com/ProjectOpenSea/opensea-cli.git
-cd opensea-cli
-npm install && npm run build
-export OPENSEA_API_KEY=your-api-key
-
-# Run directly with Node
-node dist/cli.js collections get tiny-dinos-eth
-
-# Or link globally to use the `opensea` command
-npm link
-opensea collections get tiny-dinos-eth
+npx opensea-cli collections get mfers
 ```
 
 ## Authentication
@@ -38,10 +20,10 @@ Set your API key via environment variable or flag:
 
 ```bash
 export OPENSEA_API_KEY=your-api-key
-opensea collections get boredapeyachtclub
+opensea collections get mfers
 
 # or pass inline
-opensea --api-key your-api-key collections get boredapeyachtclub
+opensea --api-key your-api-key collections get mfers
 ```
 
 Get an API key at [docs.opensea.io](https://docs.opensea.io/reference/api-keys).
@@ -118,11 +100,11 @@ import { OpenSeaCLI } from "opensea-cli"
 
 const client = new OpenSeaCLI({ apiKey: process.env.OPENSEA_API_KEY })
 
-const collection = await client.collections.get("boredapeyachtclub")
-const stats = await client.collections.stats("boredapeyachtclub")
-const nfts = await client.nfts.listByCollection("boredapeyachtclub", { limit: 5 })
-const listings = await client.listings.best("boredapeyachtclub", { limit: 10 })
-const events = await client.events.byCollection("boredapeyachtclub", { eventType: "sale" })
+const collection = await client.collections.get("mfers")
+const stats = await client.collections.stats("mfers")
+const nfts = await client.nfts.listByCollection("mfers", { limit: 5 })
+const listings = await client.listings.best("mfers", { limit: 10 })
+const events = await client.events.byCollection("mfers", { eventType: "sale" })
 const account = await client.accounts.get("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045")
 ```
 
@@ -131,7 +113,7 @@ const account = await client.accounts.get("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA
 JSON (default) - structured output for agents and scripts:
 
 ```bash
-opensea collections get boredapeyachtclub
+opensea collections get mfers
 ```
 
 Table - human-readable output:
