@@ -73,8 +73,8 @@ opensea search accounts <query> [--limit <n>]
 ## Tokens
 
 ```bash
-opensea tokens trending [--chains <chains>] [--limit <n>] [--cursor <cursor>]
-opensea tokens top [--chains <chains>] [--limit <n>] [--cursor <cursor>]
+opensea tokens trending [--chains <chains>] [--limit <n>] [--next <cursor>]
+opensea tokens top [--chains <chains>] [--limit <n>] [--next <cursor>]
 opensea tokens get <chain> <address>
 ```
 
@@ -90,4 +90,4 @@ opensea swaps quote --from-chain <chain> --from-address <address> --to-chain <ch
 opensea accounts get <address>
 ```
 
-> All list commands support cursor-based pagination. See [pagination.md](pagination.md) for details.
+> REST list commands support cursor-based pagination. Search commands return a flat list with no cursor. See [pagination.md](pagination.md) for details.

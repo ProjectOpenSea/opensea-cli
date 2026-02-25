@@ -16,16 +16,16 @@ export function tokensCommand(
     .description("Get trending tokens based on OpenSea's trending score")
     .option("--chains <chains>", "Comma-separated list of chains to filter by")
     .option("--limit <limit>", "Number of results (max 100)", "20")
-    .option("--cursor <cursor>", "Pagination cursor")
+    .option("--next <cursor>", "Pagination cursor")
     .action(
-      async (options: { chains?: string; limit: string; cursor?: string }) => {
+      async (options: { chains?: string; limit: string; next?: string }) => {
         const client = getClient()
         const result = await client.get<{ tokens: Token[]; next?: string }>(
           "/api/v2/tokens/trending",
           {
             chains: options.chains,
             limit: Number.parseInt(options.limit, 10),
-            cursor: options.cursor,
+            cursor: options.next,
           },
         )
         console.log(formatOutput(result, getFormat()))
@@ -37,16 +37,16 @@ export function tokensCommand(
     .description("Get top tokens ranked by 24-hour trading volume")
     .option("--chains <chains>", "Comma-separated list of chains to filter by")
     .option("--limit <limit>", "Number of results (max 100)", "20")
-    .option("--cursor <cursor>", "Pagination cursor")
+    .option("--next <cursor>", "Pagination cursor")
     .action(
-      async (options: { chains?: string; limit: string; cursor?: string }) => {
+      async (options: { chains?: string; limit: string; next?: string }) => {
         const client = getClient()
         const result = await client.get<{ tokens: Token[]; next?: string }>(
           "/api/v2/tokens/top",
           {
             chains: options.chains,
             limit: Number.parseInt(options.limit, 10),
-            cursor: options.cursor,
+            cursor: options.next,
           },
         )
         console.log(formatOutput(result, getFormat()))

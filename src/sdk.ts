@@ -317,24 +317,24 @@ class TokensAPI {
   async trending(options?: {
     limit?: number
     chains?: string[]
-    cursor?: string
+    next?: string
   }): Promise<{ tokens: Token[]; next?: string }> {
     return this.client.get("/api/v2/tokens/trending", {
       limit: options?.limit,
       chains: options?.chains?.join(","),
-      cursor: options?.cursor,
+      cursor: options?.next,
     })
   }
 
   async top(options?: {
     limit?: number
     chains?: string[]
-    cursor?: string
+    next?: string
   }): Promise<{ tokens: Token[]; next?: string }> {
     return this.client.get("/api/v2/tokens/top", {
       limit: options?.limit,
       chains: options?.chains?.join(","),
-      cursor: options?.cursor,
+      cursor: options?.next,
     })
   }
 

@@ -294,6 +294,16 @@ describe("OpenSeaCLI", () => {
       })
     })
 
+    it("trending maps next option to cursor param", async () => {
+      mockGet.mockResolvedValue({ tokens: [] })
+      await sdk.tokens.trending({ next: "cursor1" })
+      expect(mockGet).toHaveBeenCalledWith("/api/v2/tokens/trending", {
+        limit: undefined,
+        chains: undefined,
+        cursor: "cursor1",
+      })
+    })
+
     it("trending with no options", async () => {
       mockGet.mockResolvedValue({ tokens: [] })
       await sdk.tokens.trending()
@@ -301,6 +311,16 @@ describe("OpenSeaCLI", () => {
         limit: undefined,
         chains: undefined,
         cursor: undefined,
+      })
+    })
+
+    it("top maps next option to cursor param", async () => {
+      mockGet.mockResolvedValue({ tokens: [] })
+      await sdk.tokens.top({ limit: 5, next: "cursor2" })
+      expect(mockGet).toHaveBeenCalledWith("/api/v2/tokens/top", {
+        limit: 5,
+        chains: undefined,
+        cursor: "cursor2",
       })
     })
 

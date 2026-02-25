@@ -250,11 +250,6 @@ export interface GetTraitsResponse {
   counts: { [traitType: string]: TraitCounts }
 }
 
-export interface PaginatedResponse<T> {
-  next?: string
-  results: T[]
-}
-
 export interface Token {
   address: string
   chain: string
