@@ -28,7 +28,7 @@ const program = new Command()
 program
   .name("opensea")
   .description("OpenSea CLI - Query the OpenSea API from the command line")
-  .version("0.1.0")
+  .version(process.env.npm_package_version ?? "0.0.0")
   .addHelpText("before", BANNER)
   .option("--api-key <key>", "OpenSea API key (or set OPENSEA_API_KEY env var)")
   .option("--chain <chain>", "Default chain", "ethereum")
@@ -71,8 +71,6 @@ program.addCommand(accountsCommand(getClient, getFormat))
 program.addCommand(tokensCommand(getClient, getFormat))
 program.addCommand(searchCommand(getClient, getFormat))
 program.addCommand(swapsCommand(getClient, getFormat))
-
-program.hook("postAction", () => {})
 
 async function main() {
   try {
