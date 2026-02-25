@@ -13,6 +13,9 @@ import type {
   NFT,
   Offer,
   OpenSeaClientConfig,
+  SwapQuoteResponse,
+  Token,
+  TokenDetails,
 } from "./types/index.js"
 
 export class OpenSeaCLI {
@@ -24,6 +27,8 @@ export class OpenSeaCLI {
   readonly offers: OffersAPI
   readonly events: EventsAPI
   readonly accounts: AccountsAPI
+  readonly tokens: TokensAPI
+  readonly swaps: SwapsAPI
 
   constructor(config: OpenSeaClientConfig) {
     this.client = new OpenSeaClient(config)
@@ -33,6 +38,8 @@ export class OpenSeaCLI {
     this.offers = new OffersAPI(this.client)
     this.events = new EventsAPI(this.client)
     this.accounts = new AccountsAPI(this.client)
+    this.tokens = new TokensAPI(this.client)
+    this.swaps = new SwapsAPI(this.client)
   }
 }
 
@@ -289,5 +296,63 @@ class AccountsAPI {
 
   async get(address: string): Promise<Account> {
     return this.client.get(`/api/v2/accounts/${address}`)
+  }
+}
+
+class TokensAPI {
+  constructor(private client: OpenSeaClient) {}
+
+  async trending(options?: {
+    limit?: number
+    chains?: string[]
+    cursor?: string
+  }): Promise<{ tokens: Token[]; next?: string }> {
+    return this.client.get("/api/v2/tokens/trending", {
+      limit: options?.limit,
+      chains: options?.chains?.join(","),
+      cursor: options?.cursor,
+    })
+  }
+
+  async top(options?: {
+    limit?: number
+    chains?: string[]
+    cursor?: string
+  }): Promise<{ tokens: Token[]; next?: string }> {
+    return this.client.get("/api/v2/tokens/top", {
+      limit: options?.limit,
+      chains: options?.chains?.join(","),
+      cursor: options?.cursor,
+    })
+  }
+
+  async get(chain: Chain, address: string): Promise<TokenDetails> {
+    return this.client.get(`/api/v2/chain/${chain}/token/${address}`)
+  }
+}
+
+class SwapsAPI {
+  constructor(private client: OpenSeaClient) {}
+
+  async quote(options: {
+    fromChain: string
+    fromAddress: string
+    toChain: string
+    toAddress: string
+    quantity: string
+    address: string
+    slippage?: number
+    recipient?: string
+  }): Promise<SwapQuoteResponse> {
+    return this.client.get("/api/v2/swap/quote", {
+      from_chain: options.fromChain,
+      from_address: options.fromAddress,
+      to_chain: options.toChain,
+      to_address: options.toAddress,
+      quantity: options.quantity,
+      address: options.address,
+      slippage: options.slippage,
+      recipient: options.recipient,
+    })
   }
 }

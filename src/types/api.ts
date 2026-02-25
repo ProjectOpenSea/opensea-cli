@@ -254,3 +254,70 @@ export interface PaginatedResponse<T> {
   next?: string
   results: T[]
 }
+
+export interface Token {
+  address: string
+  chain: string
+  name: string
+  symbol: string
+  image_url?: string
+  usd_price: string
+  decimals: number
+  market_cap_usd?: number
+  volume_24h?: number
+  price_change_24h?: number
+  opensea_url: string
+}
+
+export interface TokenDetails {
+  address: string
+  chain: string
+  name: string
+  symbol: string
+  image_url?: string
+  description?: string
+  usd_price: string
+  decimals: number
+  stats?: TokenStats
+  socials?: TokenSocials
+  opensea_url: string
+}
+
+export interface TokenStats {
+  market_cap_usd?: number
+  fdv_usd?: number
+  circulating_supply?: number
+  max_supply?: number
+  total_supply?: number
+  volume_24h?: number
+  price_change_1h?: number
+  price_change_24h?: number
+  price_change_7d?: number
+  price_change_30d?: number
+}
+
+export interface TokenSocials {
+  website?: string
+  twitter_handle?: string
+  telegram_identifier?: string
+}
+
+export interface SwapQuote {
+  total_price_usd: number
+  total_cost_usd: number
+  slippage_tolerance: number
+  estimated_duration_ms: number
+  marketplace_fee_bps: number
+}
+
+export interface SwapTransaction {
+  chain: string
+  to?: string
+  data: string
+  value?: string
+}
+
+export interface SwapQuoteResponse {
+  quote: SwapQuote
+  transactions: SwapTransaction[]
+}
