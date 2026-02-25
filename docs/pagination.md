@@ -23,7 +23,6 @@ opensea tokens trending --limit 5 --next "abc123..."
 | Command | Cursor flag |
 |---|---|
 | `collections list` | `--next` |
-
 | `nfts list-by-collection` | `--next` |
 | `nfts list-by-contract` | `--next` |
 | `nfts list-by-account` | `--next` |
