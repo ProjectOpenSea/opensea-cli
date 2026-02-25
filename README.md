@@ -1,4 +1,13 @@
-# opensea-cli
+<p align="center">
+  <img src="./img/banner.png" />
+</p>
+
+[![Version][version-badge]][version-link]
+[![npm][npm-badge]][npm-link]
+[![Test CI][ci-badge]][ci-link]
+[![License][license-badge]][license-link]
+
+# opensea-cli <!-- omit in toc -->
 
 Query the OpenSea API from the command line or programmatically. Designed for both AI agents and developers.
 
@@ -302,3 +311,12 @@ opensea accounts get 0x21130e908bba2d41b63fbca7caa131285b8724f8
 
 - Node.js >= 18.0.0
 - OpenSea API key ([get one here](https://docs.opensea.io/reference/api-keys))
+
+[version-badge]: https://img.shields.io/github/package-json/v/ProjectOpenSea/opensea-cli
+[version-link]: https://github.com/ProjectOpenSea/opensea-cli/releases
+[npm-badge]: https://img.shields.io/npm/v/opensea-cli?color=red
+[npm-link]: https://www.npmjs.com/package/opensea-cli
+[ci-badge]: https://github.com/ProjectOpenSea/opensea-cli/actions/workflows/npm-publish.yml/badge.svg
+[ci-link]: https://github.com/ProjectOpenSea/opensea-cli/actions/workflows/npm-publish.yml
+[license-badge]: https://img.shields.io/github/license/ProjectOpenSea/opensea-cli
+[license-link]: https://github.com/ProjectOpenSea/opensea-cli/blob/main/LICENSE
