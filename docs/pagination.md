@@ -4,7 +4,7 @@ The OpenSea API uses cursor-based pagination. Paginated responses include a `nex
 
 ## CLI
 
-Most list commands support `--next <cursor>` (or `--cursor <cursor>` for tokens):
+All paginated commands use `--next <cursor>`:
 
 ```bash
 # First page
@@ -13,9 +13,9 @@ opensea collections list --limit 5
 # The response includes a "next" cursor — pass it to get the next page
 opensea collections list --limit 5 --next "LXBrPTEwMDA..."
 
-# Tokens use --cursor instead of --next
+# Tokens also use --next
 opensea tokens trending --limit 5
-opensea tokens trending --limit 5 --cursor "abc123..."
+opensea tokens trending --limit 5 --next "abc123..."
 ```
 
 ### Commands that support pagination
@@ -23,6 +23,7 @@ opensea tokens trending --limit 5 --cursor "abc123..."
 | Command | Cursor flag |
 |---|---|
 | `collections list` | `--next` |
+
 | `nfts list-by-collection` | `--next` |
 | `nfts list-by-contract` | `--next` |
 | `nfts list-by-account` | `--next` |
@@ -35,8 +36,10 @@ opensea tokens trending --limit 5 --cursor "abc123..."
 | `events by-account` | `--next` |
 | `events by-collection` | `--next` |
 | `events by-nft` | `--next` |
-| `tokens trending` | `--cursor` |
-| `tokens top` | `--cursor` |
+| `tokens trending` | `--next` |
+| `tokens top` | `--next` |
+
+> **Note:** Search commands (`search collections`, `search nfts`, `search tokens`, `search accounts`) do not support cursor-based pagination. The underlying GraphQL API returns a flat list with no `next` cursor.
 
 ## SDK
 

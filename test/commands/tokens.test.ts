@@ -27,7 +27,15 @@ describe("tokensCommand", () => {
 
     const cmd = tokensCommand(ctx.getClient, ctx.getFormat)
     await cmd.parseAsync(
-      ["trending", "--chains", "ethereum,base", "--limit", "10"],
+      [
+        "trending",
+        "--chains",
+        "ethereum,base",
+        "--limit",
+        "10",
+        "--next",
+        "abc123",
+      ],
       { from: "user" },
     )
 
@@ -36,6 +44,7 @@ describe("tokensCommand", () => {
       expect.objectContaining({
         chains: "ethereum,base",
         limit: 10,
+        cursor: "abc123",
       }),
     )
   })
@@ -44,11 +53,13 @@ describe("tokensCommand", () => {
     ctx.mockClient.get.mockResolvedValue({ tokens: [] })
 
     const cmd = tokensCommand(ctx.getClient, ctx.getFormat)
-    await cmd.parseAsync(["top", "--limit", "5"], { from: "user" })
+    await cmd.parseAsync(["top", "--limit", "5", "--next", "cursor1"], {
+      from: "user",
+    })
 
     expect(ctx.mockClient.get).toHaveBeenCalledWith(
       "/api/v2/tokens/top",
-      expect.objectContaining({ limit: 5 }),
+      expect.objectContaining({ limit: 5, cursor: "cursor1" }),
     )
   })
 

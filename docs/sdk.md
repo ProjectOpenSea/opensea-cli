@@ -129,7 +129,7 @@ const account = await client.accounts.get("0x123...")
 const { tokens, next } = await client.tokens.trending({
   chains: ["base", "ethereum"],
   limit: 10,
-  cursor: "cursor_string",
+  next: "cursor_string",
 })
 
 const { tokens, next } = await client.tokens.top({
@@ -142,7 +142,7 @@ const tokenDetails = await client.tokens.get("base", "0x123...")
 
 ## Search
 
-Search methods use GraphQL and return different result shapes than the REST API.
+Search methods use GraphQL and return different result shapes than the REST API. Search endpoints do not currently expose a `next` cursor for pagination; use `limit` to control result count.
 
 ```typescript
 const collections = await client.search.collections("mfers", {
