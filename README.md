@@ -85,6 +85,15 @@ opensea events by-collection <slug> [--event-type <type>]
 opensea events by-nft <chain> <contract> <token-id> [--event-type <type>]
 ```
 
+### Search
+
+```bash
+opensea search collections <query> [--chains <chains>] [--limit <n>]
+opensea search nfts <query> [--collection <slug>] [--chains <chains>] [--limit <n>]
+opensea search tokens <query> [--chain <chain>] [--limit <n>]
+opensea search accounts <query> [--limit <n>]
+```
+
 ### Tokens
 
 ```bash
@@ -120,6 +129,7 @@ const nfts = await client.nfts.listByCollection("mfers", { limit: 5 })
 const listings = await client.listings.best("mfers", { limit: 10 })
 const events = await client.events.byCollection("mfers", { eventType: "sale" })
 const account = await client.accounts.get("0x21130e908bba2d41b63fbca7caa131285b8724f8")
+const searchResults = await client.search.collections("mfers", { limit: 5 })
 ```
 
 ## Output Formats
@@ -221,6 +231,28 @@ opensea events by-nft ethereum 0xd9b78a2f1dafc8bb9c60961790d2beefebee56f4 1 --li
 
 # Get events for an account
 opensea events by-account 0x21130e908bba2d41b63fbca7caa131285b8724f8 --limit 2
+```
+
+### Search
+
+```bash
+# Search for collections
+opensea search collections mfers
+
+# Search for NFTs
+opensea search nfts "cool cat" --limit 5
+
+# Search for NFTs within a specific collection
+opensea search nfts "rare" --collection tiny-dinos-eth --limit 5
+
+# Search for tokens/currencies
+opensea search tokens eth --limit 5
+
+# Search for tokens on a specific chain
+opensea search tokens usdc --chain base --limit 5
+
+# Search for accounts
+opensea search accounts vitalik --limit 5
 ```
 
 ### Tokens

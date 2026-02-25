@@ -321,3 +321,60 @@ export interface SwapQuoteResponse {
   quote: SwapQuote
   transactions: SwapTransaction[]
 }
+
+export interface SearchCollectionResult {
+  slug: string
+  name: string
+  description: string
+  imageUrl: string
+  chain: { identifier: string; name: string }
+  stats: {
+    totalSupply: number
+    ownerCount: number
+    volume: { usd: number }
+    sales: number
+  } | null
+  floorPrice: {
+    pricePerItem: {
+      usd: number
+      native: { unit: number; symbol: string }
+    }
+  } | null
+}
+
+export interface SearchNFTResult {
+  tokenId: string
+  name: string
+  description: string
+  imageUrl: string
+  contractAddress: string
+  collection: { slug: string; name: string }
+  chain: { identifier: string; name: string }
+  bestListing: {
+    pricePerItem: {
+      usd: number
+      native: { unit: number; symbol: string }
+    }
+  } | null
+  owner: { address: string; displayName: string } | null
+}
+
+export interface SearchTokenResult {
+  name: string
+  symbol: string
+  imageUrl: string
+  usdPrice: string
+  contractAddress: string
+  chain: { identifier: string; name: string }
+  stats: {
+    marketCapUsd: number
+    oneDay: { priceChange: number; volume: number }
+  } | null
+}
+
+export interface SearchAccountResult {
+  address: string
+  username: string
+  imageUrl: string
+  isVerified: boolean
+}

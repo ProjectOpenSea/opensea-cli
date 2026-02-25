@@ -7,6 +7,7 @@ import {
   listingsCommand,
   nftsCommand,
   offersCommand,
+  searchCommand,
   swapsCommand,
   tokensCommand,
 } from "./commands/index.js"
@@ -68,6 +69,7 @@ program.addCommand(offersCommand(getClient, getFormat))
 program.addCommand(eventsCommand(getClient, getFormat))
 program.addCommand(accountsCommand(getClient, getFormat))
 program.addCommand(tokensCommand(getClient, getFormat))
+program.addCommand(searchCommand(getClient, getFormat))
 program.addCommand(swapsCommand(getClient, getFormat))
 
 program.hook("postAction", () => {})

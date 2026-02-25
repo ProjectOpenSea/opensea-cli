@@ -1,15 +1,18 @@
 import type { OpenSeaClientConfig } from "./types/index.js"
 
 const DEFAULT_BASE_URL = "https://api.opensea.io"
+const DEFAULT_GRAPHQL_URL = "https://gql.opensea.io/graphql"
 
 export class OpenSeaClient {
   private apiKey: string
   private baseUrl: string
+  private graphqlUrl: string
   private defaultChain: string
 
   constructor(config: OpenSeaClientConfig) {
     this.apiKey = config.apiKey
     this.baseUrl = config.baseUrl ?? DEFAULT_BASE_URL
+    this.graphqlUrl = config.graphqlUrl ?? DEFAULT_GRAPHQL_URL
     this.defaultChain = config.chain ?? "ethereum"
   }
 
@@ -57,6 +60,41 @@ export class OpenSeaClient {
     }
 
     return response.json() as Promise<T>
+  }
+
+  async graphql<T>(
+    query: string,
+    variables?: Record<string, unknown>,
+  ): Promise<T> {
+    const response = await fetch(this.graphqlUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "x-api-key": this.apiKey,
+      },
+      body: JSON.stringify({ query, variables }),
+    })
+
+    if (!response.ok) {
+      const body = await response.text()
+      throw new OpenSeaAPIError(response.status, body, "graphql")
+    }
+
+    const json = (await response.json()) as {
+      data?: T
+      errors?: { message: string }[]
+    }
+
+    if (json.errors?.length) {
+      throw new OpenSeaAPIError(
+        400,
+        json.errors.map(e => e.message).join("; "),
+        "graphql",
+      )
+    }
+
+    return json.data as T
   }
 
   getDefaultChain(): string {

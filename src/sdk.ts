@@ -13,6 +13,10 @@ import type {
   NFT,
   Offer,
   OpenSeaClientConfig,
+  SearchAccountResult,
+  SearchCollectionResult,
+  SearchNFTResult,
+  SearchTokenResult,
   SwapQuoteResponse,
   Token,
   TokenDetails,
@@ -28,6 +32,7 @@ export class OpenSeaCLI {
   readonly events: EventsAPI
   readonly accounts: AccountsAPI
   readonly tokens: TokensAPI
+  readonly search: SearchAPI
   readonly swaps: SwapsAPI
 
   constructor(config: OpenSeaClientConfig) {
@@ -39,6 +44,7 @@ export class OpenSeaCLI {
     this.events = new EventsAPI(this.client)
     this.accounts = new AccountsAPI(this.client)
     this.tokens = new TokensAPI(this.client)
+    this.search = new SearchAPI(this.client)
     this.swaps = new SwapsAPI(this.client)
   }
 }
@@ -328,6 +334,92 @@ class TokensAPI {
 
   async get(chain: Chain, address: string): Promise<TokenDetails> {
     return this.client.get(`/api/v2/chain/${chain}/token/${address}`)
+  }
+}
+
+class SearchAPI {
+  constructor(private client: OpenSeaClient) {}
+
+  async collections(
+    query: string,
+    options?: { chains?: string[]; limit?: number },
+  ): Promise<SearchCollectionResult[]> {
+    const result = await this.client.graphql<{
+      collectionsByQuery: SearchCollectionResult[]
+    }>(
+      `query SearchCollections($query: String!, $limit: Int, $chains: [ChainIdentifier!]) {
+        collectionsByQuery(query: $query, limit: $limit, chains: $chains) {
+          slug name description imageUrl
+          chain { identifier name }
+          stats { totalSupply ownerCount volume { usd } sales }
+          floorPrice { pricePerItem { usd native { unit symbol } } }
+        }
+      }`,
+      { query, limit: options?.limit, chains: options?.chains },
+    )
+    return result.collectionsByQuery
+  }
+
+  async nfts(
+    query: string,
+    options?: { collection?: string; chains?: string[]; limit?: number },
+  ): Promise<SearchNFTResult[]> {
+    const result = await this.client.graphql<{
+      itemsByQuery: SearchNFTResult[]
+    }>(
+      `query SearchItems($query: String!, $collectionSlug: String, $limit: Int, $chains: [ChainIdentifier!]) {
+        itemsByQuery(query: $query, collectionSlug: $collectionSlug, limit: $limit, chains: $chains) {
+          tokenId name description imageUrl contractAddress
+          collection { slug name }
+          chain { identifier name }
+          bestListing { pricePerItem { usd native { unit symbol } } }
+          owner { address displayName }
+        }
+      }`,
+      {
+        query,
+        collectionSlug: options?.collection,
+        limit: options?.limit,
+        chains: options?.chains,
+      },
+    )
+    return result.itemsByQuery
+  }
+
+  async tokens(
+    query: string,
+    options?: { chain?: string; limit?: number },
+  ): Promise<SearchTokenResult[]> {
+    const result = await this.client.graphql<{
+      currenciesByQuery: SearchTokenResult[]
+    }>(
+      `query SearchCurrencies($query: String!, $limit: Int, $chain: ChainIdentifier) {
+        currenciesByQuery(query: $query, limit: $limit, chain: $chain, allowlistOnly: false) {
+          name symbol imageUrl usdPrice contractAddress
+          chain { identifier name }
+          stats { marketCapUsd oneDay { priceChange volume } }
+        }
+      }`,
+      { query, limit: options?.limit, chain: options?.chain },
+    )
+    return result.currenciesByQuery
+  }
+
+  async accounts(
+    query: string,
+    options?: { limit?: number },
+  ): Promise<SearchAccountResult[]> {
+    const result = await this.client.graphql<{
+      accountsByQuery: SearchAccountResult[]
+    }>(
+      `query SearchAccounts($query: String!, $limit: Int) {
+        accountsByQuery(query: $query, limit: $limit) {
+          address username imageUrl isVerified
+        }
+      }`,
+      { query, limit: options?.limit },
+    )
+    return result.accountsByQuery
   }
 }
 
