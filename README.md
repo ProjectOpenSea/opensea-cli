@@ -119,7 +119,7 @@ const stats = await client.collections.stats("mfers")
 const nfts = await client.nfts.listByCollection("mfers", { limit: 5 })
 const listings = await client.listings.best("mfers", { limit: 10 })
 const events = await client.events.byCollection("mfers", { eventType: "sale" })
-const account = await client.accounts.get("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045")
+const account = await client.accounts.get("0x21130e908bba2d41b63fbca7caa131285b8724f8")
 ```
 
 ## Output Formats
@@ -169,7 +169,7 @@ opensea nfts list-by-collection tiny-dinos-eth --limit 2
 opensea nfts list-by-contract ethereum 0xd9b78a2f1dafc8bb9c60961790d2beefebee56f4 --limit 2
 
 # List NFTs owned by an account
-opensea nfts list-by-account ethereum 0xde7fce3a1cba4a705f299ce41d163017f165d666 --limit 2
+opensea nfts list-by-account ethereum 0x21130e908bba2d41b63fbca7caa131285b8724f8 --limit 2
 
 # Get contract details
 opensea nfts contract ethereum 0xd9b78a2f1dafc8bb9c60961790d2beefebee56f4
@@ -220,7 +220,7 @@ opensea events by-collection tiny-dinos-eth --limit 2
 opensea events by-nft ethereum 0xd9b78a2f1dafc8bb9c60961790d2beefebee56f4 1 --limit 2
 
 # Get events for an account
-opensea events by-account 0xde7fce3a1cba4a705f299ce41d163017f165d666 --limit 2
+opensea events by-account 0x21130e908bba2d41b63fbca7caa131285b8724f8 --limit 2
 ```
 
 ### Tokens
@@ -257,7 +257,7 @@ opensea swaps quote \
 
 ```bash
 # Get account details
-opensea accounts get 0xde7fce3a1cba4a705f299ce41d163017f165d666
+opensea accounts get 0x21130e908bba2d41b63fbca7caa131285b8724f8
 ```
 
 ## Exit Codes
