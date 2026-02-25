@@ -242,6 +242,17 @@ opensea tokens top --chains base --limit 2
 opensea tokens get base 0x3ec2156d4c0a9cbdab4a016633b7bcf6a8d68ea2
 ```
 
+### Swaps
+
+```bash
+# Get a swap quote for USDC to DRB on Base
+opensea swaps quote \
+  --from-chain base --from-address 0x833589fcd6edb6e08f4c7c32d4f71b54bda02913 \
+  --to-chain base --to-address 0x3ec2156d4c0a9cbdab4a016633b7bcf6a8d68ea2 \
+  --quantity 1000000 \
+  --address 0x21130e908bba2d41b63fbca7caa131285b8724f8
+```
+
 ### Accounts
 
 ```bash
