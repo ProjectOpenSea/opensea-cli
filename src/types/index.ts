@@ -5,6 +5,8 @@ export interface OpenSeaClientConfig {
   baseUrl?: string
   graphqlUrl?: string
   chain?: string
+  timeout?: number
+  verbose?: boolean
 }
 
 export interface CommandOptions {

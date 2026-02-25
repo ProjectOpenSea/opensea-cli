@@ -1,6 +1,7 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import { formatOutput } from "../output.js"
+import { parseIntOption } from "../parse.js"
 import type { AssetEvent } from "../types/index.js"
 
 export function eventsCommand(
@@ -36,12 +37,14 @@ export function eventsCommand(
           next?: string
         }>("/api/v2/events", {
           event_type: options.eventType,
-          after: options.after ? Number.parseInt(options.after, 10) : undefined,
+          after: options.after
+            ? parseIntOption(options.after, "--after")
+            : undefined,
           before: options.before
-            ? Number.parseInt(options.before, 10)
+            ? parseIntOption(options.before, "--before")
             : undefined,
           chain: options.chain,
-          limit: Number.parseInt(options.limit, 10),
+          limit: parseIntOption(options.limit, "--limit"),
           next: options.next,
         })
         console.log(formatOutput(result, getFormat()))
@@ -73,7 +76,7 @@ export function eventsCommand(
         }>(`/api/v2/events/accounts/${address}`, {
           event_type: options.eventType,
           chain: options.chain,
-          limit: Number.parseInt(options.limit, 10),
+          limit: parseIntOption(options.limit, "--limit"),
           next: options.next,
         })
         console.log(formatOutput(result, getFormat()))
@@ -102,7 +105,7 @@ export function eventsCommand(
           next?: string
         }>(`/api/v2/events/collection/${slug}`, {
           event_type: options.eventType,
-          limit: Number.parseInt(options.limit, 10),
+          limit: parseIntOption(options.limit, "--limit"),
           next: options.next,
         })
         console.log(formatOutput(result, getFormat()))
@@ -137,7 +140,7 @@ export function eventsCommand(
           `/api/v2/events/chain/${chain}/contract/${contract}/nfts/${tokenId}`,
           {
             event_type: options.eventType,
-            limit: Number.parseInt(options.limit, 10),
+            limit: parseIntOption(options.limit, "--limit"),
             next: options.next,
           },
         )

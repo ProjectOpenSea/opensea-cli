@@ -1,6 +1,7 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import { formatOutput } from "../output.js"
+import { parseIntOption } from "../parse.js"
 import {
   SEARCH_ACCOUNTS_QUERY,
   SEARCH_COLLECTIONS_QUERY,
@@ -35,7 +36,7 @@ export function searchCommand(
           collectionsByQuery: SearchCollectionResult[]
         }>(SEARCH_COLLECTIONS_QUERY, {
           query,
-          limit: Number.parseInt(options.limit, 10),
+          limit: parseIntOption(options.limit, "--limit"),
           chains: options.chains?.split(","),
         })
         console.log(formatOutput(result.collectionsByQuery, getFormat()))
@@ -60,7 +61,7 @@ export function searchCommand(
         }>(SEARCH_NFTS_QUERY, {
           query,
           collectionSlug: options.collection,
-          limit: Number.parseInt(options.limit, 10),
+          limit: parseIntOption(options.limit, "--limit"),
           chains: options.chains?.split(","),
         })
         console.log(formatOutput(result.itemsByQuery, getFormat()))
@@ -80,7 +81,7 @@ export function searchCommand(
           currenciesByQuery: SearchTokenResult[]
         }>(SEARCH_TOKENS_QUERY, {
           query,
-          limit: Number.parseInt(options.limit, 10),
+          limit: parseIntOption(options.limit, "--limit"),
           chain: options.chain,
         })
         console.log(formatOutput(result.currenciesByQuery, getFormat()))
@@ -98,7 +99,7 @@ export function searchCommand(
         accountsByQuery: SearchAccountResult[]
       }>(SEARCH_ACCOUNTS_QUERY, {
         query,
-        limit: Number.parseInt(options.limit, 10),
+        limit: parseIntOption(options.limit, "--limit"),
       })
       console.log(formatOutput(result.accountsByQuery, getFormat()))
     })

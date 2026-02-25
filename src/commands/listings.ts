@@ -1,6 +1,7 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import { formatOutput } from "../output.js"
+import { parseIntOption } from "../parse.js"
 import type { Listing } from "../types/index.js"
 
 export function listingsCommand(
@@ -22,7 +23,7 @@ export function listingsCommand(
           listings: Listing[]
           next?: string
         }>(`/api/v2/listings/collection/${collection}/all`, {
-          limit: Number.parseInt(options.limit, 10),
+          limit: parseIntOption(options.limit, "--limit"),
           next: options.next,
         })
         console.log(formatOutput(result, getFormat()))
@@ -42,7 +43,7 @@ export function listingsCommand(
           listings: Listing[]
           next?: string
         }>(`/api/v2/listings/collection/${collection}/best`, {
-          limit: Number.parseInt(options.limit, 10),
+          limit: parseIntOption(options.limit, "--limit"),
           next: options.next,
         })
         console.log(formatOutput(result, getFormat()))

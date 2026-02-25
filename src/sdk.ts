@@ -319,6 +319,8 @@ class TokensAPI {
     chains?: string[]
     next?: string
   }): Promise<{ tokens: Token[]; next?: string }> {
+    // The tokens API uses "cursor" as its query param instead of "next".
+    // The SDK accepts "next" for consistency with all other endpoints.
     return this.client.get("/api/v2/tokens/trending", {
       limit: options?.limit,
       chains: options?.chains?.join(","),
@@ -331,6 +333,8 @@ class TokensAPI {
     chains?: string[]
     next?: string
   }): Promise<{ tokens: Token[]; next?: string }> {
+    // The tokens API uses "cursor" as its query param instead of "next".
+    // The SDK accepts "next" for consistency with all other endpoints.
     return this.client.get("/api/v2/tokens/top", {
       limit: options?.limit,
       chains: options?.chains?.join(","),
