@@ -16,5 +16,11 @@ jobs:
         with:
           node-version-file: .nvmrc
           registry-url: https://registry.npmjs.org/
+      # Publish @opensea/cli
       - run: npm install
       - run: npm publish --provenance --access public
+
+      # Publish opensea-cli stub (skip if version already exists)
+      - run: npm publish --provenance --access public
+        working-directory: packages/opensea-cli-stub
+        continue-on-error: true

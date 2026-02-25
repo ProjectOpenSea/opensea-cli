@@ -35,13 +35,13 @@ Query the OpenSea API from the command line or programmatically. Designed for bo
 ## Install
 
 ```bash
-npm install -g opensea-cli
+npm install -g @opensea/cli
 ```
 
 Or use without installing:
 
 ```bash
-npx opensea-cli collections get mfers
+npx @opensea/cli collections get mfers
 ```
 
 ## Authentication
@@ -149,7 +149,7 @@ opensea accounts get <address>
 Use as a TypeScript/JavaScript library:
 
 ```typescript
-import { OpenSeaCLI } from "opensea-cli"
+import { OpenSeaCLI } from "@opensea/cli"
 
 const client = new OpenSeaCLI({ apiKey: process.env.OPENSEA_API_KEY })
 
@@ -335,8 +335,8 @@ opensea accounts get 0x21130e908bba2d41b63fbca7caa131285b8724f8
 
 [version-badge]: https://img.shields.io/github/package-json/v/ProjectOpenSea/opensea-cli
 [version-link]: https://github.com/ProjectOpenSea/opensea-cli/releases
-[npm-badge]: https://img.shields.io/npm/v/opensea-cli?color=red
-[npm-link]: https://www.npmjs.com/package/opensea-cli
+[npm-badge]: https://img.shields.io/npm/v/@opensea/cli?color=red
+[npm-link]: https://www.npmjs.com/package/@opensea/cli
 [ci-badge]: https://github.com/ProjectOpenSea/opensea-cli/actions/workflows/ci.yml/badge.svg
 [ci-link]: https://github.com/ProjectOpenSea/opensea-cli/actions/workflows/ci.yml
 [license-badge]: https://img.shields.io/github/license/ProjectOpenSea/opensea-cli
