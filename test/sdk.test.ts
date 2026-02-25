@@ -6,6 +6,7 @@ vi.mock("../src/client.js", () => {
   const MockOpenSeaClient = vi.fn()
   MockOpenSeaClient.prototype.get = vi.fn()
   MockOpenSeaClient.prototype.post = vi.fn()
+  MockOpenSeaClient.prototype.graphql = vi.fn()
   MockOpenSeaClient.prototype.getDefaultChain = vi.fn(() => "ethereum")
   return { OpenSeaClient: MockOpenSeaClient, OpenSeaAPIError: vi.fn() }
 })
@@ -14,11 +15,13 @@ describe("OpenSeaCLI", () => {
   let sdk: OpenSeaCLI
   let mockGet: ReturnType<typeof vi.fn>
   let mockPost: ReturnType<typeof vi.fn>
+  let mockGraphql: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
     sdk = new OpenSeaCLI({ apiKey: "test-key" })
     mockGet = vi.mocked(OpenSeaClient.prototype.get)
     mockPost = vi.mocked(OpenSeaClient.prototype.post)
+    mockGraphql = vi.mocked(OpenSeaClient.prototype.graphql)
   })
 
   afterEach(() => {
@@ -34,6 +37,7 @@ describe("OpenSeaCLI", () => {
       expect(sdk.events).toBeDefined()
       expect(sdk.accounts).toBeDefined()
       expect(sdk.tokens).toBeDefined()
+      expect(sdk.search).toBeDefined()
       expect(sdk.swaps).toBeDefined()
     })
   })
@@ -314,6 +318,71 @@ describe("OpenSeaCLI", () => {
       mockGet.mockResolvedValue({ address: "0xabc" })
       await sdk.tokens.get("ethereum", "0xabc")
       expect(mockGet).toHaveBeenCalledWith("/api/v2/chain/ethereum/token/0xabc")
+    })
+  })
+
+  describe("search", () => {
+    it("collections calls graphql with correct query and variables", async () => {
+      mockGraphql.mockResolvedValue({
+        collectionsByQuery: [{ slug: "mfers" }],
+      })
+      const result = await sdk.search.collections("mfers", {
+        limit: 5,
+        chains: ["ethereum"],
+      })
+      expect(mockGraphql).toHaveBeenCalledWith(
+        expect.stringContaining("collectionsByQuery"),
+        { query: "mfers", limit: 5, chains: ["ethereum"] },
+      )
+      expect(result).toEqual([{ slug: "mfers" }])
+    })
+
+    it("nfts calls graphql with correct query and variables", async () => {
+      mockGraphql.mockResolvedValue({
+        itemsByQuery: [{ tokenId: "1", name: "Ape #1" }],
+      })
+      const result = await sdk.search.nfts("ape", {
+        collection: "boredapeyachtclub",
+        limit: 3,
+        chains: ["ethereum"],
+      })
+      expect(mockGraphql).toHaveBeenCalledWith(
+        expect.stringContaining("itemsByQuery"),
+        {
+          query: "ape",
+          collectionSlug: "boredapeyachtclub",
+          limit: 3,
+          chains: ["ethereum"],
+        },
+      )
+      expect(result).toEqual([{ tokenId: "1", name: "Ape #1" }])
+    })
+
+    it("tokens calls graphql with correct query and variables", async () => {
+      mockGraphql.mockResolvedValue({
+        currenciesByQuery: [{ name: "USDC", symbol: "USDC" }],
+      })
+      const result = await sdk.search.tokens("usdc", {
+        chain: "base",
+        limit: 10,
+      })
+      expect(mockGraphql).toHaveBeenCalledWith(
+        expect.stringContaining("currenciesByQuery"),
+        { query: "usdc", limit: 10, chain: "base" },
+      )
+      expect(result).toEqual([{ name: "USDC", symbol: "USDC" }])
+    })
+
+    it("accounts calls graphql with correct query and variables", async () => {
+      mockGraphql.mockResolvedValue({
+        accountsByQuery: [{ address: "0xabc", username: "vitalik" }],
+      })
+      const result = await sdk.search.accounts("vitalik", { limit: 5 })
+      expect(mockGraphql).toHaveBeenCalledWith(
+        expect.stringContaining("accountsByQuery"),
+        { query: "vitalik", limit: 5 },
+      )
+      expect(result).toEqual([{ address: "0xabc", username: "vitalik" }])
     })
   })
 
