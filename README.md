@@ -316,7 +316,7 @@ opensea accounts get 0x21130e908bba2d41b63fbca7caa131285b8724f8
 [version-link]: https://github.com/ProjectOpenSea/opensea-cli/releases
 [npm-badge]: https://img.shields.io/npm/v/opensea-cli?color=red
 [npm-link]: https://www.npmjs.com/package/opensea-cli
-[ci-badge]: https://github.com/ProjectOpenSea/opensea-cli/actions/workflows/npm-publish.yml/badge.svg
-[ci-link]: https://github.com/ProjectOpenSea/opensea-cli/actions/workflows/npm-publish.yml
+[ci-badge]: https://github.com/ProjectOpenSea/opensea-cli/actions/workflows/ci.yml/badge.svg
+[ci-link]: https://github.com/ProjectOpenSea/opensea-cli/actions/workflows/ci.yml
 [license-badge]: https://img.shields.io/github/license/ProjectOpenSea/opensea-cli
 [license-link]: https://github.com/ProjectOpenSea/opensea-cli/blob/main/LICENSE

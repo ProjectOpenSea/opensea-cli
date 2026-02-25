@@ -1,4 +1,10 @@
 import { OpenSeaClient } from "./client.js"
+import {
+  SEARCH_ACCOUNTS_QUERY,
+  SEARCH_COLLECTIONS_QUERY,
+  SEARCH_NFTS_QUERY,
+  SEARCH_TOKENS_QUERY,
+} from "./queries.js"
 import type {
   Account,
   AssetEvent,
@@ -346,17 +352,11 @@ class SearchAPI {
   ): Promise<SearchCollectionResult[]> {
     const result = await this.client.graphql<{
       collectionsByQuery: SearchCollectionResult[]
-    }>(
-      `query SearchCollections($query: String!, $limit: Int, $chains: [ChainIdentifier!]) {
-        collectionsByQuery(query: $query, limit: $limit, chains: $chains) {
-          slug name description imageUrl
-          chain { identifier name }
-          stats { totalSupply ownerCount volume { usd } sales }
-          floorPrice { pricePerItem { usd native { unit symbol } } }
-        }
-      }`,
-      { query, limit: options?.limit, chains: options?.chains },
-    )
+    }>(SEARCH_COLLECTIONS_QUERY, {
+      query,
+      limit: options?.limit,
+      chains: options?.chains,
+    })
     return result.collectionsByQuery
   }
 
@@ -366,23 +366,12 @@ class SearchAPI {
   ): Promise<SearchNFTResult[]> {
     const result = await this.client.graphql<{
       itemsByQuery: SearchNFTResult[]
-    }>(
-      `query SearchItems($query: String!, $collectionSlug: String, $limit: Int, $chains: [ChainIdentifier!]) {
-        itemsByQuery(query: $query, collectionSlug: $collectionSlug, limit: $limit, chains: $chains) {
-          tokenId name description imageUrl contractAddress
-          collection { slug name }
-          chain { identifier name }
-          bestListing { pricePerItem { usd native { unit symbol } } }
-          owner { address displayName }
-        }
-      }`,
-      {
-        query,
-        collectionSlug: options?.collection,
-        limit: options?.limit,
-        chains: options?.chains,
-      },
-    )
+    }>(SEARCH_NFTS_QUERY, {
+      query,
+      collectionSlug: options?.collection,
+      limit: options?.limit,
+      chains: options?.chains,
+    })
     return result.itemsByQuery
   }
 
@@ -392,16 +381,11 @@ class SearchAPI {
   ): Promise<SearchTokenResult[]> {
     const result = await this.client.graphql<{
       currenciesByQuery: SearchTokenResult[]
-    }>(
-      `query SearchCurrencies($query: String!, $limit: Int, $chain: ChainIdentifier) {
-        currenciesByQuery(query: $query, limit: $limit, chain: $chain, allowlistOnly: false) {
-          name symbol imageUrl usdPrice contractAddress
-          chain { identifier name }
-          stats { marketCapUsd oneDay { priceChange volume } }
-        }
-      }`,
-      { query, limit: options?.limit, chain: options?.chain },
-    )
+    }>(SEARCH_TOKENS_QUERY, {
+      query,
+      limit: options?.limit,
+      chain: options?.chain,
+    })
     return result.currenciesByQuery
   }
 
@@ -411,14 +395,10 @@ class SearchAPI {
   ): Promise<SearchAccountResult[]> {
     const result = await this.client.graphql<{
       accountsByQuery: SearchAccountResult[]
-    }>(
-      `query SearchAccounts($query: String!, $limit: Int) {
-        accountsByQuery(query: $query, limit: $limit) {
-          address username imageUrl isVerified
-        }
-      }`,
-      { query, limit: options?.limit },
-    )
+    }>(SEARCH_ACCOUNTS_QUERY, {
+      query,
+      limit: options?.limit,
+    })
     return result.accountsByQuery
   }
 }
