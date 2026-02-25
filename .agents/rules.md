@@ -184,7 +184,47 @@ Key aspects:
 5. Add an SDK class in `src/sdk.ts` and register it on `OpenSeaCLI`.
 6. Update `README.md` with CLI usage and SDK examples.
 
+## Testing
+
+### Test Suite
+
+Tests use [Vitest](https://vitest.dev/) with v8 coverage, located in the top-level `test/` directory:
+
+```bash
+npm run test            # Run all tests
+npm run test -- --coverage  # Run with coverage report
+```
+
+| Directory | What it covers |
+|---|---|
+| `test/client.test.ts` | `OpenSeaClient` (get, post, graphql, error handling) |
+| `test/output.test.ts` | `formatOutput` (JSON and table formatting) |
+| `test/sdk.test.ts` | All SDK API classes and their methods |
+| `test/commands/*.test.ts` | Each CLI command module (option parsing, subcommand routing, output) |
+| `test/integration.test.ts` | End-to-end SDK flows with mocked `fetch` |
+| `test/mocks.ts` | Shared mock factories (`createCommandTestContext`, `mockFetchResponse`, `mockFetchTextResponse`) |
+
+### Testing Requirements
+
+All new code must include tests with coverage:
+
+1. **New API domains**: Add tests for the command file (`test/commands/<domain>.test.ts`), SDK methods (`test/sdk.test.ts`), and any new client methods (`test/client.test.ts`).
+2. **New client methods**: Add unit tests covering success paths, error paths, and edge cases.
+3. **Bug fixes**: Add a regression test that fails without the fix and passes with it.
+4. **Use shared mocks**: Import from `test/mocks.ts` instead of duplicating mock setup. For command tests, use `createCommandTestContext()`. For tests that need `fetch` mocking, use `mockFetchResponse()` / `mockFetchTextResponse()`.
+5. **Coverage**: Aim for coverage parity or improvement. Do not merge code that reduces overall test coverage.
+
 ## CI / Publishing
 
+### CI (GitHub Actions)
+
+The CI workflow (`.github/workflows/ci.yml`) runs on all PRs and pushes to `main` with two parallel jobs:
+
+- **lint** job: `format:check`, `lint`, `type-check`
+- **test** job: `vitest run --coverage`
+
+All CI checks must pass before merging.
+
+### Publishing
+
 - GitHub Actions workflow (`.github/workflows/npm-publish.yml`) publishes to npm on GitHub release.
-- No CI lint/test/build checks on PRs currently - run checks locally before pushing.
