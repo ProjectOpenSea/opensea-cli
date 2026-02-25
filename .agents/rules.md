@@ -228,3 +228,7 @@ All CI checks must pass before merging.
 ### Publishing
 
 - GitHub Actions workflow (`.github/workflows/npm-publish.yml`) publishes to npm on GitHub release.
+- **Dual-package publishing**: The workflow publishes two packages:
+  1. `@opensea/cli` — the main package (from repo root).
+  2. `opensea-cli` — a stub redirect package (from `packages/opensea-cli-stub/`) that warns users to install `@opensea/cli`. The stub publish uses `continue-on-error: true` since its version rarely changes.
+- Auth uses OIDC via `id-token: write` + `setup-node` with `registry-url` + `--provenance` flag. No npm token secret needed.

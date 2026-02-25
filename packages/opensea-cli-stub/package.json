@@ -1,0 +1,13 @@
+{
+  "name": "opensea-cli",
+  "version": "0.2.0",
+  "description": "This package has moved to @opensea/cli",
+  "scripts": {
+    "postinstall": "node postinstall.js"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ProjectOpenSea/opensea-cli"
+  }
+}
