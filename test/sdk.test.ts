@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { OpenSeaClient } from "../client.js"
-import { OpenSeaCLI } from "../sdk.js"
+import { OpenSeaClient } from "../src/client.js"
+import { OpenSeaCLI } from "../src/sdk.js"
 
-vi.mock("../client.js", () => {
+vi.mock("../src/client.js", () => {
   const MockOpenSeaClient = vi.fn()
   MockOpenSeaClient.prototype.get = vi.fn()
   MockOpenSeaClient.prototype.post = vi.fn()

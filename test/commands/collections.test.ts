@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import type { OpenSeaClient } from "../../client.js"
-import { collectionsCommand } from "../../commands/collections.js"
+import type { OpenSeaClient } from "../../src/client.js"
+import { collectionsCommand } from "../../src/commands/collections.js"
 
 describe("collectionsCommand", () => {
   let mockClient: { get: ReturnType<typeof vi.fn> }

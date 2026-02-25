@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { formatOutput } from "../output.js"
+import { formatOutput } from "../src/output.js"
 
 describe("formatOutput", () => {
   describe("json format", () => {

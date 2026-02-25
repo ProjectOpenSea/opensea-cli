@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { OpenSeaAPIError, OpenSeaClient } from "../client.js"
+import { OpenSeaAPIError, OpenSeaClient } from "../src/client.js"
 
 describe("OpenSeaClient", () => {
   let client: OpenSeaClient

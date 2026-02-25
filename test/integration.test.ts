@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { OpenSeaAPIError, OpenSeaClient } from "../client.js"
-import { formatOutput } from "../output.js"
-import { OpenSeaCLI } from "../sdk.js"
+import { OpenSeaAPIError, OpenSeaClient } from "../src/client.js"
+import { formatOutput } from "../src/output.js"
+import { OpenSeaCLI } from "../src/sdk.js"
 
 describe("integration: OpenSeaClient + formatOutput", () => {
   afterEach(() => {

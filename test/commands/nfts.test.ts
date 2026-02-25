@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import type { OpenSeaClient } from "../../client.js"
-import { nftsCommand } from "../../commands/nfts.js"
+import type { OpenSeaClient } from "../../src/client.js"
+import { nftsCommand } from "../../src/commands/nfts.js"
 
 describe("nftsCommand", () => {
   let mockClient: {
