@@ -1,17 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import type { OpenSeaClient } from "../../src/client.js"
 import { tokensCommand } from "../../src/commands/tokens.js"
+import { type CommandTestContext, createCommandTestContext } from "../mocks.js"
 
 describe("tokensCommand", () => {
-  let mockClient: { get: ReturnType<typeof vi.fn> }
-  let getClient: () => OpenSeaClient
-  let getFormat: () => "json" | "table"
+  let ctx: CommandTestContext
 
   beforeEach(() => {
-    mockClient = { get: vi.fn() }
-    getClient = () => mockClient as unknown as OpenSeaClient
-    getFormat = () => "json"
-    vi.spyOn(console, "log").mockImplementation(() => {})
+    ctx = createCommandTestContext()
   })
 
   afterEach(() => {
@@ -19,7 +14,7 @@ describe("tokensCommand", () => {
   })
 
   it("creates command with correct subcommands", () => {
-    const cmd = tokensCommand(getClient, getFormat)
+    const cmd = tokensCommand(ctx.getClient, ctx.getFormat)
     expect(cmd.name()).toBe("tokens")
     const subcommands = cmd.commands.map(c => c.name())
     expect(subcommands).toContain("trending")
@@ -28,15 +23,15 @@ describe("tokensCommand", () => {
   })
 
   it("trending subcommand passes options", async () => {
-    mockClient.get.mockResolvedValue({ tokens: [] })
+    ctx.mockClient.get.mockResolvedValue({ tokens: [] })
 
-    const cmd = tokensCommand(getClient, getFormat)
+    const cmd = tokensCommand(ctx.getClient, ctx.getFormat)
     await cmd.parseAsync(
       ["trending", "--chains", "ethereum,base", "--limit", "10"],
       { from: "user" },
     )
 
-    expect(mockClient.get).toHaveBeenCalledWith(
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
       "/api/v2/tokens/trending",
       expect.objectContaining({
         chains: "ethereum,base",
@@ -46,24 +41,24 @@ describe("tokensCommand", () => {
   })
 
   it("top subcommand passes options", async () => {
-    mockClient.get.mockResolvedValue({ tokens: [] })
+    ctx.mockClient.get.mockResolvedValue({ tokens: [] })
 
-    const cmd = tokensCommand(getClient, getFormat)
+    const cmd = tokensCommand(ctx.getClient, ctx.getFormat)
     await cmd.parseAsync(["top", "--limit", "5"], { from: "user" })
 
-    expect(mockClient.get).toHaveBeenCalledWith(
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
       "/api/v2/tokens/top",
       expect.objectContaining({ limit: 5 }),
     )
   })
 
   it("get subcommand fetches token details", async () => {
-    mockClient.get.mockResolvedValue({ address: "0xabc" })
+    ctx.mockClient.get.mockResolvedValue({ address: "0xabc" })
 
-    const cmd = tokensCommand(getClient, getFormat)
+    const cmd = tokensCommand(ctx.getClient, ctx.getFormat)
     await cmd.parseAsync(["get", "ethereum", "0xabc"], { from: "user" })
 
-    expect(mockClient.get).toHaveBeenCalledWith(
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
       "/api/v2/chain/ethereum/token/0xabc",
     )
   })

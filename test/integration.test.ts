@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { OpenSeaAPIError, OpenSeaClient } from "../src/client.js"
 import { formatOutput } from "../src/output.js"
 import { OpenSeaCLI } from "../src/sdk.js"
+import { mockFetchResponse, mockFetchTextResponse } from "./mocks.js"
 
 describe("integration: OpenSeaClient + formatOutput", () => {
   afterEach(() => {
@@ -10,9 +11,7 @@ describe("integration: OpenSeaClient + formatOutput", () => {
 
   it("fetches data and formats as JSON", async () => {
     const mockData = { name: "CoolCats", collection: "cool-cats" }
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify(mockData), { status: 200 }),
-    )
+    mockFetchResponse(mockData)
 
     const client = new OpenSeaClient({ apiKey: "test-key" })
     const result = await client.get<{ name: string }>(
@@ -25,9 +24,7 @@ describe("integration: OpenSeaClient + formatOutput", () => {
 
   it("fetches data and formats as table", async () => {
     const mockData = { name: "CoolCats", collection: "cool-cats" }
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify(mockData), { status: 200 }),
-    )
+    mockFetchResponse(mockData)
 
     const client = new OpenSeaClient({ apiKey: "test-key" })
     const result = await client.get<{ name: string }>(
@@ -40,9 +37,7 @@ describe("integration: OpenSeaClient + formatOutput", () => {
   })
 
   it("handles API errors gracefully", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response('{"error": "unauthorized"}', { status: 401 }),
-    )
+    mockFetchTextResponse('{"error": "unauthorized"}', 401)
 
     const client = new OpenSeaClient({ apiKey: "bad-key" })
 
@@ -64,9 +59,7 @@ describe("integration: OpenSeaCLI SDK", () => {
 
   it("SDK collections.get fetches and returns data", async () => {
     const mockData = { name: "TestCollection" }
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify(mockData), { status: 200 }),
-    )
+    mockFetchResponse(mockData)
 
     const sdk = new OpenSeaCLI({ apiKey: "test-key" })
     const result = await sdk.collections.get("test")
@@ -78,9 +71,7 @@ describe("integration: OpenSeaCLI SDK", () => {
 
   it("SDK nfts.get fetches and returns data", async () => {
     const mockData = { nft: { identifier: "1" } }
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify(mockData), { status: 200 }),
-    )
+    mockFetchResponse(mockData)
 
     const sdk = new OpenSeaCLI({ apiKey: "test-key" })
     const result = await sdk.nfts.get("ethereum", "0xabc", "1")
@@ -90,9 +81,7 @@ describe("integration: OpenSeaCLI SDK", () => {
 
   it("SDK listings.all fetches paginated data", async () => {
     const mockData = { listings: [{ order_hash: "abc" }], next: "cursor1" }
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify(mockData), { status: 200 }),
-    )
+    mockFetchResponse(mockData)
 
     const sdk = new OpenSeaCLI({ apiKey: "test-key" })
     const result = await sdk.listings.all("slug", { limit: 5 })
@@ -103,9 +92,7 @@ describe("integration: OpenSeaCLI SDK", () => {
 
   it("SDK accounts.get fetches account", async () => {
     const mockData = { address: "0xabc", username: "user1" }
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify(mockData), { status: 200 }),
-    )
+    mockFetchResponse(mockData)
 
     const sdk = new OpenSeaCLI({ apiKey: "test-key" })
     const result = await sdk.accounts.get("0xabc")
@@ -114,9 +101,7 @@ describe("integration: OpenSeaCLI SDK", () => {
   })
 
   it("SDK with custom baseUrl sends requests to correct host", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({}), { status: 200 }),
-    )
+    mockFetchResponse({})
 
     const sdk = new OpenSeaCLI({
       apiKey: "test-key",

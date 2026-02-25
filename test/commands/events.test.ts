@@ -1,17 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import type { OpenSeaClient } from "../../src/client.js"
 import { eventsCommand } from "../../src/commands/events.js"
+import { type CommandTestContext, createCommandTestContext } from "../mocks.js"
 
 describe("eventsCommand", () => {
-  let mockClient: { get: ReturnType<typeof vi.fn> }
-  let getClient: () => OpenSeaClient
-  let getFormat: () => "json" | "table"
+  let ctx: CommandTestContext
 
   beforeEach(() => {
-    mockClient = { get: vi.fn() }
-    getClient = () => mockClient as unknown as OpenSeaClient
-    getFormat = () => "json"
-    vi.spyOn(console, "log").mockImplementation(() => {})
+    ctx = createCommandTestContext()
   })
 
   afterEach(() => {
@@ -19,7 +14,7 @@ describe("eventsCommand", () => {
   })
 
   it("creates command with correct subcommands", () => {
-    const cmd = eventsCommand(getClient, getFormat)
+    const cmd = eventsCommand(ctx.getClient, ctx.getFormat)
     expect(cmd.name()).toBe("events")
     const subcommands = cmd.commands.map(c => c.name())
     expect(subcommands).toContain("list")
@@ -29,15 +24,15 @@ describe("eventsCommand", () => {
   })
 
   it("list subcommand passes options", async () => {
-    mockClient.get.mockResolvedValue({ asset_events: [] })
+    ctx.mockClient.get.mockResolvedValue({ asset_events: [] })
 
-    const cmd = eventsCommand(getClient, getFormat)
+    const cmd = eventsCommand(ctx.getClient, ctx.getFormat)
     await cmd.parseAsync(
       ["list", "--event-type", "sale", "--limit", "5", "--chain", "ethereum"],
       { from: "user" },
     )
 
-    expect(mockClient.get).toHaveBeenCalledWith(
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
       "/api/v2/events",
       expect.objectContaining({
         event_type: "sale",
@@ -48,15 +43,15 @@ describe("eventsCommand", () => {
   })
 
   it("list subcommand parses after/before timestamps", async () => {
-    mockClient.get.mockResolvedValue({ asset_events: [] })
+    ctx.mockClient.get.mockResolvedValue({ asset_events: [] })
 
-    const cmd = eventsCommand(getClient, getFormat)
+    const cmd = eventsCommand(ctx.getClient, ctx.getFormat)
     await cmd.parseAsync(
       ["list", "--after", "1000000", "--before", "2000000"],
       { from: "user" },
     )
 
-    expect(mockClient.get).toHaveBeenCalledWith(
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
       "/api/v2/events",
       expect.objectContaining({
         after: 1000000,
@@ -66,43 +61,43 @@ describe("eventsCommand", () => {
   })
 
   it("by-account subcommand passes options", async () => {
-    mockClient.get.mockResolvedValue({ asset_events: [] })
+    ctx.mockClient.get.mockResolvedValue({ asset_events: [] })
 
-    const cmd = eventsCommand(getClient, getFormat)
+    const cmd = eventsCommand(ctx.getClient, ctx.getFormat)
     await cmd.parseAsync(["by-account", "0xabc", "--event-type", "transfer"], {
       from: "user",
     })
 
-    expect(mockClient.get).toHaveBeenCalledWith(
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
       "/api/v2/events/accounts/0xabc",
       expect.objectContaining({ event_type: "transfer" }),
     )
   })
 
   it("by-collection subcommand passes options", async () => {
-    mockClient.get.mockResolvedValue({ asset_events: [] })
+    ctx.mockClient.get.mockResolvedValue({ asset_events: [] })
 
-    const cmd = eventsCommand(getClient, getFormat)
+    const cmd = eventsCommand(ctx.getClient, ctx.getFormat)
     await cmd.parseAsync(["by-collection", "cool-cats", "--limit", "10"], {
       from: "user",
     })
 
-    expect(mockClient.get).toHaveBeenCalledWith(
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
       "/api/v2/events/collection/cool-cats",
       expect.objectContaining({ limit: 10 }),
     )
   })
 
   it("by-nft subcommand passes options", async () => {
-    mockClient.get.mockResolvedValue({ asset_events: [] })
+    ctx.mockClient.get.mockResolvedValue({ asset_events: [] })
 
-    const cmd = eventsCommand(getClient, getFormat)
+    const cmd = eventsCommand(ctx.getClient, ctx.getFormat)
     await cmd.parseAsync(
       ["by-nft", "ethereum", "0xabc", "1", "--event-type", "sale"],
       { from: "user" },
     )
 
-    expect(mockClient.get).toHaveBeenCalledWith(
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
       "/api/v2/events/chain/ethereum/contract/0xabc/nfts/1",
       expect.objectContaining({ event_type: "sale" }),
     )

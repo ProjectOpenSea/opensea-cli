@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { OpenSeaAPIError, OpenSeaClient } from "../src/client.js"
+import { mockFetchResponse, mockFetchTextResponse } from "./mocks.js"
 
 describe("OpenSeaClient", () => {
   let client: OpenSeaClient
@@ -30,9 +31,7 @@ describe("OpenSeaClient", () => {
   describe("get", () => {
     it("makes GET request with correct headers", async () => {
       const mockResponse = { name: "test" }
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(mockResponse), { status: 200 }),
-      )
+      mockFetchResponse(mockResponse)
 
       const result = await client.get("/api/v2/test")
 
@@ -47,9 +46,7 @@ describe("OpenSeaClient", () => {
     })
 
     it("appends query params, skipping null and undefined", async () => {
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify({}), { status: 200 }),
-      )
+      mockFetchResponse({})
 
       await client.get("/api/v2/test", {
         chain: "ethereum",
@@ -67,9 +64,7 @@ describe("OpenSeaClient", () => {
     })
 
     it("throws OpenSeaAPIError on non-ok response", async () => {
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response("Not Found", { status: 404 }),
-      )
+      mockFetchTextResponse("Not Found", 404)
 
       try {
         await client.get("/api/v2/bad")
@@ -87,9 +82,7 @@ describe("OpenSeaClient", () => {
   describe("post", () => {
     it("makes POST request with correct headers", async () => {
       const mockResponse = { status: "ok" }
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(mockResponse), { status: 200 }),
-      )
+      mockFetchResponse(mockResponse)
 
       const result = await client.post("/api/v2/refresh")
 
@@ -107,9 +100,7 @@ describe("OpenSeaClient", () => {
     })
 
     it("throws OpenSeaAPIError on non-ok response", async () => {
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response("Server Error", { status: 500 }),
-      )
+      mockFetchTextResponse("Server Error", 500)
 
       await expect(client.post("/api/v2/fail")).rejects.toThrow(OpenSeaAPIError)
     })

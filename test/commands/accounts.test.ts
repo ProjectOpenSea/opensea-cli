@@ -1,17 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import type { OpenSeaClient } from "../../src/client.js"
 import { accountsCommand } from "../../src/commands/accounts.js"
+import { type CommandTestContext, createCommandTestContext } from "../mocks.js"
 
 describe("accountsCommand", () => {
-  let mockClient: { get: ReturnType<typeof vi.fn> }
-  let getClient: () => OpenSeaClient
-  let getFormat: () => "json" | "table"
+  let ctx: CommandTestContext
 
   beforeEach(() => {
-    mockClient = { get: vi.fn() }
-    getClient = () => mockClient as unknown as OpenSeaClient
-    getFormat = () => "json"
-    vi.spyOn(console, "log").mockImplementation(() => {})
+    ctx = createCommandTestContext()
   })
 
   afterEach(() => {
@@ -19,18 +14,18 @@ describe("accountsCommand", () => {
   })
 
   it("creates command with correct name and subcommands", () => {
-    const cmd = accountsCommand(getClient, getFormat)
+    const cmd = accountsCommand(ctx.getClient, ctx.getFormat)
     expect(cmd.name()).toBe("accounts")
     const subcommands = cmd.commands.map(c => c.name())
     expect(subcommands).toContain("get")
   })
 
   it("get subcommand fetches account by address", async () => {
-    mockClient.get.mockResolvedValue({ address: "0xabc", username: "user" })
+    ctx.mockClient.get.mockResolvedValue({ address: "0xabc", username: "user" })
 
-    const cmd = accountsCommand(getClient, getFormat)
+    const cmd = accountsCommand(ctx.getClient, ctx.getFormat)
     await cmd.parseAsync(["get", "0xabc"], { from: "user" })
 
-    expect(mockClient.get).toHaveBeenCalledWith("/api/v2/accounts/0xabc")
+    expect(ctx.mockClient.get).toHaveBeenCalledWith("/api/v2/accounts/0xabc")
   })
 })

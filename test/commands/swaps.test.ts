@@ -1,17 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import type { OpenSeaClient } from "../../src/client.js"
 import { swapsCommand } from "../../src/commands/swaps.js"
+import { type CommandTestContext, createCommandTestContext } from "../mocks.js"
 
 describe("swapsCommand", () => {
-  let mockClient: { get: ReturnType<typeof vi.fn> }
-  let getClient: () => OpenSeaClient
-  let getFormat: () => "json" | "table"
+  let ctx: CommandTestContext
 
   beforeEach(() => {
-    mockClient = { get: vi.fn() }
-    getClient = () => mockClient as unknown as OpenSeaClient
-    getFormat = () => "json"
-    vi.spyOn(console, "log").mockImplementation(() => {})
+    ctx = createCommandTestContext()
   })
 
   afterEach(() => {
@@ -19,16 +14,16 @@ describe("swapsCommand", () => {
   })
 
   it("creates command with correct subcommands", () => {
-    const cmd = swapsCommand(getClient, getFormat)
+    const cmd = swapsCommand(ctx.getClient, ctx.getFormat)
     expect(cmd.name()).toBe("swaps")
     const subcommands = cmd.commands.map(c => c.name())
     expect(subcommands).toContain("quote")
   })
 
   it("quote subcommand passes all required options", async () => {
-    mockClient.get.mockResolvedValue({ quote: {}, transactions: [] })
+    ctx.mockClient.get.mockResolvedValue({ quote: {}, transactions: [] })
 
-    const cmd = swapsCommand(getClient, getFormat)
+    const cmd = swapsCommand(ctx.getClient, ctx.getFormat)
     await cmd.parseAsync(
       [
         "quote",
@@ -48,7 +43,7 @@ describe("swapsCommand", () => {
       { from: "user" },
     )
 
-    expect(mockClient.get).toHaveBeenCalledWith(
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
       "/api/v2/swap/quote",
       expect.objectContaining({
         from_chain: "ethereum",
@@ -62,9 +57,9 @@ describe("swapsCommand", () => {
   })
 
   it("quote subcommand passes optional slippage and recipient", async () => {
-    mockClient.get.mockResolvedValue({ quote: {}, transactions: [] })
+    ctx.mockClient.get.mockResolvedValue({ quote: {}, transactions: [] })
 
-    const cmd = swapsCommand(getClient, getFormat)
+    const cmd = swapsCommand(ctx.getClient, ctx.getFormat)
     await cmd.parseAsync(
       [
         "quote",
@@ -88,7 +83,7 @@ describe("swapsCommand", () => {
       { from: "user" },
     )
 
-    expect(mockClient.get).toHaveBeenCalledWith(
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
       "/api/v2/swap/quote",
       expect.objectContaining({
         slippage: 0.05,

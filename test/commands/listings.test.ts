@@ -1,17 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import type { OpenSeaClient } from "../../src/client.js"
 import { listingsCommand } from "../../src/commands/listings.js"
+import { type CommandTestContext, createCommandTestContext } from "../mocks.js"
 
 describe("listingsCommand", () => {
-  let mockClient: { get: ReturnType<typeof vi.fn> }
-  let getClient: () => OpenSeaClient
-  let getFormat: () => "json" | "table"
+  let ctx: CommandTestContext
 
   beforeEach(() => {
-    mockClient = { get: vi.fn() }
-    getClient = () => mockClient as unknown as OpenSeaClient
-    getFormat = () => "json"
-    vi.spyOn(console, "log").mockImplementation(() => {})
+    ctx = createCommandTestContext()
   })
 
   afterEach(() => {
@@ -19,7 +14,7 @@ describe("listingsCommand", () => {
   })
 
   it("creates command with correct subcommands", () => {
-    const cmd = listingsCommand(getClient, getFormat)
+    const cmd = listingsCommand(ctx.getClient, ctx.getFormat)
     expect(cmd.name()).toBe("listings")
     const subcommands = cmd.commands.map(c => c.name())
     expect(subcommands).toContain("all")
@@ -28,40 +23,40 @@ describe("listingsCommand", () => {
   })
 
   it("all subcommand fetches all listings", async () => {
-    mockClient.get.mockResolvedValue({ listings: [] })
+    ctx.mockClient.get.mockResolvedValue({ listings: [] })
 
-    const cmd = listingsCommand(getClient, getFormat)
+    const cmd = listingsCommand(ctx.getClient, ctx.getFormat)
     await cmd.parseAsync(["all", "cool-cats", "--limit", "10"], {
       from: "user",
     })
 
-    expect(mockClient.get).toHaveBeenCalledWith(
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
       "/api/v2/listings/collection/cool-cats/all",
       expect.objectContaining({ limit: 10 }),
     )
   })
 
   it("best subcommand fetches best listings", async () => {
-    mockClient.get.mockResolvedValue({ listings: [] })
+    ctx.mockClient.get.mockResolvedValue({ listings: [] })
 
-    const cmd = listingsCommand(getClient, getFormat)
+    const cmd = listingsCommand(ctx.getClient, ctx.getFormat)
     await cmd.parseAsync(["best", "cool-cats"], { from: "user" })
 
-    expect(mockClient.get).toHaveBeenCalledWith(
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
       "/api/v2/listings/collection/cool-cats/best",
       expect.objectContaining({ limit: 20 }),
     )
   })
 
   it("best-for-nft subcommand fetches best listing for NFT", async () => {
-    mockClient.get.mockResolvedValue({})
+    ctx.mockClient.get.mockResolvedValue({})
 
-    const cmd = listingsCommand(getClient, getFormat)
+    const cmd = listingsCommand(ctx.getClient, ctx.getFormat)
     await cmd.parseAsync(["best-for-nft", "cool-cats", "123"], {
       from: "user",
     })
 
-    expect(mockClient.get).toHaveBeenCalledWith(
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
       "/api/v2/listings/collection/cool-cats/nfts/123/best",
     )
   })

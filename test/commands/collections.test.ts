@@ -1,18 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import type { OpenSeaClient } from "../../src/client.js"
 import { collectionsCommand } from "../../src/commands/collections.js"
+import { type CommandTestContext, createCommandTestContext } from "../mocks.js"
 
 describe("collectionsCommand", () => {
-  let mockClient: { get: ReturnType<typeof vi.fn> }
-  let getClient: () => OpenSeaClient
-  let getFormat: () => "json" | "table"
-  let consoleSpy: ReturnType<typeof vi.spyOn>
+  let ctx: CommandTestContext
 
   beforeEach(() => {
-    mockClient = { get: vi.fn() }
-    getClient = () => mockClient as unknown as OpenSeaClient
-    getFormat = () => "json"
-    consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {})
+    ctx = createCommandTestContext()
   })
 
   afterEach(() => {
@@ -20,7 +14,7 @@ describe("collectionsCommand", () => {
   })
 
   it("creates command with correct name and subcommands", () => {
-    const cmd = collectionsCommand(getClient, getFormat)
+    const cmd = collectionsCommand(ctx.getClient, ctx.getFormat)
     expect(cmd.name()).toBe("collections")
     const subcommands = cmd.commands.map(c => c.name())
     expect(subcommands).toContain("get")
@@ -31,19 +25,21 @@ describe("collectionsCommand", () => {
 
   it("get subcommand fetches collection by slug", async () => {
     const mockData = { name: "CoolCats" }
-    mockClient.get.mockResolvedValue(mockData)
+    ctx.mockClient.get.mockResolvedValue(mockData)
 
-    const cmd = collectionsCommand(getClient, getFormat)
+    const cmd = collectionsCommand(ctx.getClient, ctx.getFormat)
     await cmd.parseAsync(["get", "cool-cats"], { from: "user" })
 
-    expect(mockClient.get).toHaveBeenCalledWith("/api/v2/collections/cool-cats")
-    expect(consoleSpy).toHaveBeenCalled()
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
+      "/api/v2/collections/cool-cats",
+    )
+    expect(ctx.consoleSpy).toHaveBeenCalled()
   })
 
   it("list subcommand passes options correctly", async () => {
-    mockClient.get.mockResolvedValue({ collections: [] })
+    ctx.mockClient.get.mockResolvedValue({ collections: [] })
 
-    const cmd = collectionsCommand(getClient, getFormat)
+    const cmd = collectionsCommand(ctx.getClient, ctx.getFormat)
     await cmd.parseAsync(
       [
         "list",
@@ -57,7 +53,7 @@ describe("collectionsCommand", () => {
       { from: "user" },
     )
 
-    expect(mockClient.get).toHaveBeenCalledWith(
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
       "/api/v2/collections",
       expect.objectContaining({
         chain: "ethereum",
@@ -68,34 +64,34 @@ describe("collectionsCommand", () => {
   })
 
   it("stats subcommand fetches collection stats", async () => {
-    mockClient.get.mockResolvedValue({ total: {} })
+    ctx.mockClient.get.mockResolvedValue({ total: {} })
 
-    const cmd = collectionsCommand(getClient, getFormat)
+    const cmd = collectionsCommand(ctx.getClient, ctx.getFormat)
     await cmd.parseAsync(["stats", "cool-cats"], { from: "user" })
 
-    expect(mockClient.get).toHaveBeenCalledWith(
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
       "/api/v2/collections/cool-cats/stats",
     )
   })
 
   it("traits subcommand fetches collection traits", async () => {
-    mockClient.get.mockResolvedValue({ categories: {} })
+    ctx.mockClient.get.mockResolvedValue({ categories: {} })
 
-    const cmd = collectionsCommand(getClient, getFormat)
+    const cmd = collectionsCommand(ctx.getClient, ctx.getFormat)
     await cmd.parseAsync(["traits", "cool-cats"], { from: "user" })
 
-    expect(mockClient.get).toHaveBeenCalledWith("/api/v2/traits/cool-cats")
+    expect(ctx.mockClient.get).toHaveBeenCalledWith("/api/v2/traits/cool-cats")
   })
 
   it("outputs in table format when getFormat returns table", async () => {
-    mockClient.get.mockResolvedValue({ name: "Test" })
-    getFormat = () => "table"
+    ctx.mockClient.get.mockResolvedValue({ name: "Test" })
+    ctx.getFormat = () => "table"
 
-    const cmd = collectionsCommand(getClient, getFormat)
+    const cmd = collectionsCommand(ctx.getClient, ctx.getFormat)
     await cmd.parseAsync(["get", "test"], { from: "user" })
 
-    expect(consoleSpy).toHaveBeenCalled()
-    const output = consoleSpy.mock.calls[0][0] as string
+    expect(ctx.consoleSpy).toHaveBeenCalled()
+    const output = ctx.consoleSpy.mock.calls[0][0] as string
     expect(output).toContain("name")
   })
 })
