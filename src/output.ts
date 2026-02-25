@@ -35,6 +35,7 @@ function formatTable(data: unknown): string {
 
   if (data && typeof data === "object") {
     const entries = Object.entries(data as Record<string, unknown>)
+    if (entries.length === 0) return "(empty)"
     const maxKeyLength = Math.max(...entries.map(([k]) => k.length))
     return entries
       .map(([key, value]) => {

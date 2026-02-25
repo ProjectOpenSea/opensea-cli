@@ -34,6 +34,10 @@ describe("formatOutput", () => {
       expect(formatOutput([], "table")).toBe("(empty)")
     })
 
+    it("returns (empty) for empty object", () => {
+      expect(formatOutput({}, "table")).toBe("(empty)")
+    })
+
     it("formats an object as key-value pairs", () => {
       const data = { name: "test", count: 5 }
       const result = formatOutput(data, "table")

@@ -35,13 +35,16 @@ describe("OpenSeaClient", () => {
 
       const result = await client.get("/api/v2/test")
 
-      expect(fetch).toHaveBeenCalledWith("https://api.opensea.io/api/v2/test", {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          "x-api-key": "test-key",
-        },
-      })
+      expect(fetch).toHaveBeenCalledWith(
+        "https://api.opensea.io/api/v2/test",
+        expect.objectContaining({
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "x-api-key": "test-key",
+          },
+        }),
+      )
       expect(result).toEqual(mockResponse)
     })
 
@@ -88,15 +91,46 @@ describe("OpenSeaClient", () => {
 
       expect(fetch).toHaveBeenCalledWith(
         "https://api.opensea.io/api/v2/refresh",
-        {
+        expect.objectContaining({
           method: "POST",
           headers: {
             Accept: "application/json",
             "x-api-key": "test-key",
           },
-        },
+        }),
       )
       expect(result).toEqual(mockResponse)
+    })
+
+    it("sends JSON body when provided", async () => {
+      mockFetchResponse({ id: 1 })
+
+      await client.post("/api/v2/create", { name: "test" })
+
+      expect(fetch).toHaveBeenCalledWith(
+        "https://api.opensea.io/api/v2/create",
+        expect.objectContaining({
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            "x-api-key": "test-key",
+          },
+          body: JSON.stringify({ name: "test" }),
+        }),
+      )
+    })
+
+    it("appends query params when provided", async () => {
+      mockFetchResponse({})
+
+      await client.post("/api/v2/action", undefined, {
+        chain: "ethereum",
+      })
+
+      const calledUrl = vi.mocked(fetch).mock.calls[0][0] as string
+      const url = new URL(calledUrl)
+      expect(url.searchParams.get("chain")).toBe("ethereum")
     })
 
     it("throws OpenSeaAPIError on non-ok response", async () => {
@@ -116,18 +150,21 @@ describe("OpenSeaClient", () => {
         { query: "test" },
       )
 
-      expect(fetch).toHaveBeenCalledWith("https://gql.opensea.io/graphql", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          "x-api-key": "test-key",
-        },
-        body: JSON.stringify({
-          query: "query { collectionsByQuery { slug } }",
-          variables: { query: "test" },
+      expect(fetch).toHaveBeenCalledWith(
+        "https://gql.opensea.io/graphql",
+        expect.objectContaining({
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            "x-api-key": "test-key",
+          },
+          body: JSON.stringify({
+            query: "query { collectionsByQuery { slug } }",
+            variables: { query: "test" },
+          }),
         }),
-      })
+      )
       expect(result).toEqual(mockData)
     })
 
@@ -181,6 +218,91 @@ describe("OpenSeaClient", () => {
         expect(apiErr.statusCode).toBe(500)
         expect(apiErr.responseBody).toBe("GraphQL response missing data")
       }
+    })
+  })
+
+  describe("timeout", () => {
+    it("passes AbortSignal.timeout to fetch calls", async () => {
+      const timedClient = new OpenSeaClient({
+        apiKey: "test-key",
+        timeout: 5000,
+      })
+      mockFetchResponse({ ok: true })
+
+      await timedClient.get("/api/v2/test")
+
+      const fetchOptions = vi.mocked(fetch).mock.calls[0][1] as RequestInit
+      expect(fetchOptions.signal).toBeInstanceOf(AbortSignal)
+    })
+
+    it("uses default 30s timeout", async () => {
+      mockFetchResponse({ ok: true })
+
+      await client.get("/api/v2/test")
+
+      const fetchOptions = vi.mocked(fetch).mock.calls[0][1] as RequestInit
+      expect(fetchOptions.signal).toBeInstanceOf(AbortSignal)
+    })
+  })
+
+  describe("verbose", () => {
+    it("logs request and response to stderr when enabled", async () => {
+      const verboseClient = new OpenSeaClient({
+        apiKey: "test-key",
+        verbose: true,
+      })
+      const stderrSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+      mockFetchResponse({ name: "test" })
+
+      await verboseClient.get("/api/v2/collections/test")
+
+      expect(stderrSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          "[verbose] GET https://api.opensea.io/api/v2/collections/test",
+        ),
+      )
+      expect(stderrSpy).toHaveBeenCalledWith(
+        expect.stringContaining("[verbose] 200"),
+      )
+    })
+
+    it("does not log when verbose is disabled", async () => {
+      const stderrSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+      mockFetchResponse({ name: "test" })
+
+      await client.get("/api/v2/test")
+
+      expect(stderrSpy).not.toHaveBeenCalled()
+    })
+
+    it("logs for post requests", async () => {
+      const verboseClient = new OpenSeaClient({
+        apiKey: "test-key",
+        verbose: true,
+      })
+      const stderrSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+      mockFetchResponse({ status: "ok" })
+
+      await verboseClient.post("/api/v2/refresh")
+
+      expect(stderrSpy).toHaveBeenCalledWith(
+        expect.stringContaining("[verbose] POST"),
+      )
+    })
+
+    it("logs for graphql requests", async () => {
+      const verboseClient = new OpenSeaClient({
+        apiKey: "test-key",
+        verbose: true,
+      })
+      const stderrSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+      mockFetchResponse({ data: { test: true } })
+
+      await verboseClient.graphql("query { test }")
+
+      expect(stderrSpy).toHaveBeenCalledWith(
+        expect.stringContaining("[verbose] POST"),
+      )
     })
   })
 

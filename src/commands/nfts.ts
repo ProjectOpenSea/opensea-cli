@@ -1,6 +1,7 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import { formatOutput } from "../output.js"
+import { parseIntOption } from "../parse.js"
 import type { Contract, NFT } from "../types/index.js"
 
 export function nftsCommand(
@@ -34,7 +35,7 @@ export function nftsCommand(
       const result = await client.get<{ nfts: NFT[]; next?: string }>(
         `/api/v2/collection/${slug}/nfts`,
         {
-          limit: Number.parseInt(options.limit, 10),
+          limit: parseIntOption(options.limit, "--limit"),
           next: options.next,
         },
       )
@@ -58,7 +59,7 @@ export function nftsCommand(
         const result = await client.get<{ nfts: NFT[]; next?: string }>(
           `/api/v2/chain/${chain}/contract/${contract}/nfts`,
           {
-            limit: Number.parseInt(options.limit, 10),
+            limit: parseIntOption(options.limit, "--limit"),
             next: options.next,
           },
         )
@@ -83,7 +84,7 @@ export function nftsCommand(
         const result = await client.get<{ nfts: NFT[]; next?: string }>(
           `/api/v2/chain/${chain}/account/${address}/nfts`,
           {
-            limit: Number.parseInt(options.limit, 10),
+            limit: parseIntOption(options.limit, "--limit"),
             next: options.next,
           },
         )

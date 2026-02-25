@@ -1,6 +1,7 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import { formatOutput } from "../output.js"
+import { parseFloatOption } from "../parse.js"
 import type { SwapQuoteResponse } from "../types/index.js"
 
 export function swapsCommand(
@@ -58,7 +59,7 @@ export function swapsCommand(
             quantity: options.quantity,
             address: options.address,
             slippage: options.slippage
-              ? Number.parseFloat(options.slippage)
+              ? parseFloatOption(options.slippage, "--slippage")
               : undefined,
             recipient: options.recipient,
           },

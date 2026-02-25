@@ -1,6 +1,7 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import { formatOutput } from "../output.js"
+import { parseIntOption } from "../parse.js"
 import type {
   Chain,
   Collection,
@@ -57,7 +58,7 @@ export function collectionsCommand(
           order_by: options.orderBy as CollectionOrderBy | undefined,
           creator_username: options.creator,
           include_hidden: options.includeHidden,
-          limit: Number.parseInt(options.limit, 10),
+          limit: parseIntOption(options.limit, "--limit"),
           next: options.next,
         })
         console.log(formatOutput(result, getFormat()))

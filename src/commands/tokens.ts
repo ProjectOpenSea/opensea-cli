@@ -1,6 +1,7 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import { formatOutput } from "../output.js"
+import { parseIntOption } from "../parse.js"
 import type { Chain, Token, TokenDetails } from "../types/index.js"
 
 export function tokensCommand(
@@ -24,7 +25,8 @@ export function tokensCommand(
           "/api/v2/tokens/trending",
           {
             chains: options.chains,
-            limit: Number.parseInt(options.limit, 10),
+            limit: parseIntOption(options.limit, "--limit"),
+            // Tokens API uses "cursor" instead of "next" as the query param
             cursor: options.next,
           },
         )
@@ -45,7 +47,8 @@ export function tokensCommand(
           "/api/v2/tokens/top",
           {
             chains: options.chains,
-            limit: Number.parseInt(options.limit, 10),
+            limit: parseIntOption(options.limit, "--limit"),
+            // Tokens API uses "cursor" instead of "next" as the query param
             cursor: options.next,
           },
         )

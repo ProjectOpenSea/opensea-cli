@@ -11,6 +11,7 @@ import {
   swapsCommand,
   tokensCommand,
 } from "./commands/index.js"
+import { parseIntOption } from "./parse.js"
 
 const BANNER = `
    ____                   _____
@@ -34,12 +35,16 @@ program
   .option("--chain <chain>", "Default chain", "ethereum")
   .option("--format <format>", "Output format (json or table)", "json")
   .option("--base-url <url>", "API base URL")
+  .option("--timeout <ms>", "Request timeout in milliseconds", "30000")
+  .option("--verbose", "Log request and response info to stderr")
 
 function getClient(): OpenSeaClient {
   const opts = program.opts<{
     apiKey?: string
     chain: string
     baseUrl?: string
+    timeout: string
+    verbose?: boolean
   }>()
 
   const apiKey = opts.apiKey ?? process.env.OPENSEA_API_KEY
@@ -54,6 +59,8 @@ function getClient(): OpenSeaClient {
     apiKey,
     chain: opts.chain,
     baseUrl: opts.baseUrl,
+    timeout: parseIntOption(opts.timeout, "--timeout"),
+    verbose: opts.verbose,
   })
 }
 
@@ -91,7 +98,19 @@ async function main() {
       )
       process.exit(1)
     }
-    throw error
+    const label =
+      error instanceof TypeError ? "Network Error" : (error as Error).name
+    console.error(
+      JSON.stringify(
+        {
+          error: label,
+          message: (error as Error).message,
+        },
+        null,
+        2,
+      ),
+    )
+    process.exit(1)
   }
 }
 
