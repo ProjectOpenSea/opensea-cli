@@ -85,6 +85,20 @@ opensea events by-collection <slug> [--event-type <type>]
 opensea events by-nft <chain> <contract> <token-id> [--event-type <type>]
 ```
 
+### Tokens
+
+```bash
+opensea tokens trending [--chains <chains>] [--limit <n>] [--cursor <cursor>]
+opensea tokens top [--chains <chains>] [--limit <n>] [--cursor <cursor>]
+opensea tokens get <chain> <address>
+```
+
+### Swaps
+
+```bash
+opensea swaps quote --from-chain <chain> --from-address <address> --to-chain <chain> --to-address <address> --quantity <quantity> --address <address> [--slippage <slippage>] [--recipient <recipient>]
+```
+
 ### Accounts
 
 ```bash
@@ -207,6 +221,25 @@ opensea events by-nft ethereum 0xd9b78a2f1dafc8bb9c60961790d2beefebee56f4 1 --li
 
 # Get events for an account
 opensea events by-account 0xde7fce3a1cba4a705f299ce41d163017f165d666 --limit 2
+```
+
+### Tokens
+
+```bash
+# Get trending tokens
+opensea tokens trending --limit 2
+
+# Get trending tokens on a specific chain
+opensea tokens trending --chains base --limit 2
+
+# Get top tokens by 24-hour volume
+opensea tokens top --limit 2
+
+# Get top tokens on a specific chain
+opensea tokens top --chains base --limit 2
+
+# Get details for a specific token (DebtReliefBot on Base)
+opensea tokens get base 0x3ec2156d4c0a9cbdab4a016633b7bcf6a8d68ea2
 ```
 
 ### Accounts
