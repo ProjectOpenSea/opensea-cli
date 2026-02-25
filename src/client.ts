@@ -94,7 +94,11 @@ export class OpenSeaClient {
       )
     }
 
-    return json.data as T
+    if (!json.data) {
+      throw new OpenSeaAPIError(500, "GraphQL response missing data", "graphql")
+    }
+
+    return json.data
   }
 
   getDefaultChain(): string {
