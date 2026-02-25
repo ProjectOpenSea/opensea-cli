@@ -31,6 +31,7 @@ Query the OpenSea API from the command line or programmatically. Designed for bo
 - [Examples](#examples)
 - [Exit Codes](#exit-codes)
 - [Requirements](#requirements)
+- [Development](#development)
 
 ## Install
 
@@ -66,25 +67,27 @@ Get an API key at [docs.opensea.io](https://docs.opensea.io/reference/api-keys).
 --api-key <key>     OpenSea API key (or set OPENSEA_API_KEY env var)
 --chain <chain>     Default chain (default: ethereum)
 --format <format>   Output format: json or table (default: json)
---base-url <url>    API base URL override
+--base-url <url>    API base URL override (for testing against staging or proxies)
 ```
 
 ### Collections
 
 ```bash
 opensea collections get <slug>
-opensea collections list [--chain <chain>] [--order-by <field>] [--limit <n>]
+opensea collections list [--chain <chain>] [--order-by <field>] [--creator <username>] [--include-hidden] [--limit <n>] [--next <cursor>]
 opensea collections stats <slug>
 opensea collections traits <slug>
 ```
+
+`--order-by` values: `created_date`, `one_day_change`, `seven_day_volume`, `seven_day_change`, `num_owners`, `market_cap`
 
 ### NFTs
 
 ```bash
 opensea nfts get <chain> <contract> <token-id>
-opensea nfts list-by-collection <slug> [--limit <n>]
-opensea nfts list-by-contract <chain> <contract> [--limit <n>]
-opensea nfts list-by-account <chain> <address> [--limit <n>]
+opensea nfts list-by-collection <slug> [--limit <n>] [--next <cursor>]
+opensea nfts list-by-contract <chain> <contract> [--limit <n>] [--next <cursor>]
+opensea nfts list-by-account <chain> <address> [--limit <n>] [--next <cursor>]
 opensea nfts refresh <chain> <contract> <token-id>
 opensea nfts contract <chain> <address>
 ```
@@ -92,28 +95,30 @@ opensea nfts contract <chain> <address>
 ### Listings
 
 ```bash
-opensea listings all <collection> [--limit <n>]
-opensea listings best <collection> [--limit <n>]
+opensea listings all <collection> [--limit <n>] [--next <cursor>]
+opensea listings best <collection> [--limit <n>] [--next <cursor>]
 opensea listings best-for-nft <collection> <token-id>
 ```
 
 ### Offers
 
 ```bash
-opensea offers all <collection> [--limit <n>]
-opensea offers collection <collection> [--limit <n>]
+opensea offers all <collection> [--limit <n>] [--next <cursor>]
+opensea offers collection <collection> [--limit <n>] [--next <cursor>]
 opensea offers best-for-nft <collection> <token-id>
-opensea offers traits <collection> --type <type> --value <value>
+opensea offers traits <collection> --type <type> --value <value> [--limit <n>] [--next <cursor>]
 ```
 
 ### Events
 
 ```bash
-opensea events list [--event-type <type>] [--chain <chain>] [--limit <n>]
-opensea events by-account <address> [--event-type <type>]
-opensea events by-collection <slug> [--event-type <type>]
-opensea events by-nft <chain> <contract> <token-id> [--event-type <type>]
+opensea events list [--event-type <type>] [--after <timestamp>] [--before <timestamp>] [--chain <chain>] [--limit <n>] [--next <cursor>]
+opensea events by-account <address> [--event-type <type>] [--chain <chain>] [--limit <n>] [--next <cursor>]
+opensea events by-collection <slug> [--event-type <type>] [--limit <n>] [--next <cursor>]
+opensea events by-nft <chain> <contract> <token-id> [--event-type <type>] [--limit <n>] [--next <cursor>]
 ```
+
+Event types: `sale`, `transfer`, `mint`, `listing`, `offer`, `trait_offer`, `collection_offer` ([details](docs/events.md))
 
 ### Search
 
@@ -144,23 +149,71 @@ opensea swaps quote --from-chain <chain> --from-address <address> --to-chain <ch
 opensea accounts get <address>
 ```
 
+> All list commands support cursor-based pagination. See [docs/pagination.md](docs/pagination.md) for details.
+
 ## Programmatic SDK
 
 Use as a TypeScript/JavaScript library:
 
 ```typescript
-import { OpenSeaCLI } from "@opensea/cli"
+import { OpenSeaCLI, OpenSeaAPIError } from "@opensea/cli"
 
 const client = new OpenSeaCLI({ apiKey: process.env.OPENSEA_API_KEY })
 
+// Collections
 const collection = await client.collections.get("mfers")
 const stats = await client.collections.stats("mfers")
-const nfts = await client.nfts.listByCollection("mfers", { limit: 5 })
-const listings = await client.listings.best("mfers", { limit: 10 })
-const events = await client.events.byCollection("mfers", { eventType: "sale" })
-const account = await client.accounts.get("0x21130e908bba2d41b63fbca7caa131285b8724f8")
-const searchResults = await client.search.collections("mfers", { limit: 5 })
+
+// NFTs
+const { nfts } = await client.nfts.listByCollection("mfers", { limit: 5 })
+
+// Listings & Offers
+const { listings } = await client.listings.best("mfers", { limit: 10 })
+const { offers } = await client.offers.collection("mfers", { limit: 10 })
+
+// Events
+const { asset_events } = await client.events.byCollection("mfers", {
+  eventType: "sale",
+})
+
+// Tokens
+const { tokens } = await client.tokens.trending({ chains: ["base"], limit: 5 })
+const tokenDetails = await client.tokens.get("base", "0x123...")
+
+// Search
+const collections = await client.search.collections("mfers", { limit: 5 })
+const nftResults = await client.search.nfts("cool cat", { limit: 5 })
+const tokenResults = await client.search.tokens("usdc", { chain: "base" })
+const accounts = await client.search.accounts("vitalik", { limit: 5 })
+
+// Swaps
+const { quote, transactions } = await client.swaps.quote({
+  fromChain: "base",
+  fromAddress: "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+  toChain: "base",
+  toAddress: "0x3ec2156d4c0a9cbdab4a016633b7bcf6a8d68ea2",
+  quantity: "1000000",
+  address: "0x21130e908bba2d41b63fbca7caa131285b8724f8",
+})
+
+// Accounts
+const account = await client.accounts.get(
+  "0x21130e908bba2d41b63fbca7caa131285b8724f8",
+)
+
+// Error handling
+try {
+  await client.collections.get("nonexistent")
+} catch (error) {
+  if (error instanceof OpenSeaAPIError) {
+    console.error(error.statusCode)   // e.g. 404
+    console.error(error.responseBody) // raw API response
+    console.error(error.path)         // request path
+  }
+}
 ```
+
+Full SDK reference: [docs/sdk.md](docs/sdk.md)
 
 ## Output Formats
 
@@ -332,6 +385,18 @@ opensea accounts get 0x21130e908bba2d41b63fbca7caa131285b8724f8
 
 - Node.js >= 18.0.0
 - OpenSea API key ([get one here](https://docs.opensea.io/reference/api-keys))
+
+## Development
+
+```bash
+npm install             # Install dependencies
+npm run build           # Build CLI + SDK
+npm run dev             # Build in watch mode
+npm run test            # Run tests
+npm run lint            # Lint with Biome
+npm run format          # Format with Biome
+npm run type-check      # TypeScript type checking
+```
 
 [version-badge]: https://img.shields.io/github/package-json/v/ProjectOpenSea/opensea-cli
 [version-link]: https://github.com/ProjectOpenSea/opensea-cli/releases
