@@ -11,6 +11,27 @@
 
 Query the OpenSea API from the command line or programmatically. Designed for both AI agents and developers.
 
+## Table of Contents
+
+- [Install](#install)
+- [Authentication](#authentication)
+- [CLI Usage](#cli-usage)
+  - [Global Options](#global-options)
+  - [Collections](#collections)
+  - [NFTs](#nfts)
+  - [Listings](#listings)
+  - [Offers](#offers)
+  - [Events](#events)
+  - [Search](#search)
+  - [Tokens](#tokens)
+  - [Swaps](#swaps)
+  - [Accounts](#accounts)
+- [Programmatic SDK](#programmatic-sdk)
+- [Output Formats](#output-formats)
+- [Examples](#examples)
+- [Exit Codes](#exit-codes)
+- [Requirements](#requirements)
+
 ## Install
 
 ```bash
