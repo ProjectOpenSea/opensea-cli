@@ -1,6 +1,6 @@
 {
   "name": "opensea-cli",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "type": "module",
   "description": "OpenSea CLI - Query the OpenSea API from the command line or programmatically",
   "main": "dist/index.js",
