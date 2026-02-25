@@ -1,0 +1,101 @@
+---
+description: Rules for contributing to opensea-cli
+globs: ["**/*.ts"]
+---
+
+# opensea-cli
+
+TypeScript CLI and SDK for querying the OpenSea API v2. Dual entry points: CLI (Commander.js) and programmatic SDK.
+
+## Build & Check Commands
+
+- `npm run build` - Build with tsup
+- `npm run type-check` - TypeScript type checking
+- `npm run lint` - Lint with Biome
+- `npm run lint:fix` - Lint and auto-fix
+- `npm run format` - Format with Biome
+- `npm run test` - Run tests with vitest
+
+## Architecture
+
+Two build artifacts from `tsup`:
+1. **CLI** (`src/cli.ts` -> `dist/cli.js`) - Commander.js CLI with shebang
+2. **SDK** (`src/index.ts` -> `dist/index.js`) - Programmatic library exporting `OpenSeaCLI`
+
+Layer stack:
+- CLI commands (`src/commands/*.ts`) and SDK classes (`src/sdk.ts`) both use `OpenSeaClient` (`src/client.ts`)
+- `OpenSeaClient` wraps native `fetch` with API key auth headers and error handling
+- Types in `src/types/api.ts` mirror OpenSea API v2 response shapes (snake_case fields)
+- Output formatting in `src/output.ts` (JSON or table)
+
+## Module System
+
+- ESM-only (`"type": "module"`). Use `.js` extensions in all import paths.
+- `verbatimModuleSyntax` is enabled: use `import type` for type-only imports.
+- Target ES2022, strict mode.
+
+## Formatting (Biome)
+
+- 2 spaces, double quotes, trailing commas, semicolons as needed
+- Arrow parens as needed, line width 80, LF endings
+- Run `npm run format` before committing
+
+## Command File Pattern
+
+Each file in `src/commands/` exports a factory function:
+
+```typescript
+export function domainCommand(
+  getClient: () => OpenSeaClient,
+  getFormat: () => "json" | "table",
+): Command {
+  const cmd = new Command("domain").description("...")
+  cmd.command("sub").argument("<arg>", "...").action(async (arg: string) => {
+    const client = getClient()
+    const result = await client.get<Type>(`/api/v2/...`)
+    console.log(formatOutput(result, getFormat()))
+  })
+  return cmd
+}
+```
+
+- Receives `getClient`/`getFormat` thunks for lazy initialization
+- Calls `client.get<T>()` or `client.post<T>()` directly with API paths
+- All output through `formatOutput()` to `console.log()`
+- Parse CLI strings to numbers with `Number.parseInt(value, 10)`
+- Register in `src/commands/index.ts` and wire in `src/cli.ts`
+
+## SDK Class Pattern
+
+Domain classes in `src/sdk.ts` wrap `OpenSeaClient` with typed camelCase methods:
+
+```typescript
+class DomainAPI {
+  constructor(private client: OpenSeaClient) {}
+  async method(param: string, options?: { limit?: number }): Promise<Type> {
+    return this.client.get<Type>("/api/v2/...", { limit: options?.limit })
+  }
+}
+```
+
+Register new classes as `readonly` properties on `OpenSeaCLI`.
+
+## Design Rules
+
+1. No external HTTP libraries - use native `fetch` only
+2. Commands are thin wrappers - no business logic in command files
+3. CLI and SDK are independent - CLI uses `OpenSeaClient` directly, not `OpenSeaCLI`
+4. Stdout for data, stderr for errors
+5. One file per domain in `src/commands/`
+6. Types mirror the API - use snake_case field names matching OpenSea API v2
+7. Cursor-based pagination with `next` strings, never offset-based
+8. Exit codes: 0 = success, 1 = API error, 2 = auth error
+
+## Adding a New API Domain
+
+1. Add response types to `src/types/api.ts`
+2. Create `src/commands/<domain>.ts` following the command pattern
+3. Export from `src/commands/index.ts`
+4. Wire in `src/cli.ts` via `program.addCommand(...)`
+5. Add SDK class in `src/sdk.ts`, register on `OpenSeaCLI`
+6. Update `README.md` with CLI usage and SDK examples
