@@ -20,24 +20,21 @@ opensea tokens trending --limit 5 --next "abc123..."
 
 ### Commands that support pagination
 
-| Command | Cursor flag |
-|---|---|
-| `collections list` | `--next` |
-
-| `nfts list-by-collection` | `--next` |
-| `nfts list-by-contract` | `--next` |
-| `nfts list-by-account` | `--next` |
-| `listings all` | `--next` |
-| `listings best` | `--next` |
-| `offers all` | `--next` |
-| `offers collection` | `--next` |
-| `offers traits` | `--next` |
-| `events list` | `--next` |
-| `events by-account` | `--next` |
-| `events by-collection` | `--next` |
-| `events by-nft` | `--next` |
-| `tokens trending` | `--next` |
-| `tokens top` | `--next` |
+- `collections list`
+- `nfts list-by-collection`
+- `nfts list-by-contract`
+- `nfts list-by-account`
+- `listings all`
+- `listings best`
+- `offers all`
+- `offers collection`
+- `offers traits`
+- `events list`
+- `events by-account`
+- `events by-collection`
+- `events by-nft`
+- `tokens trending`
+- `tokens top`
 
 > **Note:** Search commands (`search collections`, `search nfts`, `search tokens`, `search accounts`) do not support cursor-based pagination. The underlying GraphQL API returns a flat list with no `next` cursor.
 
