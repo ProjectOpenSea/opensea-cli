@@ -89,7 +89,7 @@ opensea --format table collections stats mfers
 | `swaps` | Get swap quotes for token trading |
 | `accounts` | Get account details |
 
-Global options: `--api-key`, `--chain` (default: ethereum), `--format` (json/table), `--base-url`
+Global options: `--api-key`, `--chain` (default: ethereum), `--format` (json/table/toon), `--base-url`
 
 Full command reference with all options and flags: [docs/cli-reference.md](docs/cli-reference.md)
 
@@ -135,6 +135,33 @@ Table - human-readable output:
 
 ```bash
 opensea --format table collections list --limit 5
+```
+
+TOON - [Token-Oriented Object Notation](https://github.com/toon-format/toon), a compact format that uses ~40% fewer tokens than JSON. Ideal for piping output into LLM / AI agent context windows:
+
+```bash
+opensea --format toon tokens trending --limit 5
+```
+
+Example TOON output for a list of tokens:
+
+```
+tokens[3]{name,symbol,chain,market_cap,price_usd}:
+  Ethereum,ETH,ethereum,250000000000,2100.50
+  Bitcoin,BTC,bitcoin,900000000000,48000.00
+  Solana,SOL,solana,30000000000,95.25
+next: abc123
+```
+
+TOON collapses uniform arrays of objects into CSV-like tables with a single header row, while nested objects use YAML-like indentation. The encoder follows the [TOON v3.0 spec](https://github.com/toon-format/spec/blob/main/SPEC.md) and is implemented without external dependencies.
+
+TOON is also available programmatically via the SDK:
+
+```typescript
+import { formatToon } from "@opensea/cli"
+
+const data = await client.tokens.trending({ limit: 5 })
+console.log(formatToon(data))
 ```
 
 ## Exit Codes
