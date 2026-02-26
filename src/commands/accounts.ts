@@ -1,11 +1,12 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
+import type { OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
 import type { Account } from "../types/index.js"
 
 export function accountsCommand(
   getClient: () => OpenSeaClient,
-  getFormat: () => "json" | "table",
+  getFormat: () => OutputFormat,
 ): Command {
   const cmd = new Command("accounts").description("Query accounts")
 

@@ -11,6 +11,7 @@ import {
   swapsCommand,
   tokensCommand,
 } from "./commands/index.js"
+import type { OutputFormat } from "./output.js"
 import { parseIntOption } from "./parse.js"
 
 const BANNER = `
@@ -33,7 +34,7 @@ program
   .addHelpText("before", BANNER)
   .option("--api-key <key>", "OpenSea API key (or set OPENSEA_API_KEY env var)")
   .option("--chain <chain>", "Default chain", "ethereum")
-  .option("--format <format>", "Output format (json or table)", "json")
+  .option("--format <format>", "Output format (json, table, or toon)", "json")
   .option("--base-url <url>", "API base URL")
   .option("--timeout <ms>", "Request timeout in milliseconds", "30000")
   .option("--verbose", "Log request and response info to stderr")
@@ -64,9 +65,11 @@ function getClient(): OpenSeaClient {
   })
 }
 
-function getFormat(): "json" | "table" {
+function getFormat(): OutputFormat {
   const opts = program.opts<{ format: string }>()
-  return opts.format === "table" ? "table" : "json"
+  if (opts.format === "table") return "table"
+  if (opts.format === "toon") return "toon"
+  return "json"
 }
 
 program.addCommand(collectionsCommand(getClient, getFormat))

@@ -1,3 +1,6 @@
 export { OpenSeaAPIError, OpenSeaClient } from "./client.js"
+export type { OutputFormat } from "./output.js"
+export { formatOutput } from "./output.js"
 export { OpenSeaCLI } from "./sdk.js"
+export { formatToon } from "./toon.js"
 export type * from "./types/index.js"
