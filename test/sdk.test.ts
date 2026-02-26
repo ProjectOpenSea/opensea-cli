@@ -6,7 +6,6 @@ vi.mock("../src/client.js", () => {
   const MockOpenSeaClient = vi.fn()
   MockOpenSeaClient.prototype.get = vi.fn()
   MockOpenSeaClient.prototype.post = vi.fn()
-  MockOpenSeaClient.prototype.graphql = vi.fn()
   MockOpenSeaClient.prototype.getDefaultChain = vi.fn(() => "ethereum")
   return { OpenSeaClient: MockOpenSeaClient, OpenSeaAPIError: vi.fn() }
 })
@@ -15,13 +14,11 @@ describe("OpenSeaCLI", () => {
   let sdk: OpenSeaCLI
   let mockGet: ReturnType<typeof vi.fn>
   let mockPost: ReturnType<typeof vi.fn>
-  let mockGraphql: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
     sdk = new OpenSeaCLI({ apiKey: "test-key" })
     mockGet = vi.mocked(OpenSeaClient.prototype.get)
     mockPost = vi.mocked(OpenSeaClient.prototype.post)
-    mockGraphql = vi.mocked(OpenSeaClient.prototype.graphql)
   })
 
   afterEach(() => {
@@ -342,67 +339,47 @@ describe("OpenSeaCLI", () => {
   })
 
   describe("search", () => {
-    it("collections calls graphql with correct query and variables", async () => {
-      mockGraphql.mockResolvedValue({
-        collectionsByQuery: [{ slug: "mfers" }],
-      })
-      const result = await sdk.search.collections("mfers", {
+    it("query calls correct endpoint with all options", async () => {
+      const mockResponse = {
+        results: [{ type: "collection", collection: { collection: "mfers" } }],
+      }
+      mockGet.mockResolvedValue(mockResponse)
+      const result = await sdk.search.query("mfers", {
+        assetTypes: ["collection", "nft"],
+        chains: ["ethereum"],
         limit: 5,
-        chains: ["ethereum"],
       })
-      expect(mockGraphql).toHaveBeenCalledWith(
-        expect.stringContaining("collectionsByQuery"),
-        { query: "mfers", limit: 5, chains: ["ethereum"] },
-      )
-      expect(result).toEqual([{ slug: "mfers" }])
+      expect(mockGet).toHaveBeenCalledWith("/api/v2/search", {
+        query: "mfers",
+        asset_types: "collection,nft",
+        chains: "ethereum",
+        limit: 5,
+      })
+      expect(result).toEqual(mockResponse)
     })
 
-    it("nfts calls graphql with correct query and variables", async () => {
-      mockGraphql.mockResolvedValue({
-        itemsByQuery: [{ tokenId: "1", name: "Ape #1" }],
+    it("query calls with no options", async () => {
+      mockGet.mockResolvedValue({ results: [] })
+      await sdk.search.query("test")
+      expect(mockGet).toHaveBeenCalledWith("/api/v2/search", {
+        query: "test",
+        asset_types: undefined,
+        chains: undefined,
+        limit: undefined,
       })
-      const result = await sdk.search.nfts("ape", {
-        collection: "boredapeyachtclub",
-        limit: 3,
-        chains: ["ethereum"],
-      })
-      expect(mockGraphql).toHaveBeenCalledWith(
-        expect.stringContaining("itemsByQuery"),
-        {
-          query: "ape",
-          collectionSlug: "boredapeyachtclub",
-          limit: 3,
-          chains: ["ethereum"],
-        },
-      )
-      expect(result).toEqual([{ tokenId: "1", name: "Ape #1" }])
     })
 
-    it("tokens calls graphql with correct query and variables", async () => {
-      mockGraphql.mockResolvedValue({
-        currenciesByQuery: [{ name: "USDC", symbol: "USDC" }],
+    it("query calls with multiple chains", async () => {
+      mockGet.mockResolvedValue({ results: [] })
+      await sdk.search.query("ape", {
+        chains: ["ethereum", "base"],
       })
-      const result = await sdk.search.tokens("usdc", {
-        chain: "base",
-        limit: 10,
+      expect(mockGet).toHaveBeenCalledWith("/api/v2/search", {
+        query: "ape",
+        asset_types: undefined,
+        chains: "ethereum,base",
+        limit: undefined,
       })
-      expect(mockGraphql).toHaveBeenCalledWith(
-        expect.stringContaining("currenciesByQuery"),
-        { query: "usdc", limit: 10, chain: "base" },
-      )
-      expect(result).toEqual([{ name: "USDC", symbol: "USDC" }])
-    })
-
-    it("accounts calls graphql with correct query and variables", async () => {
-      mockGraphql.mockResolvedValue({
-        accountsByQuery: [{ address: "0xabc", username: "vitalik" }],
-      })
-      const result = await sdk.search.accounts("vitalik", { limit: 5 })
-      expect(mockGraphql).toHaveBeenCalledWith(
-        expect.stringContaining("accountsByQuery"),
-        { query: "vitalik", limit: 5 },
-      )
-      expect(result).toEqual([{ address: "0xabc", username: "vitalik" }])
     })
   })
 

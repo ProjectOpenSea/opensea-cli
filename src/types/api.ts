@@ -317,59 +317,52 @@ export interface SwapQuoteResponse {
   transactions: SwapTransaction[]
 }
 
-export interface SearchCollectionResult {
-  slug: string
+export type SearchAssetType = "collection" | "nft" | "token" | "account"
+
+export interface SearchResultCollection {
+  collection: string
   name: string
-  description: string
-  imageUrl: string
-  chain: { identifier: string; name: string }
-  stats: {
-    totalSupply: number
-    ownerCount: number
-    volume: { usd: number }
-    sales: number
-  } | null
-  floorPrice: {
-    pricePerItem: {
-      usd: number
-      native: { unit: number; symbol: string }
-    }
-  } | null
+  image_url: string | null
+  is_disabled: boolean
+  is_nsfw: boolean
+  opensea_url: string
 }
 
-export interface SearchNFTResult {
-  tokenId: string
-  name: string
-  description: string
-  imageUrl: string
-  contractAddress: string
-  collection: { slug: string; name: string }
-  chain: { identifier: string; name: string }
-  bestListing: {
-    pricePerItem: {
-      usd: number
-      native: { unit: number; symbol: string }
-    }
-  } | null
-  owner: { address: string; displayName: string } | null
-}
-
-export interface SearchTokenResult {
+export interface SearchResultToken {
+  address: string
+  chain: string
   name: string
   symbol: string
-  imageUrl: string
-  usdPrice: string
-  contractAddress: string
-  chain: { identifier: string; name: string }
-  stats: {
-    marketCapUsd: number
-    oneDay: { priceChange: number; volume: number }
-  } | null
+  image_url: string | null
+  usd_price: string
+  decimals: number
+  opensea_url: string
 }
 
-export interface SearchAccountResult {
+export interface SearchResultNFT {
+  identifier: string
+  collection: string
+  contract: string
+  name: string | null
+  image_url: string | null
+  opensea_url: string
+}
+
+export interface SearchResultAccount {
   address: string
-  username: string
-  imageUrl: string
-  isVerified: boolean
+  username: string | null
+  profile_image_url: string | null
+  opensea_url: string
+}
+
+export interface SearchResult {
+  type: SearchAssetType
+  collection?: SearchResultCollection
+  token?: SearchResultToken
+  nft?: SearchResultNFT
+  account?: SearchResultAccount
+}
+
+export interface SearchResponse {
+  results: SearchResult[]
 }

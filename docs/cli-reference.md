@@ -66,11 +66,10 @@ Event types: `sale`, `transfer`, `mint`, `listing`, `offer`, `trait_offer`, `col
 ## Search
 
 ```bash
-opensea search collections <query> [--chains <chains>] [--limit <n>]
-opensea search nfts <query> [--collection <slug>] [--chains <chains>] [--limit <n>]
-opensea search tokens <query> [--chain <chain>] [--limit <n>]
-opensea search accounts <query> [--limit <n>]
+opensea search <query> [--types <types>] [--chains <chains>] [--limit <n>]
 ```
+
+`--types` values (comma-separated): `collection`, `nft`, `token`, `account`
 
 ## Tokens
 
@@ -92,4 +91,4 @@ opensea swaps quote --from-chain <chain> --from-address <address> --to-chain <ch
 opensea accounts get <address>
 ```
 
-> REST list commands support cursor-based pagination. Search commands return a flat list with no cursor. See [pagination.md](pagination.md) for details.
+> REST list commands support cursor-based pagination. The search command returns a flat list with no cursor. See [pagination.md](pagination.md) for details.

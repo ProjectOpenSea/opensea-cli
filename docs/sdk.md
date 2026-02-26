@@ -16,7 +16,6 @@ const client = new OpenSeaCLI({ apiKey: process.env.OPENSEA_API_KEY })
 |---|---|---|---|
 | `apiKey` | `string` | *required* | OpenSea API key |
 | `baseUrl` | `string` | `https://api.opensea.io` | API base URL override |
-| `graphqlUrl` | `string` | `https://gql.opensea.io/graphql` | GraphQL URL override |
 | `chain` | `string` | `"ethereum"` | Default chain |
 
 ## Collections
@@ -142,26 +141,32 @@ const tokenDetails = await client.tokens.get("base", "0x123...")
 
 ## Search
 
-Search methods use GraphQL and return different result shapes than the REST API. Search endpoints do not currently expose a `next` cursor for pagination; use `limit` to control result count.
+Search uses the unified `/api/v2/search` REST endpoint. Results are ranked by relevance and each result has a `type` discriminator (`collection`, `nft`, `token`, or `account`) with the corresponding typed object. The search endpoint does not support cursor-based pagination; use `limit` to control result count (max 50).
 
 ```typescript
-const collections = await client.search.collections("mfers", {
+const { results } = await client.search.query("mfers", {
+  assetTypes: ["collection", "nft"],
   chains: ["ethereum"],
-  limit: 5,
+  limit: 10,
 })
 
-const nfts = await client.search.nfts("cool cat", {
-  collection: "cool-cats-nft",
-  chains: ["ethereum"],
-  limit: 5,
-})
-
-const tokens = await client.search.tokens("usdc", {
-  chain: "base",
-  limit: 5,
-})
-
-const accounts = await client.search.accounts("vitalik", { limit: 5 })
+// Each result has a type and the corresponding object
+for (const result of results) {
+  switch (result.type) {
+    case "collection":
+      console.log(result.collection?.name)
+      break
+    case "nft":
+      console.log(result.nft?.name)
+      break
+    case "token":
+      console.log(result.token?.symbol)
+      break
+    case "account":
+      console.log(result.account?.username)
+      break
+  }
+}
 ```
 
 ## Swaps

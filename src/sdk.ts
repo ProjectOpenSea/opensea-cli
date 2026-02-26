@@ -1,10 +1,4 @@
 import { OpenSeaClient } from "./client.js"
-import {
-  SEARCH_ACCOUNTS_QUERY,
-  SEARCH_COLLECTIONS_QUERY,
-  SEARCH_NFTS_QUERY,
-  SEARCH_TOKENS_QUERY,
-} from "./queries.js"
 import type {
   Account,
   AssetEvent,
@@ -19,10 +13,8 @@ import type {
   NFT,
   Offer,
   OpenSeaClientConfig,
-  SearchAccountResult,
-  SearchCollectionResult,
-  SearchNFTResult,
-  SearchTokenResult,
+  SearchAssetType,
+  SearchResponse,
   SwapQuoteResponse,
   Token,
   TokenDetails,
@@ -350,60 +342,20 @@ class TokensAPI {
 class SearchAPI {
   constructor(private client: OpenSeaClient) {}
 
-  async collections(
+  async query(
     query: string,
-    options?: { chains?: string[]; limit?: number },
-  ): Promise<SearchCollectionResult[]> {
-    const result = await this.client.graphql<{
-      collectionsByQuery: SearchCollectionResult[]
-    }>(SEARCH_COLLECTIONS_QUERY, {
+    options?: {
+      assetTypes?: SearchAssetType[]
+      chains?: string[]
+      limit?: number
+    },
+  ): Promise<SearchResponse> {
+    return this.client.get<SearchResponse>("/api/v2/search", {
       query,
-      limit: options?.limit,
-      chains: options?.chains,
-    })
-    return result.collectionsByQuery
-  }
-
-  async nfts(
-    query: string,
-    options?: { collection?: string; chains?: string[]; limit?: number },
-  ): Promise<SearchNFTResult[]> {
-    const result = await this.client.graphql<{
-      itemsByQuery: SearchNFTResult[]
-    }>(SEARCH_NFTS_QUERY, {
-      query,
-      collectionSlug: options?.collection,
-      limit: options?.limit,
-      chains: options?.chains,
-    })
-    return result.itemsByQuery
-  }
-
-  async tokens(
-    query: string,
-    options?: { chain?: string; limit?: number },
-  ): Promise<SearchTokenResult[]> {
-    const result = await this.client.graphql<{
-      currenciesByQuery: SearchTokenResult[]
-    }>(SEARCH_TOKENS_QUERY, {
-      query,
-      limit: options?.limit,
-      chain: options?.chain,
-    })
-    return result.currenciesByQuery
-  }
-
-  async accounts(
-    query: string,
-    options?: { limit?: number },
-  ): Promise<SearchAccountResult[]> {
-    const result = await this.client.graphql<{
-      accountsByQuery: SearchAccountResult[]
-    }>(SEARCH_ACCOUNTS_QUERY, {
-      query,
+      asset_types: options?.assetTypes?.join(","),
+      chains: options?.chains?.join(","),
       limit: options?.limit,
     })
-    return result.accountsByQuery
   }
 }
 
