@@ -7,8 +7,10 @@ Full command reference for all `opensea` CLI commands.
 ```
 --api-key <key>     OpenSea API key (or set OPENSEA_API_KEY env var)
 --chain <chain>     Default chain (default: ethereum)
---format <format>   Output format: json or table (default: json)
+--format <format>   Output format: json, table, or toon (default: json)
 --base-url <url>    API base URL override (for testing against staging or proxies)
+--timeout           Request timeout in milliseconds (default: 30000)
+--verbose           Log request and response info to stderr
 ```
 
 ## Collections
