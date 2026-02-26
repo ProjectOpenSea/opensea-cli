@@ -1,6 +1,13 @@
-export function formatOutput(data: unknown, format: "json" | "table"): string {
+import { formatToon } from "./toon.js"
+
+export type OutputFormat = "json" | "table" | "toon"
+
+export function formatOutput(data: unknown, format: OutputFormat): string {
   if (format === "table") {
     return formatTable(data)
+  }
+  if (format === "toon") {
+    return formatToon(data)
   }
   return JSON.stringify(data, null, 2)
 }

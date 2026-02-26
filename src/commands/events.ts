@@ -1,12 +1,13 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
+import type { OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
 import { parseIntOption } from "../parse.js"
 import type { AssetEvent } from "../types/index.js"
 
 export function eventsCommand(
   getClient: () => OpenSeaClient,
-  getFormat: () => "json" | "table",
+  getFormat: () => OutputFormat,
 ): Command {
   const cmd = new Command("events").description("Query marketplace events")
 

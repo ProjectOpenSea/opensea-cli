@@ -1,12 +1,13 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
+import type { OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
 import { parseIntOption } from "../parse.js"
 import type { Chain, Token, TokenDetails } from "../types/index.js"
 
 export function tokensCommand(
   getClient: () => OpenSeaClient,
-  getFormat: () => "json" | "table",
+  getFormat: () => OutputFormat,
 ): Command {
   const cmd = new Command("tokens").description(
     "Query trending tokens, top tokens, and token details",

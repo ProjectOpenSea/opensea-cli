@@ -1,12 +1,13 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
+import type { OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
 import { parseIntOption } from "../parse.js"
 import type { Contract, NFT } from "../types/index.js"
 
 export function nftsCommand(
   getClient: () => OpenSeaClient,
-  getFormat: () => "json" | "table",
+  getFormat: () => OutputFormat,
 ): Command {
   const cmd = new Command("nfts").description("Query NFTs")
 
