@@ -88,23 +88,23 @@ opensea events by-account 0x21130e908bba2d41b63fbca7caa131285b8724f8 --limit 2
 ## Search
 
 ```bash
-# Search for collections
-opensea search collections mfers
+# Search across all types (defaults to collections and tokens)
+opensea search mfers
 
-# Search for NFTs
-opensea search nfts "cool cat" --limit 5
+# Search for collections only
+opensea search "bored ape" --types collection
 
-# Search for NFTs within a specific collection
-opensea search nfts "rare" --collection tiny-dinos-eth --limit 5
-
-# Search for tokens/currencies
-opensea search tokens eth --limit 5
+# Search for NFTs and collections
+opensea search "cool cat" --types collection,nft --limit 5
 
 # Search for tokens on a specific chain
-opensea search tokens usdc --chain base --limit 5
+opensea search usdc --types token --chains base --limit 5
 
 # Search for accounts
-opensea search accounts vitalik --limit 5
+opensea search vitalik --types account --limit 5
+
+# Search across all types on a specific chain
+opensea search "ape" --types collection,nft,token,account --chains ethereum
 ```
 
 ## Tokens

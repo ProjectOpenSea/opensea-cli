@@ -5,7 +5,6 @@ import type { OutputFormat } from "../src/output.js"
 export type MockClient = {
   get: Mock
   post: Mock
-  graphql: Mock
 }
 
 export type CommandTestContext = {
@@ -19,7 +18,6 @@ export function createCommandTestContext(): CommandTestContext {
   const mockClient: MockClient = {
     get: vi.fn(),
     post: vi.fn(),
-    graphql: vi.fn(),
   }
   const getClient = () => mockClient as unknown as OpenSeaClient
   const getFormat = () => "json" as OutputFormat

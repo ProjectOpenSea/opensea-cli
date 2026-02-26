@@ -36,7 +36,7 @@ opensea tokens trending --limit 5 --next "abc123..."
 - `tokens trending`
 - `tokens top`
 
-> **Note:** Search commands (`search collections`, `search nfts`, `search tokens`, `search accounts`) do not support cursor-based pagination. The underlying GraphQL API returns a flat list with no `next` cursor.
+> **Note:** The `search` command does not support cursor-based pagination. The search API returns a flat list with no `next` cursor; use `--limit` to control result count (max 50).
 
 ## SDK
 

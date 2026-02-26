@@ -140,87 +140,6 @@ describe("OpenSeaClient", () => {
     })
   })
 
-  describe("graphql", () => {
-    it("makes POST request to graphql URL with correct headers and body", async () => {
-      const mockData = { collectionsByQuery: [{ slug: "test" }] }
-      mockFetchResponse({ data: mockData })
-
-      const result = await client.graphql<typeof mockData>(
-        "query { collectionsByQuery { slug } }",
-        { query: "test" },
-      )
-
-      expect(fetch).toHaveBeenCalledWith(
-        "https://gql.opensea.io/graphql",
-        expect.objectContaining({
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            "x-api-key": "test-key",
-          },
-          body: JSON.stringify({
-            query: "query { collectionsByQuery { slug } }",
-            variables: { query: "test" },
-          }),
-        }),
-      )
-      expect(result).toEqual(mockData)
-    })
-
-    it("uses custom graphqlUrl when configured", async () => {
-      const custom = new OpenSeaClient({
-        apiKey: "key",
-        graphqlUrl: "https://custom-gql.example.com/graphql",
-      })
-      mockFetchResponse({ data: {} })
-
-      await custom.graphql("query { test }")
-
-      const calledUrl = vi.mocked(fetch).mock.calls[0][0] as string
-      expect(calledUrl).toBe("https://custom-gql.example.com/graphql")
-    })
-
-    it("throws OpenSeaAPIError on non-ok HTTP response", async () => {
-      mockFetchTextResponse("Unauthorized", 401)
-
-      await expect(client.graphql("query { test }")).rejects.toThrow(
-        OpenSeaAPIError,
-      )
-    })
-
-    it("throws OpenSeaAPIError when response contains GraphQL errors", async () => {
-      mockFetchResponse({
-        errors: [{ message: "Field not found" }, { message: "Invalid query" }],
-      })
-
-      try {
-        await client.graphql("query { bad }")
-        expect.fail("Should have thrown")
-      } catch (err) {
-        expect(err).toBeInstanceOf(OpenSeaAPIError)
-        const apiErr = err as OpenSeaAPIError
-        expect(apiErr.statusCode).toBe(400)
-        expect(apiErr.responseBody).toBe("Field not found; Invalid query")
-        expect(apiErr.path).toBe("graphql")
-      }
-    })
-
-    it("throws OpenSeaAPIError when response data is missing", async () => {
-      mockFetchResponse({})
-
-      try {
-        await client.graphql("query { test }")
-        expect.fail("Should have thrown")
-      } catch (err) {
-        expect(err).toBeInstanceOf(OpenSeaAPIError)
-        const apiErr = err as OpenSeaAPIError
-        expect(apiErr.statusCode).toBe(500)
-        expect(apiErr.responseBody).toBe("GraphQL response missing data")
-      }
-    })
-  })
-
   describe("timeout", () => {
     it("passes AbortSignal.timeout to fetch calls", async () => {
       const timedClient = new OpenSeaClient({
@@ -284,21 +203,6 @@ describe("OpenSeaClient", () => {
       mockFetchResponse({ status: "ok" })
 
       await verboseClient.post("/api/v2/refresh")
-
-      expect(stderrSpy).toHaveBeenCalledWith(
-        expect.stringContaining("[verbose] POST"),
-      )
-    })
-
-    it("logs for graphql requests", async () => {
-      const verboseClient = new OpenSeaClient({
-        apiKey: "test-key",
-        verbose: true,
-      })
-      const stderrSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-      mockFetchResponse({ data: { test: true } })
-
-      await verboseClient.graphql("query { test }")
 
       expect(stderrSpy).toHaveBeenCalledWith(
         expect.stringContaining("[verbose] POST"),
