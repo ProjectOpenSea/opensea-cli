@@ -1,7 +1,12 @@
+import { createRequire } from "node:module"
 import type { OpenSeaClientConfig } from "./types/index.js"
+
+const require = createRequire(import.meta.url)
+const { version } = require("../package.json") as { version: string }
 
 const DEFAULT_BASE_URL = "https://api.opensea.io"
 const DEFAULT_TIMEOUT_MS = 30_000
+const USER_AGENT = `opensea-cli/${version}`
 
 export class OpenSeaClient {
   private apiKey: string
@@ -37,6 +42,7 @@ export class OpenSeaClient {
       method: "GET",
       headers: {
         Accept: "application/json",
+        "User-Agent": USER_AGENT,
         "x-api-key": this.apiKey,
       },
       signal: AbortSignal.timeout(this.timeoutMs),
@@ -71,6 +77,7 @@ export class OpenSeaClient {
 
     const headers: Record<string, string> = {
       Accept: "application/json",
+      "User-Agent": USER_AGENT,
       "x-api-key": this.apiKey,
     }
 
