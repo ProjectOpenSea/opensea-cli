@@ -169,6 +169,7 @@ console.log(formatToon(data))
 - `0` - Success
 - `1` - API error
 - `2` - Authentication error
+- `3` - Rate limited (HTTP 429)
 
 ## Requirements
 

@@ -87,10 +87,11 @@ async function main() {
     await program.parseAsync(process.argv)
   } catch (error) {
     if (error instanceof OpenSeaAPIError) {
+      const isRateLimited = error.statusCode === 429
       console.error(
         JSON.stringify(
           {
-            error: "API Error",
+            error: isRateLimited ? "Rate Limited" : "API Error",
             status: error.statusCode,
             path: error.path,
             message: error.responseBody,
@@ -99,7 +100,7 @@ async function main() {
           2,
         ),
       )
-      process.exit(1)
+      process.exit(isRateLimited ? 3 : 1)
     }
     const label =
       error instanceof TypeError ? "Network Error" : (error as Error).name

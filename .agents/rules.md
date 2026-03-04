@@ -160,9 +160,9 @@ Key aspects:
 ### Error Handling
 
 - API errors are wrapped in `OpenSeaAPIError` (includes status code, response body, path).
-- CLI catches `OpenSeaAPIError` and outputs structured JSON to stderr, then exits with code 1.
+- CLI catches `OpenSeaAPIError` and outputs structured JSON to stderr, then exits with code 1 (or code 3 for rate limiting).
 - Authentication errors (missing API key) exit with code 2.
-- Exit codes: 0 = success, 1 = API error, 2 = auth error.
+- Exit codes: 0 = success, 1 = API error, 2 = auth error, 3 = rate limited (HTTP 429).
 
 ## Design Rules
 
