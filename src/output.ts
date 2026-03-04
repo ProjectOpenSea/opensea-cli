@@ -2,14 +2,36 @@ import { formatToon } from "./toon.js"
 
 export type OutputFormat = "json" | "table" | "toon"
 
+export interface OutputOptions {
+  fields?: string[]
+  maxLines?: number
+}
+
+let _outputOptions: OutputOptions = {}
+
+export function setOutputOptions(options: OutputOptions): void {
+  _outputOptions = options
+}
+
 export function formatOutput(data: unknown, format: OutputFormat): string {
+  const processed = _outputOptions.fields
+    ? filterFields(data, _outputOptions.fields)
+    : data
+
+  let result: string
   if (format === "table") {
-    return formatTable(data)
+    result = formatTable(processed)
+  } else if (format === "toon") {
+    result = formatToon(processed)
+  } else {
+    result = JSON.stringify(processed, null, 2)
   }
-  if (format === "toon") {
-    return formatToon(data)
+
+  if (_outputOptions.maxLines != null) {
+    result = truncateOutput(result, _outputOptions.maxLines)
   }
-  return JSON.stringify(data, null, 2)
+
+  return result
 }
 
 function formatTable(data: unknown): string {
@@ -56,4 +78,37 @@ function formatTable(data: unknown): string {
   }
 
   return String(data)
+}
+
+function pickFields(
+  obj: Record<string, unknown>,
+  fields: string[],
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {}
+  for (const field of fields) {
+    if (field in obj) {
+      result[field] = obj[field]
+    }
+  }
+  return result
+}
+
+function filterFields(data: unknown, fields: string[]): unknown {
+  if (Array.isArray(data)) {
+    return data.map(item => filterFields(item, fields))
+  }
+  if (data && typeof data === "object") {
+    return pickFields(data as Record<string, unknown>, fields)
+  }
+  return data
+}
+
+function truncateOutput(text: string, maxLines: number): string {
+  const lines = text.split("\n")
+  if (lines.length <= maxLines) return text
+  const omitted = lines.length - maxLines
+  return (
+    lines.slice(0, maxLines).join("\n") +
+    `\n... (${omitted} more line${omitted === 1 ? "" : "s"})`
+  )
 }

@@ -11,7 +11,7 @@ import {
   swapsCommand,
   tokensCommand,
 } from "./commands/index.js"
-import type { OutputFormat } from "./output.js"
+import { type OutputFormat, setOutputOptions } from "./output.js"
 import { parseIntOption } from "./parse.js"
 
 const EXIT_API_ERROR = 1
@@ -42,6 +42,11 @@ program
   .option("--base-url <url>", "API base URL")
   .option("--timeout <ms>", "Request timeout in milliseconds", "30000")
   .option("--verbose", "Log request and response info to stderr")
+  .option(
+    "--fields <fields>",
+    "Comma-separated list of fields to include in output",
+  )
+  .option("--max-lines <lines>", "Truncate output after N lines")
 
 function getClient(): OpenSeaClient {
   const opts = program.opts<{
@@ -75,6 +80,25 @@ function getFormat(): OutputFormat {
   if (opts.format === "toon") return "toon"
   return "json"
 }
+
+program.hook("preAction", () => {
+  const opts = program.opts<{
+    fields?: string
+    maxLines?: string
+  }>()
+  let maxLines: number | undefined
+  if (opts.maxLines) {
+    maxLines = parseIntOption(opts.maxLines, "--max-lines")
+    if (maxLines < 1) {
+      console.error("Error: --max-lines must be >= 1")
+      process.exit(2)
+    }
+  }
+  setOutputOptions({
+    fields: opts.fields?.split(",").map(f => f.trim()),
+    maxLines,
+  })
+})
 
 program.addCommand(collectionsCommand(getClient, getFormat))
 program.addCommand(nftsCommand(getClient, getFormat))
