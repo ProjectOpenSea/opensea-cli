@@ -14,6 +14,10 @@ import {
 import type { OutputFormat } from "./output.js"
 import { parseIntOption } from "./parse.js"
 
+const EXIT_API_ERROR = 1
+const EXIT_AUTH_ERROR = 2
+const EXIT_RATE_LIMITED = 3
+
 const BANNER = `
    ____                   _____
   / __ \\                 / ____|
@@ -53,7 +57,7 @@ function getClient(): OpenSeaClient {
     console.error(
       "Error: API key required. Use --api-key or set OPENSEA_API_KEY environment variable.",
     )
-    process.exit(2)
+    process.exit(EXIT_AUTH_ERROR)
   }
 
   return new OpenSeaClient({
@@ -100,7 +104,7 @@ async function main() {
           2,
         ),
       )
-      process.exit(isRateLimited ? 3 : 1)
+      process.exit(isRateLimited ? EXIT_RATE_LIMITED : EXIT_API_ERROR)
     }
     const label =
       error instanceof TypeError ? "Network Error" : (error as Error).name
@@ -114,7 +118,7 @@ async function main() {
         2,
       ),
     )
-    process.exit(1)
+    process.exit(EXIT_API_ERROR)
   }
 }
 
