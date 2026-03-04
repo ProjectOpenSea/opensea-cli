@@ -47,12 +47,13 @@ export async function checkHealth(
         message: `Authentication failed (${error.statusCode}): invalid API key`,
       }
     }
-    // Non-auth error on events endpoint — connectivity works but auth is unverified
+    // Non-auth error on listings endpoint — connectivity works but auth is unverified
     return {
       status: "ok",
       key_prefix: keyPrefix,
       authenticated: false,
-      message: "Connectivity is working but authentication could not be verified",
+      message:
+        "Connectivity is working but authentication could not be verified",
     }
   }
 }

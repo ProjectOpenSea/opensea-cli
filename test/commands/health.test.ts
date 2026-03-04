@@ -28,16 +28,17 @@ describe("healthCommand", () => {
     expect(ctx.mockClient.get).toHaveBeenCalledWith("/api/v2/collections", {
       limit: 1,
     })
-    expect(ctx.mockClient.get).toHaveBeenCalledWith("/api/v2/listings/collection/boredapeyachtclub/all", {
-      limit: 1,
-    })
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
+      "/api/v2/listings/collection/boredapeyachtclub/all",
+      {
+        limit: 1,
+      },
+    )
     const output = JSON.parse(ctx.consoleSpy.mock.calls[0][0] as string)
     expect(output.status).toBe("ok")
     expect(output.key_prefix).toBe("test...")
     expect(output.authenticated).toBe(true)
-    expect(output.message).toBe(
-      "Connectivity and authentication are working",
-    )
+    expect(output.message).toBe("Connectivity and authentication are working")
   })
 
   it("outputs error status when connectivity fails", async () => {
@@ -63,7 +64,11 @@ describe("healthCommand", () => {
     ctx.mockClient.get
       .mockResolvedValueOnce({}) // connectivity ok
       .mockRejectedValueOnce(
-        new OpenSeaAPIError(401, "Unauthorized", "/api/v2/listings/collection/boredapeyachtclub/all"),
+        new OpenSeaAPIError(
+          401,
+          "Unauthorized",
+          "/api/v2/listings/collection/boredapeyachtclub/all",
+        ),
       )
 
     const mockExit = vi
@@ -100,7 +105,11 @@ describe("healthCommand", () => {
     ctx.mockClient.get
       .mockResolvedValueOnce({}) // connectivity ok
       .mockRejectedValueOnce(
-        new OpenSeaAPIError(500, "Server Error", "/api/v2/listings/collection/boredapeyachtclub/all"),
+        new OpenSeaAPIError(
+          500,
+          "Server Error",
+          "/api/v2/listings/collection/boredapeyachtclub/all",
+        ),
       )
 
     const cmd = healthCommand(ctx.getClient, ctx.getFormat)

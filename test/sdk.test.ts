@@ -421,15 +421,16 @@ describe("OpenSeaCLI", () => {
       expect(mockGet).toHaveBeenCalledWith("/api/v2/collections", {
         limit: 1,
       })
-      expect(mockGet).toHaveBeenCalledWith("/api/v2/listings/collection/boredapeyachtclub/all", {
-        limit: 1,
-      })
+      expect(mockGet).toHaveBeenCalledWith(
+        "/api/v2/listings/collection/boredapeyachtclub/all",
+        {
+          limit: 1,
+        },
+      )
       expect(result.status).toBe("ok")
       expect(result.authenticated).toBe(true)
       expect(result.key_prefix).toBe("test...")
-      expect(result.message).toBe(
-        "Connectivity and authentication are working",
-      )
+      expect(result.message).toBe("Connectivity and authentication are working")
     })
 
     it("check returns error when connectivity fails", async () => {
