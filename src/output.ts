@@ -20,7 +20,7 @@ export function filterData(
     result &&
     typeof result === "object"
   ) {
-    const obj = result as Record<string, unknown>
+    const obj = { ...(result as Record<string, unknown>) }
     for (const [key, value] of Object.entries(obj)) {
       if (Array.isArray(value)) {
         obj[key] = value.slice(0, options.maxItems)

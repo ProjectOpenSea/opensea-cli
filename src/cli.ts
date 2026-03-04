@@ -87,7 +87,10 @@ function getFilters(): OutputFilterOptions {
     maxItems?: string
   }>()
   return {
-    fields: opts.fields?.split(",").map(f => f.trim()),
+    fields: opts.fields
+      ?.split(",")
+      .map(f => f.trim())
+      .filter(Boolean),
     maxItems: opts.maxItems
       ? parseIntOption(opts.maxItems, "--max-items")
       : undefined,

@@ -26,7 +26,7 @@ export function healthCommand(getClient: () => OpenSeaClient): Command {
               2,
             ),
           )
-          process.exit(1)
+          process.exit(error.statusCode === 429 ? 3 : 1)
         }
         console.error(
           JSON.stringify(
