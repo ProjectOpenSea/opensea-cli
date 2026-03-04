@@ -221,9 +221,9 @@ describe("OpenSeaClient", () => {
       expect(client.getApiKeyPrefix()).toBe("test...")
     })
 
-    it("handles short API keys", () => {
+    it("masks short API keys", () => {
       const shortKeyClient = new OpenSeaClient({ apiKey: "ab" })
-      expect(shortKeyClient.getApiKeyPrefix()).toBe("ab...")
+      expect(shortKeyClient.getApiKeyPrefix()).toBe("***")
     })
   })
 })

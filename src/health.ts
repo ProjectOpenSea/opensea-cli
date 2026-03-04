@@ -12,7 +12,10 @@ export async function checkHealth(
   } catch (error) {
     let message: string
     if (error instanceof OpenSeaAPIError) {
-      message = `API error (${error.statusCode}): ${error.responseBody}`
+      message =
+        error.statusCode === 429
+          ? "Rate limited: too many requests"
+          : `API error (${error.statusCode}): ${error.responseBody}`
     } else {
       message = `Network error: ${(error as Error).message}`
     }
@@ -20,6 +23,8 @@ export async function checkHealth(
       status: "error",
       key_prefix: keyPrefix,
       authenticated: false,
+      rate_limited:
+        error instanceof OpenSeaAPIError && error.statusCode === 429,
       message,
     }
   }
@@ -33,18 +38,28 @@ export async function checkHealth(
       status: "ok",
       key_prefix: keyPrefix,
       authenticated: true,
+      rate_limited: false,
       message: "Connectivity and authentication are working",
     }
   } catch (error) {
-    if (
-      error instanceof OpenSeaAPIError &&
-      (error.statusCode === 401 || error.statusCode === 403)
-    ) {
-      return {
-        status: "error",
-        key_prefix: keyPrefix,
-        authenticated: false,
-        message: `Authentication failed (${error.statusCode}): invalid API key`,
+    if (error instanceof OpenSeaAPIError) {
+      if (error.statusCode === 429) {
+        return {
+          status: "error",
+          key_prefix: keyPrefix,
+          authenticated: false,
+          rate_limited: true,
+          message: "Rate limited: too many requests",
+        }
+      }
+      if (error.statusCode === 401 || error.statusCode === 403) {
+        return {
+          status: "error",
+          key_prefix: keyPrefix,
+          authenticated: false,
+          rate_limited: false,
+          message: `Authentication failed (${error.statusCode}): invalid API key`,
+        }
       }
     }
     // Non-auth error on listings endpoint — connectivity works but auth is unverified
@@ -52,6 +67,7 @@ export async function checkHealth(
       status: "ok",
       key_prefix: keyPrefix,
       authenticated: false,
+      rate_limited: false,
       message:
         "Connectivity is working but authentication could not be verified",
     }

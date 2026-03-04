@@ -101,7 +101,7 @@ describe("healthCommand", () => {
     expect(mockExit).toHaveBeenCalledWith(1)
   })
 
-  it("reports ok with unverified auth when events endpoint has non-auth error", async () => {
+  it("reports ok with unverified auth when listings endpoint has non-auth error", async () => {
     ctx.mockClient.get
       .mockResolvedValueOnce({}) // connectivity ok
       .mockRejectedValueOnce(
@@ -119,5 +119,24 @@ describe("healthCommand", () => {
     expect(output.status).toBe("ok")
     expect(output.authenticated).toBe(false)
     expect(output.message).toContain("could not be verified")
+  })
+
+  it("exits with code 3 on rate limit (429)", async () => {
+    ctx.mockClient.get.mockRejectedValue(
+      new OpenSeaAPIError(429, "Too Many Requests", "/api/v2/collections"),
+    )
+
+    const mockExit = vi
+      .spyOn(process, "exit")
+      .mockImplementation(() => undefined as never)
+
+    const cmd = healthCommand(ctx.getClient, ctx.getFormat)
+    await cmd.parseAsync([], { from: "user" })
+
+    const output = JSON.parse(ctx.consoleSpy.mock.calls[0][0] as string)
+    expect(output.status).toBe("error")
+    expect(output.rate_limited).toBe(true)
+    expect(output.message).toContain("Rate limited")
+    expect(mockExit).toHaveBeenCalledWith(3)
   })
 })

@@ -485,6 +485,16 @@ describe("OpenSeaCLI", () => {
       expect(result.message).toContain("could not be verified")
     })
 
+    it("check returns error with rate_limited on 429", async () => {
+      mockGet.mockRejectedValue(
+        new OpenSeaAPIError(429, "Too Many Requests", "/api/v2/collections"),
+      )
+      const result = await sdk.health.check()
+      expect(result.status).toBe("error")
+      expect(result.rate_limited).toBe(true)
+      expect(result.message).toContain("Rate limited")
+    })
+
     it("check returns error when network fails", async () => {
       mockGet.mockRejectedValue(new Error("fetch failed"))
       const result = await sdk.health.check()

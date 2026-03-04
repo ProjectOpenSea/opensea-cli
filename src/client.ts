@@ -106,6 +106,7 @@ export class OpenSeaClient {
   }
 
   getApiKeyPrefix(): string {
+    if (this.apiKey.length < 8) return "***"
     return `${this.apiKey.slice(0, 4)}...`
   }
 }

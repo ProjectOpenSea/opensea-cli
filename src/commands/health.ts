@@ -15,7 +15,7 @@ export function healthCommand(
       const result = await checkHealth(client)
       console.log(formatOutput(result, getFormat()))
       if (result.status === "error") {
-        process.exit(1)
+        process.exit(result.rate_limited ? 3 : 1)
       }
     })
 

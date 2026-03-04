@@ -19,5 +19,6 @@ export interface HealthResult {
   status: "ok" | "error"
   key_prefix: string
   authenticated: boolean
+  rate_limited: boolean
   message: string
 }
