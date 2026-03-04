@@ -167,8 +167,9 @@ console.log(formatToon(data))
 ## Exit Codes
 
 - `0` - Success
-- `1` - API error
+- `1` - API error (non-429)
 - `2` - Authentication error
+- `3` - Rate limited (HTTP 429)
 
 ## Requirements
 
