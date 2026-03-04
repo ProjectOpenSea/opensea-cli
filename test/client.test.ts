@@ -218,6 +218,17 @@ describe("OpenSeaClient", () => {
       expect(client.getDefaultChain()).toBe("ethereum")
     })
   })
+
+  describe("getApiKeyPrefix", () => {
+    it("returns first 4 characters followed by ellipsis", () => {
+      expect(client.getApiKeyPrefix()).toBe("test...")
+    })
+
+    it("masks short API keys", () => {
+      const shortKeyClient = new OpenSeaClient({ apiKey: "ab" })
+      expect(shortKeyClient.getApiKeyPrefix()).toBe("***")
+    })
+  })
 })
 
 describe("OpenSeaAPIError", () => {

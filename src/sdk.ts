@@ -1,4 +1,5 @@
 import { OpenSeaClient } from "./client.js"
+import { checkHealth } from "./health.js"
 import type {
   Account,
   AssetEvent,
@@ -9,6 +10,7 @@ import type {
   Contract,
   EventType,
   GetTraitsResponse,
+  HealthResult,
   Listing,
   NFT,
   Offer,
@@ -32,6 +34,7 @@ export class OpenSeaCLI {
   readonly tokens: TokensAPI
   readonly search: SearchAPI
   readonly swaps: SwapsAPI
+  readonly health: HealthAPI
 
   constructor(config: OpenSeaClientConfig) {
     this.client = new OpenSeaClient(config)
@@ -44,6 +47,7 @@ export class OpenSeaCLI {
     this.tokens = new TokensAPI(this.client)
     this.search = new SearchAPI(this.client)
     this.swaps = new SwapsAPI(this.client)
+    this.health = new HealthAPI(this.client)
   }
 }
 
@@ -382,5 +386,13 @@ class SwapsAPI {
       slippage: options.slippage,
       recipient: options.recipient,
     })
+  }
+}
+
+class HealthAPI {
+  constructor(private client: OpenSeaClient) {}
+
+  async check(): Promise<HealthResult> {
+    return checkHealth(this.client)
   }
 }

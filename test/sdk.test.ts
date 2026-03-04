@@ -1,13 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { OpenSeaClient } from "../src/client.js"
+import { OpenSeaAPIError, OpenSeaClient } from "../src/client.js"
 import { OpenSeaCLI } from "../src/sdk.js"
 
-vi.mock("../src/client.js", () => {
+vi.mock("../src/client.js", async importOriginal => {
+  const actual = await importOriginal<typeof import("../src/client.js")>()
   const MockOpenSeaClient = vi.fn()
   MockOpenSeaClient.prototype.get = vi.fn()
   MockOpenSeaClient.prototype.post = vi.fn()
   MockOpenSeaClient.prototype.getDefaultChain = vi.fn(() => "ethereum")
-  return { OpenSeaClient: MockOpenSeaClient, OpenSeaAPIError: vi.fn() }
+  MockOpenSeaClient.prototype.getApiKeyPrefix = vi.fn(() => "test...")
+  return {
+    OpenSeaClient: MockOpenSeaClient,
+    OpenSeaAPIError: actual.OpenSeaAPIError,
+  }
 })
 
 describe("OpenSeaCLI", () => {
@@ -36,6 +41,7 @@ describe("OpenSeaCLI", () => {
       expect(sdk.tokens).toBeDefined()
       expect(sdk.search).toBeDefined()
       expect(sdk.swaps).toBeDefined()
+      expect(sdk.health).toBeDefined()
     })
   })
 
@@ -405,6 +411,96 @@ describe("OpenSeaCLI", () => {
         slippage: 0.02,
         recipient: undefined,
       })
+    })
+  })
+
+  describe("health", () => {
+    it("check returns ok with auth when both calls succeed", async () => {
+      mockGet.mockResolvedValue({})
+      const result = await sdk.health.check()
+      expect(mockGet).toHaveBeenCalledWith("/api/v2/collections", {
+        limit: 1,
+      })
+      expect(mockGet).toHaveBeenCalledWith(
+        "/api/v2/listings/collection/boredapeyachtclub/all",
+        {
+          limit: 1,
+        },
+      )
+      expect(result.status).toBe("ok")
+      expect(result.authenticated).toBe(true)
+      expect(result.key_prefix).toBe("test...")
+      expect(result.message).toBe("Connectivity and authentication are working")
+    })
+
+    it("check returns error when connectivity fails", async () => {
+      mockGet.mockRejectedValue(
+        new OpenSeaAPIError(
+          500,
+          "Internal Server Error",
+          "/api/v2/collections",
+        ),
+      )
+      const result = await sdk.health.check()
+      expect(result.status).toBe("error")
+      expect(result.authenticated).toBe(false)
+      expect(result.key_prefix).toBe("test...")
+      expect(result.message).toContain("API error (500)")
+    })
+
+    it("check returns error on authentication failure (401)", async () => {
+      mockGet
+        .mockResolvedValueOnce({}) // connectivity ok
+        .mockRejectedValueOnce(
+          new OpenSeaAPIError(401, "Unauthorized", "/api/v2/events"),
+        )
+      const result = await sdk.health.check()
+      expect(result.status).toBe("error")
+      expect(result.authenticated).toBe(false)
+      expect(result.key_prefix).toBe("test...")
+      expect(result.message).toContain("Authentication failed (401)")
+    })
+
+    it("check returns error on authentication failure (403)", async () => {
+      mockGet
+        .mockResolvedValueOnce({}) // connectivity ok
+        .mockRejectedValueOnce(
+          new OpenSeaAPIError(403, "Forbidden", "/api/v2/events"),
+        )
+      const result = await sdk.health.check()
+      expect(result.status).toBe("error")
+      expect(result.authenticated).toBe(false)
+      expect(result.message).toContain("Authentication failed (403)")
+    })
+
+    it("check returns ok with unverified auth on non-auth events error", async () => {
+      mockGet
+        .mockResolvedValueOnce({}) // connectivity ok
+        .mockRejectedValueOnce(
+          new OpenSeaAPIError(500, "Server Error", "/api/v2/events"),
+        )
+      const result = await sdk.health.check()
+      expect(result.status).toBe("ok")
+      expect(result.authenticated).toBe(false)
+      expect(result.message).toContain("could not be verified")
+    })
+
+    it("check returns error with rate_limited on 429", async () => {
+      mockGet.mockRejectedValue(
+        new OpenSeaAPIError(429, "Too Many Requests", "/api/v2/collections"),
+      )
+      const result = await sdk.health.check()
+      expect(result.status).toBe("error")
+      expect(result.rate_limited).toBe(true)
+      expect(result.message).toContain("Rate limited")
+    })
+
+    it("check returns error when network fails", async () => {
+      mockGet.mockRejectedValue(new Error("fetch failed"))
+      const result = await sdk.health.check()
+      expect(result.status).toBe("error")
+      expect(result.key_prefix).toBe("test...")
+      expect(result.message).toContain("Network error: fetch failed")
     })
   })
 })

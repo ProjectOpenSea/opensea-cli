@@ -1,4 +1,5 @@
 export { OpenSeaAPIError, OpenSeaClient } from "./client.js"
+export { checkHealth } from "./health.js"
 export type { OutputFormat } from "./output.js"
 export { formatOutput } from "./output.js"
 export { OpenSeaCLI } from "./sdk.js"
