@@ -3,3 +3,4 @@ dist
 .env
 *.tgz
 .tsbuildinfo
+test-reports/

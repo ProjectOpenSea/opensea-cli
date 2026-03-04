@@ -1170,9 +1170,9 @@ describeIfLive(
             res.headers.get("ratelimit-remaining") ??
             res.headers.get("x-ratelimit-limit") ??
             res.headers.get("ratelimit-limit")
-          // Rate limiting headers should be present
-          expect(rateLimitHeader).toBeDefined()
-          record("headers.rateLimit", "GET", path, res)
+          // Record whether rate-limit headers are present (not all endpoints expose them)
+          const violations = rateLimitHeader === null ? ["no rate-limit headers found"] : []
+          record("headers.rateLimit", "GET", path, res, violations)
         } catch (e) {
           recordError("headers.rateLimit", "GET", path, e)
           throw e
