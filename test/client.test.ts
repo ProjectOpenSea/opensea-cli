@@ -41,7 +41,7 @@ describe("OpenSeaClient", () => {
           method: "GET",
           headers: expect.objectContaining({
             Accept: "application/json",
-            "User-Agent": expect.stringMatching(/^opensea-cli\/\d+\.\d+\.\d+/),
+            "User-Agent": expect.stringMatching(/^opensea-cli\/\d+\.\d+\.\d+$/),
             "x-api-key": "test-key",
           }),
         }),
@@ -96,7 +96,7 @@ describe("OpenSeaClient", () => {
           method: "POST",
           headers: expect.objectContaining({
             Accept: "application/json",
-            "User-Agent": expect.stringMatching(/^opensea-cli\/\d+\.\d+\.\d+/),
+            "User-Agent": expect.stringMatching(/^opensea-cli\/\d+\.\d+\.\d+$/),
             "x-api-key": "test-key",
           }),
         }),
@@ -116,7 +116,7 @@ describe("OpenSeaClient", () => {
           headers: expect.objectContaining({
             Accept: "application/json",
             "Content-Type": "application/json",
-            "User-Agent": expect.stringMatching(/^opensea-cli\/\d+\.\d+\.\d+/),
+            "User-Agent": expect.stringMatching(/^opensea-cli\/\d+\.\d+\.\d+$/),
             "x-api-key": "test-key",
           }),
           body: JSON.stringify({ name: "test" }),
