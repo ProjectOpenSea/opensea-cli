@@ -9,7 +9,7 @@ export function healthCommand(
   getFormat: () => OutputFormat,
 ): Command {
   const cmd = new Command("health")
-    .description("Check API connectivity")
+    .description("Check API connectivity and authentication")
     .action(async () => {
       const client = getClient()
       const result = await checkHealth(client)

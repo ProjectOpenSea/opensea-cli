@@ -18,5 +18,6 @@ export interface CommandOptions {
 export interface HealthResult {
   status: "ok" | "error"
   key_prefix: string
+  authenticated: boolean
   message: string
 }
