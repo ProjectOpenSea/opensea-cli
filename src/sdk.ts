@@ -1,4 +1,5 @@
-import { OpenSeaAPIError, OpenSeaClient } from "./client.js"
+import { OpenSeaClient } from "./client.js"
+import { checkHealth } from "./health.js"
 import type {
   Account,
   AssetEvent,
@@ -392,29 +393,6 @@ class HealthAPI {
   constructor(private client: OpenSeaClient) {}
 
   async check(): Promise<HealthResult> {
-    const keyPrefix = this.client.getApiKeyPrefix()
-    try {
-      await this.client.get("/api/v2/collections", { limit: 1 })
-      return {
-        status: "ok",
-        key_prefix: keyPrefix,
-        message: "API key is valid and connectivity is working",
-      }
-    } catch (error) {
-      let message: string
-      if (error instanceof OpenSeaAPIError) {
-        message =
-          error.statusCode === 401 || error.statusCode === 403
-            ? `Authentication failed (${error.statusCode}): ${error.responseBody}`
-            : `API error (${error.statusCode}): ${error.responseBody}`
-      } else {
-        message = `Network error: ${(error as Error).message}`
-      }
-      return {
-        status: "error",
-        key_prefix: keyPrefix,
-        message,
-      }
-    }
+    return checkHealth(this.client)
   }
 }

@@ -5,13 +5,9 @@ import { type CommandTestContext, createCommandTestContext } from "../mocks.js"
 
 describe("healthCommand", () => {
   let ctx: CommandTestContext
-  let mockGetApiKeyPrefix: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
     ctx = createCommandTestContext()
-    mockGetApiKeyPrefix = vi.fn().mockReturnValue("test...")
-    ;(ctx.mockClient as Record<string, unknown>).getApiKeyPrefix =
-      mockGetApiKeyPrefix
   })
 
   afterEach(() => {
@@ -35,7 +31,7 @@ describe("healthCommand", () => {
     const output = JSON.parse(ctx.consoleSpy.mock.calls[0][0] as string)
     expect(output.status).toBe("ok")
     expect(output.key_prefix).toBe("test...")
-    expect(output.message).toBe("API key is valid and connectivity is working")
+    expect(output.message).toBe("Connectivity is working")
   })
 
   it("outputs error status on authentication failure", async () => {

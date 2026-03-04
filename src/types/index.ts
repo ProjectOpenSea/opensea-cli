@@ -15,7 +15,7 @@ export interface CommandOptions {
   raw?: boolean
 }
 
-export type HealthResult = {
+export interface HealthResult {
   status: "ok" | "error"
   key_prefix: string
   message: string

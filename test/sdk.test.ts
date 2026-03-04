@@ -1,14 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { OpenSeaClient } from "../src/client.js"
+import { OpenSeaAPIError, OpenSeaClient } from "../src/client.js"
 import { OpenSeaCLI } from "../src/sdk.js"
 
-vi.mock("../src/client.js", () => {
+vi.mock("../src/client.js", async importOriginal => {
+  const actual = await importOriginal<typeof import("../src/client.js")>()
   const MockOpenSeaClient = vi.fn()
   MockOpenSeaClient.prototype.get = vi.fn()
   MockOpenSeaClient.prototype.post = vi.fn()
   MockOpenSeaClient.prototype.getDefaultChain = vi.fn(() => "ethereum")
   MockOpenSeaClient.prototype.getApiKeyPrefix = vi.fn(() => "test...")
-  return { OpenSeaClient: MockOpenSeaClient, OpenSeaAPIError: vi.fn() }
+  return {
+    OpenSeaClient: MockOpenSeaClient,
+    OpenSeaAPIError: actual.OpenSeaAPIError,
+  }
 })
 
 describe("OpenSeaCLI", () => {
@@ -419,12 +423,34 @@ describe("OpenSeaCLI", () => {
       })
       expect(result.status).toBe("ok")
       expect(result.key_prefix).toBe("test...")
-      expect(result.message).toBe(
-        "API key is valid and connectivity is working",
-      )
+      expect(result.message).toBe("Connectivity is working")
     })
 
-    it("check returns error when API call fails", async () => {
+    it("check returns error on authentication failure", async () => {
+      mockGet.mockRejectedValue(
+        new OpenSeaAPIError(401, "Unauthorized", "/api/v2/collections"),
+      )
+      const result = await sdk.health.check()
+      expect(result.status).toBe("error")
+      expect(result.key_prefix).toBe("test...")
+      expect(result.message).toContain("Authentication failed (401)")
+    })
+
+    it("check returns error on API error", async () => {
+      mockGet.mockRejectedValue(
+        new OpenSeaAPIError(
+          500,
+          "Internal Server Error",
+          "/api/v2/collections",
+        ),
+      )
+      const result = await sdk.health.check()
+      expect(result.status).toBe("error")
+      expect(result.key_prefix).toBe("test...")
+      expect(result.message).toContain("API error (500)")
+    })
+
+    it("check returns error when network fails", async () => {
       mockGet.mockRejectedValue(new Error("fetch failed"))
       const result = await sdk.health.check()
       expect(result.status).toBe("error")
