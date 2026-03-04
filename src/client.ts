@@ -72,7 +72,6 @@ export class OpenSeaClient {
       {
         method: "GET",
         headers: this.defaultHeaders,
-        signal: AbortSignal.timeout(this.timeoutMs),
       },
       path,
     )
@@ -111,7 +110,6 @@ export class OpenSeaClient {
         method: "POST",
         headers,
         body: body ? JSON.stringify(body) : undefined,
-        signal: AbortSignal.timeout(this.timeoutMs),
       },
       path,
     )
