@@ -48,6 +48,8 @@ program
     "Comma-separated list of fields to include in output",
   )
   .option("--max-lines <lines>", "Truncate output after N lines")
+  .option("--max-retries <n>", "Max retries on 429/5xx (0 to disable)", "3")
+  .option("--no-retry", "Disable request retries")
 
 function getClient(): OpenSeaClient {
   const opts = program.opts<{
@@ -56,6 +58,8 @@ function getClient(): OpenSeaClient {
     baseUrl?: string
     timeout: string
     verbose?: boolean
+    maxRetries: string
+    retry: boolean
   }>()
 
   const apiKey = opts.apiKey ?? process.env.OPENSEA_API_KEY
@@ -66,12 +70,17 @@ function getClient(): OpenSeaClient {
     process.exit(EXIT_AUTH_ERROR)
   }
 
+  const maxRetries = opts.retry
+    ? parseIntOption(opts.maxRetries, "--max-retries")
+    : 0
+
   return new OpenSeaClient({
     apiKey,
     chain: opts.chain,
     baseUrl: opts.baseUrl,
     timeout: parseIntOption(opts.timeout, "--timeout"),
     verbose: opts.verbose,
+    maxRetries,
   })
 }
 

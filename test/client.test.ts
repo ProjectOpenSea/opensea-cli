@@ -6,7 +6,7 @@ describe("OpenSeaClient", () => {
   let client: OpenSeaClient
 
   beforeEach(() => {
-    client = new OpenSeaClient({ apiKey: "test-key" })
+    client = new OpenSeaClient({ apiKey: "test-key", maxRetries: 0 })
   })
 
   afterEach(() => {
@@ -140,6 +140,198 @@ describe("OpenSeaClient", () => {
       mockFetchTextResponse("Server Error", 500)
 
       await expect(client.post("/api/v2/fail")).rejects.toThrow(OpenSeaAPIError)
+    })
+  })
+
+  describe("retry", () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it("retries on 429 and succeeds", async () => {
+      const retryClient = new OpenSeaClient({
+        apiKey: "test-key",
+        maxRetries: 3,
+        retryBaseDelay: 100,
+      })
+      vi.spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce(new Response("Rate limited", { status: 429 }))
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ ok: true }), { status: 200 }),
+        )
+
+      const promise = retryClient.get("/api/v2/test")
+      await vi.advanceTimersByTimeAsync(10_000)
+      const result = await promise
+
+      expect(result).toEqual({ ok: true })
+      expect(fetch).toHaveBeenCalledTimes(2)
+    })
+
+    it("retries on 500 and succeeds", async () => {
+      const retryClient = new OpenSeaClient({
+        apiKey: "test-key",
+        maxRetries: 3,
+        retryBaseDelay: 100,
+      })
+      vi.spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce(new Response("Server Error", { status: 500 }))
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ ok: true }), { status: 200 }),
+        )
+
+      const promise = retryClient.get("/api/v2/test")
+      await vi.advanceTimersByTimeAsync(10_000)
+      const result = await promise
+
+      expect(result).toEqual({ ok: true })
+      expect(fetch).toHaveBeenCalledTimes(2)
+    })
+
+    it("throws after exhausting all retries", async () => {
+      const retryClient = new OpenSeaClient({
+        apiKey: "test-key",
+        maxRetries: 2,
+        retryBaseDelay: 100,
+      })
+      vi.spyOn(globalThis, "fetch").mockImplementation(() =>
+        Promise.resolve(new Response("Rate limited", { status: 429 })),
+      )
+
+      const promise = retryClient.get("/api/v2/test").catch((e: unknown) => e)
+      await vi.advanceTimersByTimeAsync(60_000)
+      const error = await promise
+
+      expect(error).toBeInstanceOf(OpenSeaAPIError)
+      expect(fetch).toHaveBeenCalledTimes(3)
+    })
+
+    it("does not retry on 404", async () => {
+      const retryClient = new OpenSeaClient({
+        apiKey: "test-key",
+        maxRetries: 3,
+        retryBaseDelay: 100,
+      })
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response("Not Found", { status: 404 }),
+      )
+
+      await expect(retryClient.get("/api/v2/test")).rejects.toThrow(
+        OpenSeaAPIError,
+      )
+      expect(fetch).toHaveBeenCalledTimes(1)
+    })
+
+    it("does not retry when maxRetries is 0", async () => {
+      const noRetryClient = new OpenSeaClient({
+        apiKey: "test-key",
+        maxRetries: 0,
+      })
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response("Rate limited", { status: 429 }),
+      )
+
+      await expect(noRetryClient.get("/api/v2/test")).rejects.toThrow(
+        OpenSeaAPIError,
+      )
+      expect(fetch).toHaveBeenCalledTimes(1)
+    })
+
+    it("respects Retry-After header (seconds)", async () => {
+      const retryClient = new OpenSeaClient({
+        apiKey: "test-key",
+        maxRetries: 1,
+        retryBaseDelay: 100,
+      })
+      vi.spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce(
+          new Response("Rate limited", {
+            status: 429,
+            headers: { "Retry-After": "5" },
+          }),
+        )
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ ok: true }), { status: 200 }),
+        )
+
+      const promise = retryClient.get("/api/v2/test")
+      // Advance past the 5s Retry-After + jitter
+      await vi.advanceTimersByTimeAsync(10_000)
+      const result = await promise
+
+      expect(result).toEqual({ ok: true })
+      expect(fetch).toHaveBeenCalledTimes(2)
+    })
+
+    it("retries post requests", async () => {
+      const retryClient = new OpenSeaClient({
+        apiKey: "test-key",
+        maxRetries: 3,
+        retryBaseDelay: 100,
+      })
+      vi.spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce(new Response("Server Error", { status: 503 }))
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ status: "ok" }), {
+            status: 200,
+          }),
+        )
+
+      const promise = retryClient.post("/api/v2/refresh")
+      await vi.advanceTimersByTimeAsync(10_000)
+      const result = await promise
+
+      expect(result).toEqual({ status: "ok" })
+      expect(fetch).toHaveBeenCalledTimes(2)
+    })
+
+    it("logs retries when verbose is enabled", async () => {
+      const verboseRetryClient = new OpenSeaClient({
+        apiKey: "test-key",
+        maxRetries: 3,
+        retryBaseDelay: 100,
+        verbose: true,
+      })
+      const stderrSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+      vi.spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce(new Response("Rate limited", { status: 429 }))
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ ok: true }), { status: 200 }),
+        )
+
+      const promise = verboseRetryClient.get("/api/v2/test")
+      await vi.advanceTimersByTimeAsync(10_000)
+      await promise
+
+      expect(stderrSpy).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /\[verbose\] Retry 1\/3 after \d+ms \(status 429\)/,
+        ),
+      )
+    })
+
+    it("does not log retries when verbose is disabled", async () => {
+      const retryClient = new OpenSeaClient({
+        apiKey: "test-key",
+        maxRetries: 3,
+        retryBaseDelay: 100,
+      })
+      const stderrSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+      vi.spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce(new Response("Rate limited", { status: 429 }))
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ ok: true }), { status: 200 }),
+        )
+
+      const promise = retryClient.get("/api/v2/test")
+      await vi.advanceTimersByTimeAsync(10_000)
+      await promise
+
+      expect(stderrSpy).not.toHaveBeenCalled()
     })
   })
 

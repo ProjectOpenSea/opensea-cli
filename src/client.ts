@@ -5,6 +5,25 @@ declare const __VERSION__: string
 const DEFAULT_BASE_URL = "https://api.opensea.io"
 const DEFAULT_TIMEOUT_MS = 30_000
 const USER_AGENT = `opensea-cli/${__VERSION__}`
+const DEFAULT_MAX_RETRIES = 3
+const DEFAULT_RETRY_BASE_DELAY_MS = 1_000
+
+function isRetryableStatus(status: number): boolean {
+  return status === 429 || status >= 500
+}
+
+function parseRetryAfter(header: string | null): number | undefined {
+  if (!header) return undefined
+  const seconds = Number(header)
+  if (!Number.isNaN(seconds)) return seconds * 1000
+  const date = Date.parse(header)
+  if (!Number.isNaN(date)) return Math.max(0, date - Date.now())
+  return undefined
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
 
 export class OpenSeaClient {
   private apiKey: string
@@ -12,6 +31,8 @@ export class OpenSeaClient {
   private defaultChain: string
   private timeoutMs: number
   private verbose: boolean
+  private maxRetries: number
+  private retryBaseDelay: number
 
   constructor(config: OpenSeaClientConfig) {
     this.apiKey = config.apiKey
@@ -19,6 +40,8 @@ export class OpenSeaClient {
     this.defaultChain = config.chain ?? "ethereum"
     this.timeoutMs = config.timeout ?? DEFAULT_TIMEOUT_MS
     this.verbose = config.verbose ?? false
+    this.maxRetries = config.maxRetries ?? DEFAULT_MAX_RETRIES
+    this.retryBaseDelay = config.retryBaseDelay ?? DEFAULT_RETRY_BASE_DELAY_MS
   }
 
   private get defaultHeaders(): Record<string, string> {
@@ -44,20 +67,15 @@ export class OpenSeaClient {
       console.error(`[verbose] GET ${url.toString()}`)
     }
 
-    const response = await fetch(url.toString(), {
-      method: "GET",
-      headers: this.defaultHeaders,
-      signal: AbortSignal.timeout(this.timeoutMs),
-    })
-
-    if (this.verbose) {
-      console.error(`[verbose] ${response.status} ${response.statusText}`)
-    }
-
-    if (!response.ok) {
-      const body = await response.text()
-      throw new OpenSeaAPIError(response.status, body, path)
-    }
+    const response = await this.fetchWithRetry(
+      url.toString(),
+      {
+        method: "GET",
+        headers: this.defaultHeaders,
+        signal: AbortSignal.timeout(this.timeoutMs),
+      },
+      path,
+    )
 
     return response.json() as Promise<T>
   }
@@ -87,21 +105,16 @@ export class OpenSeaClient {
       console.error(`[verbose] POST ${url.toString()}`)
     }
 
-    const response = await fetch(url.toString(), {
-      method: "POST",
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-      signal: AbortSignal.timeout(this.timeoutMs),
-    })
-
-    if (this.verbose) {
-      console.error(`[verbose] ${response.status} ${response.statusText}`)
-    }
-
-    if (!response.ok) {
-      const text = await response.text()
-      throw new OpenSeaAPIError(response.status, text, path)
-    }
+    const response = await this.fetchWithRetry(
+      url.toString(),
+      {
+        method: "POST",
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+        signal: AbortSignal.timeout(this.timeoutMs),
+      },
+      path,
+    )
 
     return response.json() as Promise<T>
   }
@@ -113,6 +126,48 @@ export class OpenSeaClient {
   getApiKeyPrefix(): string {
     if (this.apiKey.length < 8) return "***"
     return `${this.apiKey.slice(0, 4)}...`
+  }
+
+  private async fetchWithRetry(
+    url: string,
+    init: RequestInit,
+    path: string,
+  ): Promise<Response> {
+    for (let attempt = 0; ; attempt++) {
+      const response = await fetch(url, {
+        ...init,
+        signal: AbortSignal.timeout(this.timeoutMs),
+      })
+
+      if (this.verbose) {
+        console.error(`[verbose] ${response.status} ${response.statusText}`)
+      }
+
+      if (response.ok) {
+        return response
+      }
+
+      if (attempt < this.maxRetries && isRetryableStatus(response.status)) {
+        const retryAfterMs = parseRetryAfter(
+          response.headers.get("Retry-After"),
+        )
+        const backoffMs = this.retryBaseDelay * 2 ** attempt
+        const jitterMs = Math.random() * this.retryBaseDelay
+        const delayMs = Math.max(retryAfterMs ?? 0, backoffMs) + jitterMs
+
+        if (this.verbose) {
+          console.error(
+            `[verbose] Retry ${attempt + 1}/${this.maxRetries} after ${Math.round(delayMs)}ms (status ${response.status})`,
+          )
+        }
+
+        await sleep(delayMs)
+        continue
+      }
+
+      const text = await response.text()
+      throw new OpenSeaAPIError(response.status, text, path)
+    }
   }
 }
 
