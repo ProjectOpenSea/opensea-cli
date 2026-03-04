@@ -97,14 +97,6 @@ export class OpenSeaClient {
     return this.defaultChain
   }
 
-  getBaseUrl(): string {
-    return this.baseUrl
-  }
-
-  getApiKey(): string {
-    return this.apiKey
-  }
-
   private async fetchWithRetry<T>(
     url: URL,
     init: RequestInit,
