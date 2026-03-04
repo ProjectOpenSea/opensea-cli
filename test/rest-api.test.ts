@@ -1171,7 +1171,8 @@ describeIfLive(
             res.headers.get("x-ratelimit-limit") ??
             res.headers.get("ratelimit-limit")
           // Record whether rate-limit headers are present (not all endpoints expose them)
-          const violations = rateLimitHeader === null ? ["no rate-limit headers found"] : []
+          const violations =
+            rateLimitHeader === null ? ["no rate-limit headers found"] : []
           record("headers.rateLimit", "GET", path, res, violations)
         } catch (e) {
           recordError("headers.rateLimit", "GET", path, e)
