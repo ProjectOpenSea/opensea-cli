@@ -98,24 +98,7 @@ function filterFields(data: unknown, fields: string[]): unknown {
     return data.map(item => filterFields(item, fields))
   }
   if (data && typeof data === "object") {
-    const obj = data as Record<string, unknown>
-    const keys = Object.keys(obj)
-    const hasMatchingKey = fields.some(f => f in obj)
-    if (hasMatchingKey) {
-      return pickFields(obj, fields)
-    }
-    const result: Record<string, unknown> = {}
-    for (const key of keys) {
-      const value = obj[key]
-      result[key] = Array.isArray(value)
-        ? value.map(item =>
-            item && typeof item === "object"
-              ? pickFields(item as Record<string, unknown>, fields)
-              : item,
-          )
-        : value
-    }
-    return result
+    return pickFields(data as Record<string, unknown>, fields)
   }
   return data
 }

@@ -82,11 +82,17 @@ program.hook("preAction", () => {
     fields?: string
     maxLines?: string
   }>()
+  let maxLines: number | undefined
+  if (opts.maxLines) {
+    maxLines = parseIntOption(opts.maxLines, "--max-lines")
+    if (maxLines < 1) {
+      console.error("Error: --max-lines must be >= 1")
+      process.exit(2)
+    }
+  }
   setOutputOptions({
     fields: opts.fields?.split(",").map(f => f.trim()),
-    maxLines: opts.maxLines
-      ? parseIntOption(opts.maxLines, "--max-lines")
-      : undefined,
+    maxLines,
   })
 })
 

@@ -88,22 +88,15 @@ describe("formatOutput", () => {
       expect(result).toEqual({ name: "Cool NFT", collection: "cool-cats" })
     })
 
-    it("filters fields on items inside wrapped arrays", () => {
-      setOutputOptions({ fields: ["identifier", "name"] })
+    it("picks matching fields from wrapper objects", () => {
+      setOutputOptions({ fields: ["nfts", "next"] })
       const data = {
         nfts: [
-          {
-            identifier: "1",
-            name: "NFT #1",
-            image_url: "https://example.com/1.png",
-          },
-          {
-            identifier: "2",
-            name: "NFT #2",
-            image_url: "https://example.com/2.png",
-          },
+          { identifier: "1", name: "NFT #1" },
+          { identifier: "2", name: "NFT #2" },
         ],
         next: "cursor123",
+        extra: "dropped",
       }
       const result = JSON.parse(formatOutput(data, "json"))
       expect(result).toEqual({
@@ -200,27 +193,17 @@ describe("formatOutput", () => {
       expect(lines).toHaveLength(3)
       expect(lines[2]).toMatch(/\.\.\. \(\d+ more lines?\)/)
     })
-
-    it("handles max-lines 0 by truncating all lines", () => {
-      setOutputOptions({ maxLines: 0 })
-      const data = { a: 1 }
-      const result = formatOutput(data, "json")
-      expect(result).toContain("... (3 more lines)")
-    })
   })
 
   describe("--fields and --max-lines combined", () => {
     it("applies field filtering then truncation", () => {
       setOutputOptions({ fields: ["name"], maxLines: 3 })
-      const data = {
-        nfts: [
-          { name: "A", id: 1 },
-          { name: "B", id: 2 },
-          { name: "C", id: 3 },
-          { name: "D", id: 4 },
-        ],
-        next: "cursor",
-      }
+      const data = [
+        { name: "A", id: 1 },
+        { name: "B", id: 2 },
+        { name: "C", id: 3 },
+        { name: "D", id: 4 },
+      ]
       const result = formatOutput(data, "json")
       expect(result).not.toContain("id")
       const lines = result.split("\n")
