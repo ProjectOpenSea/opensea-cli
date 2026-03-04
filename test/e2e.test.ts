@@ -67,25 +67,30 @@ function record(entry: Omit<TestResult, "passed">, fn: () => void) {
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
+/** Parse a shell-like arg string, respecting double-quoted groups. */
+function parseArgs(input: string): string[] {
+  return (
+    input.match(/(?:[^\s"]+|"[^"]*")+/g)?.map(s => s.replace(/^"|"$/g, "")) ??
+    []
+  )
+}
+
 /** Run the CLI binary and return stdout. Uses env var for API key to avoid shell injection. */
 function cli(
-  args: string,
+  args: string | string[],
   options?: { expectError?: boolean },
 ): { stdout: string; stderr: string; exitCode: number } {
+  const argv = typeof args === "string" ? parseArgs(args) : args
   try {
-    const stdout = execFileSync(
-      "node",
-      [CLI_BIN, ...args.split(/\s+/).filter(Boolean)],
-      {
-        encoding: "utf-8",
-        timeout: 60_000,
-        env: {
-          ...process.env,
-          NODE_NO_WARNINGS: "1",
-          OPENSEA_API_KEY: API_KEY,
-        },
+    const stdout = execFileSync("node", [CLI_BIN, ...argv], {
+      encoding: "utf-8",
+      timeout: 60_000,
+      env: {
+        ...process.env,
+        NODE_NO_WARNINGS: "1",
+        OPENSEA_API_KEY: API_KEY,
       },
-    )
+    })
     return { stdout, stderr: "", exitCode: 0 }
   } catch (err) {
     const e = err as {
@@ -105,8 +110,9 @@ function cli(
 }
 
 /** Run the CLI and return stdout for a given format. */
-function cliFormatted(args: string, format: string): string {
-  return cli(`--format ${format} ${args}`).stdout
+function cliFormatted(args: string | string[], format: string): string {
+  const argv = typeof args === "string" ? parseArgs(args) : args
+  return cli(["--format", format, ...argv]).stdout
 }
 
 /** Direct API fetch for parity testing. */
