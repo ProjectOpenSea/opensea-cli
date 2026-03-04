@@ -27,7 +27,7 @@ export function formatOutput(data: unknown, format: OutputFormat): string {
     result = JSON.stringify(processed, null, 2)
   }
 
-  if (_outputOptions.maxLines) {
+  if (_outputOptions.maxLines != null) {
     result = truncateOutput(result, _outputOptions.maxLines)
   }
 
@@ -99,21 +99,23 @@ function filterFields(data: unknown, fields: string[]): unknown {
   }
   if (data && typeof data === "object") {
     const obj = data as Record<string, unknown>
-    const arrayKeys = Object.keys(obj).filter(k => Array.isArray(obj[k]))
-    if (arrayKeys.length > 0) {
-      const result: Record<string, unknown> = {}
-      for (const [key, value] of Object.entries(obj)) {
-        result[key] = Array.isArray(value)
-          ? value.map(item =>
-              item && typeof item === "object"
-                ? pickFields(item as Record<string, unknown>, fields)
-                : item,
-            )
-          : value
-      }
-      return result
+    const keys = Object.keys(obj)
+    const hasMatchingKey = fields.some(f => f in obj)
+    if (hasMatchingKey) {
+      return pickFields(obj, fields)
     }
-    return pickFields(obj, fields)
+    const result: Record<string, unknown> = {}
+    for (const key of keys) {
+      const value = obj[key]
+      result[key] = Array.isArray(value)
+        ? value.map(item =>
+            item && typeof item === "object"
+              ? pickFields(item as Record<string, unknown>, fields)
+              : item,
+          )
+        : value
+    }
+    return result
   }
   return data
 }

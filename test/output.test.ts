@@ -132,6 +132,23 @@ describe("formatOutput", () => {
       expect(result).toEqual({ name: "test" })
     })
 
+    it("filters top-level fields on objects with array properties", () => {
+      setOutputOptions({ fields: ["name", "collection"] })
+      const data = {
+        name: "Cool Cats",
+        collection: "cool-cats",
+        description: "A cool collection",
+        contracts: [{ address: "0x1", chain: "ethereum" }],
+        editors: ["alice"],
+        fees: [{ fee: 250, recipient: "0x2", required: true }],
+      }
+      const result = JSON.parse(formatOutput(data, "json"))
+      expect(result).toEqual({
+        name: "Cool Cats",
+        collection: "cool-cats",
+      })
+    })
+
     it("returns primitives unchanged", () => {
       setOutputOptions({ fields: ["name"] })
       expect(formatOutput("hello", "json")).toBe('"hello"')
@@ -182,6 +199,13 @@ describe("formatOutput", () => {
       const lines = result.split("\n")
       expect(lines).toHaveLength(3)
       expect(lines[2]).toMatch(/\.\.\. \(\d+ more lines?\)/)
+    })
+
+    it("handles max-lines 0 by truncating all lines", () => {
+      setOutputOptions({ maxLines: 0 })
+      const data = { a: 1 }
+      const result = formatOutput(data, "json")
+      expect(result).toContain("... (3 more lines)")
     })
   })
 
