@@ -1,13 +1,13 @@
 import { readFileSync } from "node:fs"
 import { defineConfig } from "vitest/config"
 
-const { version } = JSON.parse(readFileSync("package.json", "utf-8")) as {
+const pkg = JSON.parse(readFileSync("./package.json", "utf-8")) as {
   version: string
 }
 
 export default defineConfig({
   define: {
-    __VERSION__: JSON.stringify(version),
+    __VERSION__: JSON.stringify(pkg.version),
   },
   test: {
     coverage: {
