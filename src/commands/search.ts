@@ -1,6 +1,6 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
-import type { OutputFormat } from "../output.js"
+import type { OutputFilterOptions, OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
 import { parseIntOption } from "../parse.js"
 import type { SearchResponse } from "../types/index.js"
@@ -8,6 +8,7 @@ import type { SearchResponse } from "../types/index.js"
 export function searchCommand(
   getClient: () => OpenSeaClient,
   getFormat: () => OutputFormat,
+  getFilters?: () => OutputFilterOptions,
 ): Command {
   const cmd = new Command("search")
     .description("Search across collections, tokens, NFTs, and accounts")
@@ -42,7 +43,7 @@ export function searchCommand(
           "/api/v2/search",
           params,
         )
-        console.log(formatOutput(result, getFormat()))
+        console.log(formatOutput(result, getFormat(), getFilters?.()))
       },
     )
 

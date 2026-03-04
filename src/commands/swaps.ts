@@ -1,6 +1,6 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
-import type { OutputFormat } from "../output.js"
+import type { OutputFilterOptions, OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
 import { parseFloatOption } from "../parse.js"
 import type { SwapQuoteResponse } from "../types/index.js"
@@ -8,6 +8,7 @@ import type { SwapQuoteResponse } from "../types/index.js"
 export function swapsCommand(
   getClient: () => OpenSeaClient,
   getFormat: () => OutputFormat,
+  getFilters?: () => OutputFilterOptions,
 ): Command {
   const cmd = new Command("swaps").description(
     "Get swap quotes for token trading",
@@ -65,7 +66,7 @@ export function swapsCommand(
             recipient: options.recipient,
           },
         )
-        console.log(formatOutput(result, getFormat()))
+        console.log(formatOutput(result, getFormat(), getFilters?.()))
       },
     )
 

@@ -1,6 +1,6 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
-import type { OutputFormat } from "../output.js"
+import type { OutputFilterOptions, OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
 import { parseIntOption } from "../parse.js"
 import type { Listing } from "../types/index.js"
@@ -8,6 +8,7 @@ import type { Listing } from "../types/index.js"
 export function listingsCommand(
   getClient: () => OpenSeaClient,
   getFormat: () => OutputFormat,
+  getFilters?: () => OutputFilterOptions,
 ): Command {
   const cmd = new Command("listings").description("Query NFT listings")
 
@@ -27,7 +28,7 @@ export function listingsCommand(
           limit: parseIntOption(options.limit, "--limit"),
           next: options.next,
         })
-        console.log(formatOutput(result, getFormat()))
+        console.log(formatOutput(result, getFormat(), getFilters?.()))
       },
     )
 
@@ -47,7 +48,7 @@ export function listingsCommand(
           limit: parseIntOption(options.limit, "--limit"),
           next: options.next,
         })
-        console.log(formatOutput(result, getFormat()))
+        console.log(formatOutput(result, getFormat(), getFilters?.()))
       },
     )
 
@@ -61,7 +62,7 @@ export function listingsCommand(
       const result = await client.get<Listing>(
         `/api/v2/listings/collection/${collection}/nfts/${tokenId}/best`,
       )
-      console.log(formatOutput(result, getFormat()))
+      console.log(formatOutput(result, getFormat(), getFilters?.()))
     })
 
   return cmd

@@ -1,6 +1,6 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
-import type { OutputFormat } from "../output.js"
+import type { OutputFilterOptions, OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
 import { parseIntOption } from "../parse.js"
 import type { AssetEvent } from "../types/index.js"
@@ -8,6 +8,7 @@ import type { AssetEvent } from "../types/index.js"
 export function eventsCommand(
   getClient: () => OpenSeaClient,
   getFormat: () => OutputFormat,
+  getFilters?: () => OutputFilterOptions,
 ): Command {
   const cmd = new Command("events").description("Query marketplace events")
 
@@ -48,7 +49,7 @@ export function eventsCommand(
           limit: parseIntOption(options.limit, "--limit"),
           next: options.next,
         })
-        console.log(formatOutput(result, getFormat()))
+        console.log(formatOutput(result, getFormat(), getFilters?.()))
       },
     )
 
@@ -80,7 +81,7 @@ export function eventsCommand(
           limit: parseIntOption(options.limit, "--limit"),
           next: options.next,
         })
-        console.log(formatOutput(result, getFormat()))
+        console.log(formatOutput(result, getFormat(), getFilters?.()))
       },
     )
 
@@ -109,7 +110,7 @@ export function eventsCommand(
           limit: parseIntOption(options.limit, "--limit"),
           next: options.next,
         })
-        console.log(formatOutput(result, getFormat()))
+        console.log(formatOutput(result, getFormat(), getFilters?.()))
       },
     )
 
@@ -145,7 +146,7 @@ export function eventsCommand(
             next: options.next,
           },
         )
-        console.log(formatOutput(result, getFormat()))
+        console.log(formatOutput(result, getFormat(), getFilters?.()))
       },
     )
 

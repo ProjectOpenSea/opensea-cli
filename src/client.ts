@@ -2,6 +2,20 @@ import type { OpenSeaClientConfig } from "./types/index.js"
 
 const DEFAULT_BASE_URL = "https://api.opensea.io"
 const DEFAULT_TIMEOUT_MS = 30_000
+const DEFAULT_RETRIES = 3
+
+function isRetryable(status: number): boolean {
+  return status === 429 || status >= 500
+}
+
+function retryDelay(attempt: number, retryAfter?: string): number {
+  if (retryAfter) {
+    const seconds = Number.parseFloat(retryAfter)
+    if (!Number.isNaN(seconds)) return seconds * 1000
+  }
+  const base = Math.min(1000 * 2 ** attempt, 30_000)
+  return base + Math.random() * base * 0.5
+}
 
 export class OpenSeaClient {
   private apiKey: string
@@ -9,6 +23,7 @@ export class OpenSeaClient {
   private defaultChain: string
   private timeoutMs: number
   private verbose: boolean
+  private retries: number
 
   constructor(config: OpenSeaClientConfig) {
     this.apiKey = config.apiKey
@@ -16,6 +31,7 @@ export class OpenSeaClient {
     this.defaultChain = config.chain ?? "ethereum"
     this.timeoutMs = config.timeout ?? DEFAULT_TIMEOUT_MS
     this.verbose = config.verbose ?? false
+    this.retries = config.retries ?? DEFAULT_RETRIES
   }
 
   async get<T>(path: string, params?: Record<string, unknown>): Promise<T> {
@@ -29,29 +45,17 @@ export class OpenSeaClient {
       }
     }
 
-    if (this.verbose) {
-      console.error(`[verbose] GET ${url.toString()}`)
-    }
-
-    const response = await fetch(url.toString(), {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "x-api-key": this.apiKey,
+    return this.fetchWithRetry<T>(
+      url,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "x-api-key": this.apiKey,
+        },
       },
-      signal: AbortSignal.timeout(this.timeoutMs),
-    })
-
-    if (this.verbose) {
-      console.error(`[verbose] ${response.status} ${response.statusText}`)
-    }
-
-    if (!response.ok) {
-      const body = await response.text()
-      throw new OpenSeaAPIError(response.status, body, path)
-    }
-
-    return response.json() as Promise<T>
+      path,
+    )
   }
 
   async post<T>(
@@ -78,31 +82,79 @@ export class OpenSeaClient {
       headers["Content-Type"] = "application/json"
     }
 
-    if (this.verbose) {
-      console.error(`[verbose] POST ${url.toString()}`)
-    }
-
-    const response = await fetch(url.toString(), {
-      method: "POST",
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-      signal: AbortSignal.timeout(this.timeoutMs),
-    })
-
-    if (this.verbose) {
-      console.error(`[verbose] ${response.status} ${response.statusText}`)
-    }
-
-    if (!response.ok) {
-      const text = await response.text()
-      throw new OpenSeaAPIError(response.status, text, path)
-    }
-
-    return response.json() as Promise<T>
+    return this.fetchWithRetry<T>(
+      url,
+      {
+        method: "POST",
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+      },
+      path,
+    )
   }
 
   getDefaultChain(): string {
     return this.defaultChain
+  }
+
+  getBaseUrl(): string {
+    return this.baseUrl
+  }
+
+  getApiKey(): string {
+    return this.apiKey
+  }
+
+  private async fetchWithRetry<T>(
+    url: URL,
+    init: RequestInit,
+    path: string,
+  ): Promise<T> {
+    let lastError: OpenSeaAPIError | undefined
+
+    for (let attempt = 0; attempt <= this.retries; attempt++) {
+      if (attempt > 0 && lastError) {
+        const delay = retryDelay(attempt - 1, lastError.retryAfter)
+        if (this.verbose) {
+          console.error(
+            `[verbose] retry ${attempt}/${this.retries}` +
+              ` after ${Math.round(delay)}ms`,
+          )
+        }
+        await new Promise(resolve => setTimeout(resolve, delay))
+      }
+
+      if (this.verbose) {
+        console.error(`[verbose] ${init.method} ${url.toString()}`)
+      }
+
+      const response = await fetch(url.toString(), {
+        ...init,
+        signal: AbortSignal.timeout(this.timeoutMs),
+      })
+
+      if (this.verbose) {
+        console.error(`[verbose] ${response.status} ${response.statusText}`)
+      }
+
+      if (response.ok) {
+        return response.json() as Promise<T>
+      }
+
+      const body = await response.text()
+      lastError = new OpenSeaAPIError(
+        response.status,
+        body,
+        path,
+        response.headers.get("retry-after") ?? undefined,
+      )
+
+      if (!isRetryable(response.status) || attempt === this.retries) {
+        throw lastError
+      }
+    }
+
+    throw lastError!
   }
 }
 
@@ -111,6 +163,7 @@ export class OpenSeaAPIError extends Error {
     public statusCode: number,
     public responseBody: string,
     public path: string,
+    public retryAfter?: string,
   ) {
     super(`OpenSea API error ${statusCode} on ${path}: ${responseBody}`)
     this.name = "OpenSeaAPIError"

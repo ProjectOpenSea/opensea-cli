@@ -1,6 +1,6 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
-import type { OutputFormat } from "../output.js"
+import type { OutputFilterOptions, OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
 import { parseIntOption } from "../parse.js"
 import type {
@@ -14,6 +14,7 @@ import type {
 export function collectionsCommand(
   getClient: () => OpenSeaClient,
   getFormat: () => OutputFormat,
+  getFilters?: () => OutputFilterOptions,
 ): Command {
   const cmd = new Command("collections").description(
     "Manage and query NFT collections",
@@ -26,7 +27,7 @@ export function collectionsCommand(
     .action(async (slug: string) => {
       const client = getClient()
       const result = await client.get<Collection>(`/api/v2/collections/${slug}`)
-      console.log(formatOutput(result, getFormat()))
+      console.log(formatOutput(result, getFormat(), getFilters?.()))
     })
 
   cmd
@@ -62,7 +63,7 @@ export function collectionsCommand(
           limit: parseIntOption(options.limit, "--limit"),
           next: options.next,
         })
-        console.log(formatOutput(result, getFormat()))
+        console.log(formatOutput(result, getFormat(), getFilters?.()))
       },
     )
 
@@ -75,7 +76,7 @@ export function collectionsCommand(
       const result = await client.get<CollectionStats>(
         `/api/v2/collections/${slug}/stats`,
       )
-      console.log(formatOutput(result, getFormat()))
+      console.log(formatOutput(result, getFormat(), getFilters?.()))
     })
 
   cmd
@@ -87,7 +88,7 @@ export function collectionsCommand(
       const result = await client.get<GetTraitsResponse>(
         `/api/v2/traits/${slug}`,
       )
-      console.log(formatOutput(result, getFormat()))
+      console.log(formatOutput(result, getFormat(), getFilters?.()))
     })
 
   return cmd

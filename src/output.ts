@@ -2,14 +2,70 @@ import { formatToon } from "./toon.js"
 
 export type OutputFormat = "json" | "table" | "toon"
 
-export function formatOutput(data: unknown, format: OutputFormat): string {
+export interface OutputFilterOptions {
+  fields?: string[]
+  maxItems?: number
+}
+
+export function filterData(
+  data: unknown,
+  options: OutputFilterOptions,
+): unknown {
+  let result = data
+
+  if (options.maxItems !== undefined && Array.isArray(result)) {
+    result = result.slice(0, options.maxItems)
+  } else if (
+    options.maxItems !== undefined &&
+    result &&
+    typeof result === "object"
+  ) {
+    const obj = result as Record<string, unknown>
+    for (const [key, value] of Object.entries(obj)) {
+      if (Array.isArray(value)) {
+        obj[key] = value.slice(0, options.maxItems)
+      }
+    }
+    result = obj
+  }
+
+  if (options.fields && options.fields.length > 0) {
+    result = pickFields(result, options.fields)
+  }
+
+  return result
+}
+
+function pickFields(data: unknown, fields: string[]): unknown {
+  if (Array.isArray(data)) {
+    return data.map(item => pickFields(item, fields))
+  }
+  if (data && typeof data === "object") {
+    const obj = data as Record<string, unknown>
+    const picked: Record<string, unknown> = {}
+    for (const field of fields) {
+      if (field in obj) {
+        picked[field] = obj[field]
+      }
+    }
+    return picked
+  }
+  return data
+}
+
+export function formatOutput(
+  data: unknown,
+  format: OutputFormat,
+  filters?: OutputFilterOptions,
+): string {
+  const filtered = filters ? filterData(data, filters) : data
   if (format === "table") {
-    return formatTable(data)
+    return formatTable(filtered)
   }
   if (format === "toon") {
-    return formatToon(data)
+    return formatToon(filtered)
   }
-  return JSON.stringify(data, null, 2)
+  return JSON.stringify(filtered, null, 2)
 }
 
 function formatTable(data: unknown): string {

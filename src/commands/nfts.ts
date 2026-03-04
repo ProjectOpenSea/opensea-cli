@@ -1,6 +1,6 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
-import type { OutputFormat } from "../output.js"
+import type { OutputFilterOptions, OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
 import { parseIntOption } from "../parse.js"
 import type { Contract, NFT } from "../types/index.js"
@@ -8,6 +8,7 @@ import type { Contract, NFT } from "../types/index.js"
 export function nftsCommand(
   getClient: () => OpenSeaClient,
   getFormat: () => OutputFormat,
+  getFilters?: () => OutputFilterOptions,
 ): Command {
   const cmd = new Command("nfts").description("Query NFTs")
 
@@ -22,7 +23,7 @@ export function nftsCommand(
       const result = await client.get<{ nft: NFT }>(
         `/api/v2/chain/${chain}/contract/${contract}/nfts/${tokenId}`,
       )
-      console.log(formatOutput(result, getFormat()))
+      console.log(formatOutput(result, getFormat(), getFilters?.()))
     })
 
   cmd
@@ -40,7 +41,7 @@ export function nftsCommand(
           next: options.next,
         },
       )
-      console.log(formatOutput(result, getFormat()))
+      console.log(formatOutput(result, getFormat(), getFilters?.()))
     })
 
   cmd
@@ -64,7 +65,7 @@ export function nftsCommand(
             next: options.next,
           },
         )
-        console.log(formatOutput(result, getFormat()))
+        console.log(formatOutput(result, getFormat(), getFilters?.()))
       },
     )
 
@@ -89,7 +90,7 @@ export function nftsCommand(
             next: options.next,
           },
         )
-        console.log(formatOutput(result, getFormat()))
+        console.log(formatOutput(result, getFormat(), getFilters?.()))
       },
     )
 
@@ -108,6 +109,7 @@ export function nftsCommand(
         formatOutput(
           { status: "ok", message: "Metadata refresh requested" },
           getFormat(),
+          getFilters?.(),
         ),
       )
     })
@@ -122,7 +124,7 @@ export function nftsCommand(
       const result = await client.get<Contract>(
         `/api/v2/chain/${chain}/contract/${address}`,
       )
-      console.log(formatOutput(result, getFormat()))
+      console.log(formatOutput(result, getFormat(), getFilters?.()))
     })
 
   return cmd

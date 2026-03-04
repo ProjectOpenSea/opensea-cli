@@ -6,6 +6,7 @@ export interface OpenSeaClientConfig {
   chain?: string
   timeout?: number
   verbose?: boolean
+  retries?: number
 }
 
 export interface CommandOptions {

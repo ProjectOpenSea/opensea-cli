@@ -6,7 +6,7 @@ describe("OpenSeaClient", () => {
   let client: OpenSeaClient
 
   beforeEach(() => {
-    client = new OpenSeaClient({ apiKey: "test-key" })
+    client = new OpenSeaClient({ apiKey: "test-key", retries: 0 })
   })
 
   afterEach(() => {
@@ -213,6 +213,149 @@ describe("OpenSeaClient", () => {
   describe("getDefaultChain", () => {
     it("returns the default chain", () => {
       expect(client.getDefaultChain()).toBe("ethereum")
+    })
+  })
+
+  describe("retry", () => {
+    it("retries on 429 and succeeds", async () => {
+      const retryClient = new OpenSeaClient({
+        apiKey: "test-key",
+        retries: 2,
+      })
+      let callCount = 0
+      vi.spyOn(globalThis, "fetch").mockImplementation(() => {
+        callCount++
+        if (callCount === 1) {
+          return Promise.resolve(
+            new Response("rate limited", {
+              status: 429,
+              headers: { "retry-after": "0" },
+            }),
+          )
+        }
+        return Promise.resolve(
+          new Response(JSON.stringify({ ok: true }), {
+            status: 200,
+          }),
+        )
+      })
+
+      const result = await retryClient.get("/api/v2/test")
+      expect(result).toEqual({ ok: true })
+      expect(callCount).toBe(2)
+    })
+
+    it("retries on 500 and succeeds", async () => {
+      const retryClient = new OpenSeaClient({
+        apiKey: "test-key",
+        retries: 2,
+      })
+      let callCount = 0
+      vi.spyOn(globalThis, "fetch").mockImplementation(() => {
+        callCount++
+        if (callCount === 1) {
+          return Promise.resolve(new Response("server error", { status: 500 }))
+        }
+        return Promise.resolve(
+          new Response(JSON.stringify({ ok: true }), {
+            status: 200,
+          }),
+        )
+      })
+
+      const result = await retryClient.get("/api/v2/test")
+      expect(result).toEqual({ ok: true })
+      expect(callCount).toBe(2)
+    })
+
+    it("throws after exhausting retries", async () => {
+      const retryClient = new OpenSeaClient({
+        apiKey: "test-key",
+        retries: 1,
+      })
+      let callCount = 0
+      vi.spyOn(globalThis, "fetch").mockImplementation(() => {
+        callCount++
+        return Promise.resolve(
+          new Response("rate limited", {
+            status: 429,
+            headers: { "retry-after": "0" },
+          }),
+        )
+      })
+
+      await expect(retryClient.get("/api/v2/test")).rejects.toThrow(
+        OpenSeaAPIError,
+      )
+      expect(callCount).toBe(2)
+    })
+
+    it("does not retry on 404", async () => {
+      const retryClient = new OpenSeaClient({
+        apiKey: "test-key",
+        retries: 2,
+      })
+      let callCount = 0
+      vi.spyOn(globalThis, "fetch").mockImplementation(() => {
+        callCount++
+        return Promise.resolve(new Response("not found", { status: 404 }))
+      })
+
+      await expect(retryClient.get("/api/v2/test")).rejects.toThrow(
+        OpenSeaAPIError,
+      )
+      expect(callCount).toBe(1)
+    })
+
+    it("preserves retryAfter on error", async () => {
+      vi.spyOn(globalThis, "fetch").mockImplementation(() =>
+        Promise.resolve(
+          new Response("rate limited", {
+            status: 429,
+            headers: { "retry-after": "5" },
+          }),
+        ),
+      )
+
+      try {
+        await client.get("/api/v2/test")
+        expect.fail("Should have thrown")
+      } catch (err) {
+        const apiErr = err as OpenSeaAPIError
+        expect(apiErr.statusCode).toBe(429)
+        expect(apiErr.retryAfter).toBe("5")
+      }
+    })
+
+    it("logs retries when verbose", async () => {
+      const verboseRetryClient = new OpenSeaClient({
+        apiKey: "test-key",
+        retries: 1,
+        verbose: true,
+      })
+      const stderrSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+      let callCount = 0
+      vi.spyOn(globalThis, "fetch").mockImplementation(() => {
+        callCount++
+        if (callCount === 1) {
+          return Promise.resolve(
+            new Response("rate limited", {
+              status: 429,
+              headers: { "retry-after": "0" },
+            }),
+          )
+        }
+        return Promise.resolve(
+          new Response(JSON.stringify({ ok: true }), {
+            status: 200,
+          }),
+        )
+      })
+
+      await verboseRetryClient.get("/api/v2/test")
+      expect(stderrSpy).toHaveBeenCalledWith(
+        expect.stringContaining("[verbose] retry 1/1"),
+      )
     })
   })
 })

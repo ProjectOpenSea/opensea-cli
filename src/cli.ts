@@ -4,6 +4,7 @@ import {
   accountsCommand,
   collectionsCommand,
   eventsCommand,
+  healthCommand,
   listingsCommand,
   nftsCommand,
   offersCommand,
@@ -11,7 +12,7 @@ import {
   swapsCommand,
   tokensCommand,
 } from "./commands/index.js"
-import type { OutputFormat } from "./output.js"
+import type { OutputFilterOptions, OutputFormat } from "./output.js"
 import { parseIntOption } from "./parse.js"
 
 const BANNER = `
@@ -37,7 +38,13 @@ program
   .option("--format <format>", "Output format (json, table, or toon)", "json")
   .option("--base-url <url>", "API base URL")
   .option("--timeout <ms>", "Request timeout in milliseconds", "30000")
+  .option("--retries <n>", "Max retries on 429/5xx errors", "3")
   .option("--verbose", "Log request and response info to stderr")
+  .option(
+    "--fields <fields>",
+    "Comma-separated list of fields to include in output",
+  )
+  .option("--max-items <n>", "Truncate array output to first N items")
 
 function getClient(): OpenSeaClient {
   const opts = program.opts<{
@@ -45,6 +52,7 @@ function getClient(): OpenSeaClient {
     chain: string
     baseUrl?: string
     timeout: string
+    retries: string
     verbose?: boolean
   }>()
 
@@ -61,6 +69,7 @@ function getClient(): OpenSeaClient {
     chain: opts.chain,
     baseUrl: opts.baseUrl,
     timeout: parseIntOption(opts.timeout, "--timeout"),
+    retries: parseIntOption(opts.retries, "--retries"),
     verbose: opts.verbose,
   })
 }
@@ -72,15 +81,29 @@ function getFormat(): OutputFormat {
   return "json"
 }
 
-program.addCommand(collectionsCommand(getClient, getFormat))
-program.addCommand(nftsCommand(getClient, getFormat))
-program.addCommand(listingsCommand(getClient, getFormat))
-program.addCommand(offersCommand(getClient, getFormat))
-program.addCommand(eventsCommand(getClient, getFormat))
-program.addCommand(accountsCommand(getClient, getFormat))
-program.addCommand(tokensCommand(getClient, getFormat))
-program.addCommand(searchCommand(getClient, getFormat))
-program.addCommand(swapsCommand(getClient, getFormat))
+function getFilters(): OutputFilterOptions {
+  const opts = program.opts<{
+    fields?: string
+    maxItems?: string
+  }>()
+  return {
+    fields: opts.fields?.split(",").map(f => f.trim()),
+    maxItems: opts.maxItems
+      ? parseIntOption(opts.maxItems, "--max-items")
+      : undefined,
+  }
+}
+
+program.addCommand(collectionsCommand(getClient, getFormat, getFilters))
+program.addCommand(nftsCommand(getClient, getFormat, getFilters))
+program.addCommand(listingsCommand(getClient, getFormat, getFilters))
+program.addCommand(offersCommand(getClient, getFormat, getFilters))
+program.addCommand(eventsCommand(getClient, getFormat, getFilters))
+program.addCommand(accountsCommand(getClient, getFormat, getFilters))
+program.addCommand(tokensCommand(getClient, getFormat, getFilters))
+program.addCommand(searchCommand(getClient, getFormat, getFilters))
+program.addCommand(swapsCommand(getClient, getFormat, getFilters))
+program.addCommand(healthCommand(getClient))
 
 async function main() {
   try {
@@ -99,7 +122,7 @@ async function main() {
           2,
         ),
       )
-      process.exit(1)
+      process.exit(error.statusCode === 429 ? 3 : 1)
     }
     const label =
       error instanceof TypeError ? "Network Error" : (error as Error).name

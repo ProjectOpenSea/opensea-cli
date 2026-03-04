@@ -1,6 +1,6 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
-import type { OutputFormat } from "../output.js"
+import type { OutputFilterOptions, OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
 import { parseIntOption } from "../parse.js"
 import type { Chain, Token, TokenDetails } from "../types/index.js"
@@ -8,6 +8,7 @@ import type { Chain, Token, TokenDetails } from "../types/index.js"
 export function tokensCommand(
   getClient: () => OpenSeaClient,
   getFormat: () => OutputFormat,
+  getFilters?: () => OutputFilterOptions,
 ): Command {
   const cmd = new Command("tokens").description(
     "Query trending tokens, top tokens, and token details",
@@ -31,7 +32,7 @@ export function tokensCommand(
             cursor: options.next,
           },
         )
-        console.log(formatOutput(result, getFormat()))
+        console.log(formatOutput(result, getFormat(), getFilters?.()))
       },
     )
 
@@ -53,7 +54,7 @@ export function tokensCommand(
             cursor: options.next,
           },
         )
-        console.log(formatOutput(result, getFormat()))
+        console.log(formatOutput(result, getFormat(), getFilters?.()))
       },
     )
 
@@ -67,7 +68,7 @@ export function tokensCommand(
       const result = await client.get<TokenDetails>(
         `/api/v2/chain/${chain as Chain}/token/${address}`,
       )
-      console.log(formatOutput(result, getFormat()))
+      console.log(formatOutput(result, getFormat(), getFilters?.()))
     })
 
   return cmd

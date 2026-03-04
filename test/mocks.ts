@@ -27,13 +27,13 @@ export function createCommandTestContext(): CommandTestContext {
 }
 
 export function mockFetchResponse(data: unknown, status = 200): void {
-  vi.spyOn(globalThis, "fetch").mockResolvedValue(
-    new Response(JSON.stringify(data), { status }),
+  vi.spyOn(globalThis, "fetch").mockImplementation(() =>
+    Promise.resolve(new Response(JSON.stringify(data), { status })),
   )
 }
 
 export function mockFetchTextResponse(body: string, status = 200): void {
-  vi.spyOn(globalThis, "fetch").mockResolvedValue(
-    new Response(body, { status }),
+  vi.spyOn(globalThis, "fetch").mockImplementation(() =>
+    Promise.resolve(new Response(body, { status })),
   )
 }

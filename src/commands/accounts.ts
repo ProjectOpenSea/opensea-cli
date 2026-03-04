@@ -1,12 +1,13 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
-import type { OutputFormat } from "../output.js"
+import type { OutputFilterOptions, OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
 import type { Account } from "../types/index.js"
 
 export function accountsCommand(
   getClient: () => OpenSeaClient,
   getFormat: () => OutputFormat,
+  getFilters?: () => OutputFilterOptions,
 ): Command {
   const cmd = new Command("accounts").description("Query accounts")
 
@@ -17,7 +18,7 @@ export function accountsCommand(
     .action(async (address: string) => {
       const client = getClient()
       const result = await client.get<Account>(`/api/v2/accounts/${address}`)
-      console.log(formatOutput(result, getFormat()))
+      console.log(formatOutput(result, getFormat(), getFilters?.()))
     })
 
   return cmd
