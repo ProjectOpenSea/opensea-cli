@@ -1186,7 +1186,7 @@ describeIfLive(
           const res = await apiGet(path)
           expect(res.status).toBe(200)
           const cacheControl = res.headers.get("cache-control")
-          expect(cacheControl).toBeDefined()
+          expect(cacheControl).not.toBeNull()
           record("headers.cacheControl", "GET", path, res)
         } catch (e) {
           recordError("headers.cacheControl", "GET", path, e)
