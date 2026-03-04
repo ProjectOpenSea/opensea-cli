@@ -8,10 +8,10 @@
  * Run with:
  *   LIVE_TEST=true OPENSEA_API_KEY=xxx npx vitest run test/e2e.test.ts
  */
-import { execSync } from "node:child_process"
+import { execFileSync } from "node:child_process"
 import { writeFileSync } from "node:fs"
 import { resolve } from "node:path"
-import { afterAll, describe, expect, it } from "vitest"
+import { afterAll, beforeAll, describe, expect, it } from "vitest"
 import { OpenSeaAPIError } from "../src/client.js"
 import { OpenSeaCLI } from "../src/sdk.js"
 
@@ -67,17 +67,25 @@ function record(entry: Omit<TestResult, "passed">, fn: () => void) {
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
-/** Run the CLI binary and return stdout. */
+/** Run the CLI binary and return stdout. Uses env var for API key to avoid shell injection. */
 function cli(
   args: string,
   options?: { expectError?: boolean },
 ): { stdout: string; stderr: string; exitCode: number } {
   try {
-    const stdout = execSync(`node ${CLI_BIN} --api-key ${API_KEY} ${args}`, {
-      encoding: "utf-8",
-      timeout: 60_000,
-      env: { ...process.env, NODE_NO_WARNINGS: "1" },
-    })
+    const stdout = execFileSync(
+      "node",
+      [CLI_BIN, ...args.split(/\s+/).filter(Boolean)],
+      {
+        encoding: "utf-8",
+        timeout: 60_000,
+        env: {
+          ...process.env,
+          NODE_NO_WARNINGS: "1",
+          OPENSEA_API_KEY: API_KEY,
+        },
+      },
+    )
     return { stdout, stderr: "", exitCode: 0 }
   } catch (err) {
     const e = err as {
@@ -158,14 +166,15 @@ function validateToonFormat(output: string, jsonOutput: string): void {
 describe.runIf(LIVE)("e2e: live API tests", () => {
   let sdk: OpenSeaCLI
 
+  beforeAll(() => {
+    sdk = new OpenSeaCLI({ apiKey: API_KEY })
+  })
+
   // Ensure the build is fresh
   it("CLI binary exists", () => {
     const result = cli("--version")
     expect(result.stdout.trim()).toMatch(/\d+\.\d+\.\d+/)
   })
-
-  // Instantiate SDK for all tests
-  sdk = new OpenSeaCLI({ apiKey: API_KEY })
 
   // ────────────────────────────────────────────────────────────────────
   //  COLLECTIONS
@@ -1308,14 +1317,27 @@ describe.runIf(LIVE)("e2e: live API tests", () => {
     })
 
     it("invalid API key returns error via CLI", () => {
-      const result = execSync(
-        `node ${CLI_BIN} --api-key invalid-key-12345 collections get ${COLLECTION_SLUG} 2>&1 || true`,
-        {
-          encoding: "utf-8",
-          timeout: 30_000,
-          env: { ...process.env, NODE_NO_WARNINGS: "1" },
-        },
-      )
+      let output: string
+      try {
+        output = execFileSync(
+          "node",
+          [CLI_BIN, "collections", "get", COLLECTION_SLUG],
+          {
+            encoding: "utf-8",
+            timeout: 30_000,
+            env: {
+              ...process.env,
+              NODE_NO_WARNINGS: "1",
+              OPENSEA_API_KEY: "invalid-key-12345",
+            },
+          },
+        )
+      } catch (err) {
+        output =
+          (err as { stderr?: string }).stderr ??
+          (err as { stdout?: string }).stdout ??
+          ""
+      }
       record(
         {
           domain: "error",
@@ -1324,7 +1346,7 @@ describe.runIf(LIVE)("e2e: live API tests", () => {
         },
         () => {
           // Should contain structured error output
-          expect(result).toContain("error")
+          expect(output).toContain("error")
         },
       )
     })
@@ -1371,7 +1393,7 @@ describe.runIf(LIVE)("e2e: live API tests", () => {
 
     it("missing API key exits with code 2", () => {
       try {
-        execSync(`node ${CLI_BIN} collections get ${COLLECTION_SLUG}`, {
+        execFileSync("node", [CLI_BIN, "collections", "get", COLLECTION_SLUG], {
           encoding: "utf-8",
           timeout: 10_000,
           env: {
