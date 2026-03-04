@@ -12,6 +12,7 @@ vi.mock("../src/commands/index.js", () => ({
   searchCommand: () => new Command("search"),
   swapsCommand: () => new Command("swaps"),
   tokensCommand: () => new Command("tokens"),
+  healthCommand: () => new Command("health"),
 }))
 
 const exitSpy = vi
