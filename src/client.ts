@@ -161,6 +161,7 @@ export class OpenSeaClient {
           )
         }
 
+        await response.body?.cancel()
         await sleep(delayMs)
         continue
       }
