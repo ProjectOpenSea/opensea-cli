@@ -546,6 +546,7 @@ describeIfLive(
           })
           expect(res.status).toBe(200)
           expect(Array.isArray(res.data.nfts)).toBe(true)
+          expect(res.data.nfts.length).toBeGreaterThan(0)
           const v = validateSchema(NFTSchema, res.data.nfts[0])
           record("nfts.listByContract", "GET", path, res, v.violations)
           expect(v.success).toBe(true)
