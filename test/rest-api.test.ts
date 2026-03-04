@@ -158,21 +158,6 @@ function recordError(
   })
 }
 
-function _recordSkip(
-  endpoint: string,
-  method: string,
-  path: string,
-  reason: string,
-): void {
-  results.push({
-    endpoint,
-    method,
-    path,
-    status: "skip",
-    error: reason,
-  })
-}
-
 function validateSchema<T>(
   schema: z.ZodType<T>,
   data: unknown,
@@ -1027,6 +1012,7 @@ describeIfLive(
           if (page1.data.next) {
             const page2 = await apiGet<{ tokens: unknown[]; next?: string }>(
               path,
+              // Tokens API uses "cursor" instead of "next" (see sdk.ts TokensAPI)
               { limit: 2, cursor: page1.data.next },
             )
             expect(page2.status).toBe(200)
