@@ -173,6 +173,12 @@ describe.runIf(LIVE)("e2e: live API tests", () => {
   let sdk: OpenSeaCLI
 
   beforeAll(() => {
+    // Build the CLI so dist/cli.js is up-to-date
+    execFileSync("npm", ["run", "build"], {
+      cwd: resolve(import.meta.dirname, ".."),
+      encoding: "utf-8",
+      timeout: 30_000,
+    })
     sdk = new OpenSeaCLI({ apiKey: API_KEY })
   })
 
@@ -604,7 +610,12 @@ describe.runIf(LIVE)("e2e: live API tests", () => {
           { limit: 2 },
         )
         record({ domain: "listings", command: "all", layer: "parity" }, () => {
-          expect(sdkResult.listings.length).toBe(apiResult.listings.length)
+          // Both should return arrays; use tolerance for dynamic data
+          expect(Array.isArray(sdkResult.listings)).toBe(true)
+          expect(Array.isArray(apiResult.listings)).toBe(true)
+          expect(
+            Math.abs(sdkResult.listings.length - apiResult.listings.length),
+          ).toBeLessThanOrEqual(1)
         })
       })
     })
@@ -773,7 +784,12 @@ describe.runIf(LIVE)("e2e: live API tests", () => {
           { limit: 2 },
         )
         record({ domain: "offers", command: "all", layer: "parity" }, () => {
-          expect(sdkResult.offers.length).toBe(apiResult.offers.length)
+          // Both should return arrays; use tolerance for dynamic data
+          expect(Array.isArray(sdkResult.offers)).toBe(true)
+          expect(Array.isArray(apiResult.offers)).toBe(true)
+          expect(
+            Math.abs(sdkResult.offers.length - apiResult.offers.length),
+          ).toBeLessThanOrEqual(1)
         })
       })
     })
@@ -932,9 +948,14 @@ describe.runIf(LIVE)("e2e: live API tests", () => {
           limit: 2,
         })
         record({ domain: "events", command: "list", layer: "parity" }, () => {
-          expect(sdkResult.asset_events.length).toBe(
-            apiResult.asset_events.length,
-          )
+          // Both should return arrays; use tolerance for dynamic data
+          expect(Array.isArray(sdkResult.asset_events)).toBe(true)
+          expect(Array.isArray(apiResult.asset_events)).toBe(true)
+          expect(
+            Math.abs(
+              sdkResult.asset_events.length - apiResult.asset_events.length,
+            ),
+          ).toBeLessThanOrEqual(1)
         })
       })
     })
@@ -1103,7 +1124,12 @@ describe.runIf(LIVE)("e2e: live API tests", () => {
         record(
           { domain: "tokens", command: "trending", layer: "parity" },
           () => {
-            expect(sdkResult.tokens.length).toBe(apiResult.tokens.length)
+            // Both should return arrays; use tolerance for dynamic data
+            expect(Array.isArray(sdkResult.tokens)).toBe(true)
+            expect(Array.isArray(apiResult.tokens)).toBe(true)
+            expect(
+              Math.abs(sdkResult.tokens.length - apiResult.tokens.length),
+            ).toBeLessThanOrEqual(1)
           },
         )
       })
@@ -1190,9 +1216,11 @@ describe.runIf(LIVE)("e2e: live API tests", () => {
             expect(result.quote).toBeDefined()
           })
         } catch (err) {
-          // Swap quotes may fail for various reasons (liquidity, etc.)
-          // A structured API error is still a valid response
-          if (err instanceof OpenSeaAPIError) {
+          // Swap quotes may fail for expected reasons (bad request, no liquidity, etc.)
+          if (
+            err instanceof OpenSeaAPIError &&
+            [400, 404, 422].includes(err.statusCode)
+          ) {
             report.push({
               domain: "swaps",
               command: "quote",
