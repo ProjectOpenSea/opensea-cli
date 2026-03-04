@@ -1,12 +1,10 @@
-import { createRequire } from "node:module"
 import type { OpenSeaClientConfig } from "./types/index.js"
 
-const require = createRequire(import.meta.url)
-const { version } = require("../package.json") as { version: string }
+declare const __VERSION__: string
 
 const DEFAULT_BASE_URL = "https://api.opensea.io"
 const DEFAULT_TIMEOUT_MS = 30_000
-const USER_AGENT = `opensea-cli/${version}`
+const USER_AGENT = `opensea-cli/${__VERSION__}`
 
 export class OpenSeaClient {
   private apiKey: string
