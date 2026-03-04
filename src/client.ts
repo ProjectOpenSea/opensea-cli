@@ -1,8 +1,11 @@
 import type { OpenSeaClientConfig } from "./types/index.js"
 
+declare const __VERSION__: string
+
 const DEFAULT_BASE_URL = "https://api.opensea.io"
 const DEFAULT_TIMEOUT_MS = 30_000
 const DEFAULT_RETRIES = 3
+const USER_AGENT = `opensea-cli/${__VERSION__}`
 
 function isRetryable(status: number): boolean {
   return status === 429 || status >= 500
@@ -34,6 +37,14 @@ export class OpenSeaClient {
     this.retries = config.retries ?? DEFAULT_RETRIES
   }
 
+  private get defaultHeaders(): Record<string, string> {
+    return {
+      Accept: "application/json",
+      "User-Agent": USER_AGENT,
+      "x-api-key": this.apiKey,
+    }
+  }
+
   async get<T>(path: string, params?: Record<string, unknown>): Promise<T> {
     const url = new URL(`${this.baseUrl}${path}`)
 
@@ -49,10 +60,7 @@ export class OpenSeaClient {
       url,
       {
         method: "GET",
-        headers: {
-          Accept: "application/json",
-          "x-api-key": this.apiKey,
-        },
+        headers: this.defaultHeaders,
       },
       path,
     )
@@ -73,10 +81,7 @@ export class OpenSeaClient {
       }
     }
 
-    const headers: Record<string, string> = {
-      Accept: "application/json",
-      "x-api-key": this.apiKey,
-    }
+    const headers: Record<string, string> = { ...this.defaultHeaders }
 
     if (body) {
       headers["Content-Type"] = "application/json"
