@@ -4,6 +4,7 @@ import {
   accountsCommand,
   collectionsCommand,
   eventsCommand,
+  healthCommand,
   listingsCommand,
   nftsCommand,
   offersCommand,
@@ -81,6 +82,7 @@ program.addCommand(accountsCommand(getClient, getFormat))
 program.addCommand(tokensCommand(getClient, getFormat))
 program.addCommand(searchCommand(getClient, getFormat))
 program.addCommand(swapsCommand(getClient, getFormat))
+program.addCommand(healthCommand(getClient, getFormat))
 
 async function main() {
   try {

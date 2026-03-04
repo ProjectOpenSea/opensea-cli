@@ -7,6 +7,7 @@ vi.mock("../src/client.js", () => {
   MockOpenSeaClient.prototype.get = vi.fn()
   MockOpenSeaClient.prototype.post = vi.fn()
   MockOpenSeaClient.prototype.getDefaultChain = vi.fn(() => "ethereum")
+  MockOpenSeaClient.prototype.getApiKeyPrefix = vi.fn(() => "test...")
   return { OpenSeaClient: MockOpenSeaClient, OpenSeaAPIError: vi.fn() }
 })
 
@@ -36,6 +37,7 @@ describe("OpenSeaCLI", () => {
       expect(sdk.tokens).toBeDefined()
       expect(sdk.search).toBeDefined()
       expect(sdk.swaps).toBeDefined()
+      expect(sdk.health).toBeDefined()
     })
   })
 
@@ -405,6 +407,29 @@ describe("OpenSeaCLI", () => {
         slippage: 0.02,
         recipient: undefined,
       })
+    })
+  })
+
+  describe("health", () => {
+    it("check returns ok when API call succeeds", async () => {
+      mockGet.mockResolvedValue({ collections: [] })
+      const result = await sdk.health.check()
+      expect(mockGet).toHaveBeenCalledWith("/api/v2/collections", {
+        limit: 1,
+      })
+      expect(result.status).toBe("ok")
+      expect(result.key_prefix).toBe("test...")
+      expect(result.message).toBe(
+        "API key is valid and connectivity is working",
+      )
+    })
+
+    it("check returns error when API call fails", async () => {
+      mockGet.mockRejectedValue(new Error("fetch failed"))
+      const result = await sdk.health.check()
+      expect(result.status).toBe("error")
+      expect(result.key_prefix).toBe("test...")
+      expect(result.message).toContain("Network error: fetch failed")
     })
   })
 })

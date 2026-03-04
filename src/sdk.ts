@@ -1,4 +1,4 @@
-import { OpenSeaClient } from "./client.js"
+import { OpenSeaAPIError, OpenSeaClient } from "./client.js"
 import type {
   Account,
   AssetEvent,
@@ -9,6 +9,7 @@ import type {
   Contract,
   EventType,
   GetTraitsResponse,
+  HealthResult,
   Listing,
   NFT,
   Offer,
@@ -32,6 +33,7 @@ export class OpenSeaCLI {
   readonly tokens: TokensAPI
   readonly search: SearchAPI
   readonly swaps: SwapsAPI
+  readonly health: HealthAPI
 
   constructor(config: OpenSeaClientConfig) {
     this.client = new OpenSeaClient(config)
@@ -44,6 +46,7 @@ export class OpenSeaCLI {
     this.tokens = new TokensAPI(this.client)
     this.search = new SearchAPI(this.client)
     this.swaps = new SwapsAPI(this.client)
+    this.health = new HealthAPI(this.client)
   }
 }
 
@@ -382,5 +385,36 @@ class SwapsAPI {
       slippage: options.slippage,
       recipient: options.recipient,
     })
+  }
+}
+
+class HealthAPI {
+  constructor(private client: OpenSeaClient) {}
+
+  async check(): Promise<HealthResult> {
+    const keyPrefix = this.client.getApiKeyPrefix()
+    try {
+      await this.client.get("/api/v2/collections", { limit: 1 })
+      return {
+        status: "ok",
+        key_prefix: keyPrefix,
+        message: "API key is valid and connectivity is working",
+      }
+    } catch (error) {
+      let message: string
+      if (error instanceof OpenSeaAPIError) {
+        message =
+          error.statusCode === 401 || error.statusCode === 403
+            ? `Authentication failed (${error.statusCode}): ${error.responseBody}`
+            : `API error (${error.statusCode}): ${error.responseBody}`
+      } else {
+        message = `Network error: ${(error as Error).message}`
+      }
+      return {
+        status: "error",
+        key_prefix: keyPrefix,
+        message,
+      }
+    }
   }
 }

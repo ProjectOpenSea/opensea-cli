@@ -104,6 +104,10 @@ export class OpenSeaClient {
   getDefaultChain(): string {
     return this.defaultChain
   }
+
+  getApiKeyPrefix(): string {
+    return `${this.apiKey.slice(0, 4)}...`
+  }
 }
 
 export class OpenSeaAPIError extends Error {

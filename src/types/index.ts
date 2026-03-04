@@ -14,3 +14,9 @@ export interface CommandOptions {
   format?: "json" | "table"
   raw?: boolean
 }
+
+export type HealthResult = {
+  status: "ok" | "error"
+  key_prefix: string
+  message: string
+}
