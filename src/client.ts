@@ -5,11 +5,12 @@ declare const __VERSION__: string
 const DEFAULT_BASE_URL = "https://api.opensea.io"
 const DEFAULT_TIMEOUT_MS = 30_000
 const USER_AGENT = `opensea-cli/${__VERSION__}`
-const DEFAULT_MAX_RETRIES = 3
+const DEFAULT_MAX_RETRIES = 0
 const DEFAULT_RETRY_BASE_DELAY_MS = 1_000
 
-function isRetryableStatus(status: number): boolean {
-  return status === 429 || status >= 500
+function isRetryableStatus(status: number, method: string): boolean {
+  if (status === 429) return true
+  return status >= 500 && method === "GET"
 }
 
 function parseRetryAfter(header: string | null): number | undefined {
@@ -145,7 +146,11 @@ export class OpenSeaClient {
         return response
       }
 
-      if (attempt < this.maxRetries && isRetryableStatus(response.status)) {
+      const method = init.method ?? "GET"
+      if (
+        attempt < this.maxRetries &&
+        isRetryableStatus(response.status, method)
+      ) {
         const retryAfterMs = parseRetryAfter(
           response.headers.get("Retry-After"),
         )
@@ -159,7 +164,11 @@ export class OpenSeaClient {
           )
         }
 
-        await response.body?.cancel()
+        try {
+          await response.body?.cancel()
+        } catch {
+          // Stream may already be disturbed
+        }
         await sleep(delayMs)
         continue
       }

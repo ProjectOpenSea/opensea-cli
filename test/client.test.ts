@@ -267,14 +267,14 @@ describe("OpenSeaClient", () => {
       expect(fetch).toHaveBeenCalledTimes(2)
     })
 
-    it("retries post requests", async () => {
+    it("retries post requests on 429", async () => {
       const retryClient = new OpenSeaClient({
         apiKey: "test-key",
         maxRetries: 3,
         retryBaseDelay: 100,
       })
       vi.spyOn(globalThis, "fetch")
-        .mockResolvedValueOnce(new Response("Server Error", { status: 503 }))
+        .mockResolvedValueOnce(new Response("Rate limited", { status: 429 }))
         .mockResolvedValueOnce(
           new Response(JSON.stringify({ status: "ok" }), {
             status: 200,
@@ -287,6 +287,22 @@ describe("OpenSeaClient", () => {
 
       expect(result).toEqual({ status: "ok" })
       expect(fetch).toHaveBeenCalledTimes(2)
+    })
+
+    it("does not retry post requests on 5xx", async () => {
+      const retryClient = new OpenSeaClient({
+        apiKey: "test-key",
+        maxRetries: 3,
+        retryBaseDelay: 100,
+      })
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response("Server Error", { status: 503 }),
+      )
+
+      await expect(retryClient.post("/api/v2/refresh")).rejects.toThrow(
+        OpenSeaAPIError,
+      )
+      expect(fetch).toHaveBeenCalledTimes(1)
     })
 
     it("logs retries when verbose is enabled", async () => {
