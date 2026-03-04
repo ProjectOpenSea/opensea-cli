@@ -39,10 +39,11 @@ describe("OpenSeaClient", () => {
         "https://api.opensea.io/api/v2/test",
         expect.objectContaining({
           method: "GET",
-          headers: {
+          headers: expect.objectContaining({
             Accept: "application/json",
+            "User-Agent": expect.stringMatching(/^opensea-cli\/\d+\.\d+\.\d+$/),
             "x-api-key": "test-key",
-          },
+          }),
         }),
       )
       expect(result).toEqual(mockResponse)
@@ -93,10 +94,11 @@ describe("OpenSeaClient", () => {
         "https://api.opensea.io/api/v2/refresh",
         expect.objectContaining({
           method: "POST",
-          headers: {
+          headers: expect.objectContaining({
             Accept: "application/json",
+            "User-Agent": expect.stringMatching(/^opensea-cli\/\d+\.\d+\.\d+$/),
             "x-api-key": "test-key",
-          },
+          }),
         }),
       )
       expect(result).toEqual(mockResponse)
@@ -111,11 +113,12 @@ describe("OpenSeaClient", () => {
         "https://api.opensea.io/api/v2/create",
         expect.objectContaining({
           method: "POST",
-          headers: {
+          headers: expect.objectContaining({
             Accept: "application/json",
             "Content-Type": "application/json",
+            "User-Agent": expect.stringMatching(/^opensea-cli\/\d+\.\d+\.\d+$/),
             "x-api-key": "test-key",
-          },
+          }),
           body: JSON.stringify({ name: "test" }),
         }),
       )

@@ -1,7 +1,10 @@
 import type { OpenSeaClientConfig } from "./types/index.js"
 
+declare const __VERSION__: string
+
 const DEFAULT_BASE_URL = "https://api.opensea.io"
 const DEFAULT_TIMEOUT_MS = 30_000
+const USER_AGENT = `opensea-cli/${__VERSION__}`
 
 export class OpenSeaClient {
   private apiKey: string
@@ -16,6 +19,14 @@ export class OpenSeaClient {
     this.defaultChain = config.chain ?? "ethereum"
     this.timeoutMs = config.timeout ?? DEFAULT_TIMEOUT_MS
     this.verbose = config.verbose ?? false
+  }
+
+  private get defaultHeaders(): Record<string, string> {
+    return {
+      Accept: "application/json",
+      "User-Agent": USER_AGENT,
+      "x-api-key": this.apiKey,
+    }
   }
 
   async get<T>(path: string, params?: Record<string, unknown>): Promise<T> {
@@ -35,10 +46,7 @@ export class OpenSeaClient {
 
     const response = await fetch(url.toString(), {
       method: "GET",
-      headers: {
-        Accept: "application/json",
-        "x-api-key": this.apiKey,
-      },
+      headers: this.defaultHeaders,
       signal: AbortSignal.timeout(this.timeoutMs),
     })
 
@@ -69,10 +77,7 @@ export class OpenSeaClient {
       }
     }
 
-    const headers: Record<string, string> = {
-      Accept: "application/json",
-      "x-api-key": this.apiKey,
-    }
+    const headers: Record<string, string> = { ...this.defaultHeaders }
 
     if (body) {
       headers["Content-Type"] = "application/json"

@@ -1,4 +1,9 @@
+import { readFileSync } from "node:fs"
 import { defineConfig } from "tsup"
+
+const pkg = JSON.parse(readFileSync("./package.json", "utf-8")) as {
+  version: string
+}
 
 export default defineConfig([
   {
@@ -7,6 +12,9 @@ export default defineConfig([
     clean: true,
     sourcemap: true,
     target: "node18",
+    define: {
+      __VERSION__: JSON.stringify(pkg.version),
+    },
     banner: {
       js: "#!/usr/bin/env node",
     },
@@ -17,5 +25,8 @@ export default defineConfig([
     dts: true,
     sourcemap: true,
     target: "node18",
+    define: {
+      __VERSION__: JSON.stringify(pkg.version),
+    },
   },
 ])
