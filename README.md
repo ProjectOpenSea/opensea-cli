@@ -198,6 +198,16 @@ npm run type-check      # TypeScript type checking
 | [Pagination](docs/pagination.md) | Cursor-based pagination patterns for CLI and SDK |
 | [Event Types](docs/events.md) | Event type values and filtering |
 
+## Contributing
+
+This repository is a read-only mirror synced from an internal monorepo. We can't merge pull requests directly, but we review every one — if your fix or idea is solid, we'll recreate it internally and it will ship in the next release.
+
+Issues and bug reports are the best way to contribute. See [CONTRIBUTING.md](./CONTRIBUTING.md) for details.
+
+## License
+
+[MIT](LICENSE)
+
 [version-badge]: https://img.shields.io/github/package-json/v/ProjectOpenSea/opensea-cli
 [version-link]: https://github.com/ProjectOpenSea/opensea-cli/releases
 [npm-badge]: https://img.shields.io/npm/v/@opensea/cli?color=red

@@ -1,26 +1,63 @@
-export type Chain =
-  | "ethereum"
-  | "polygon"
-  | "base"
-  | "blast"
-  | "arbitrum"
-  | "avalanche"
-  | "optimism"
-  | "solana"
-  | "zora"
-  | "sei"
-  | "b3"
-  | "bera_chain"
-  | "ape_chain"
-  | "flow"
-  | "ronin"
-  | "abstract"
-  | "shape"
-  | "unichain"
-  | "gunzilla"
-  | "hyperevm"
-  | "somnia"
-  | "monad"
+/**
+ * API types for the OpenSea CLI.
+ *
+ * Types that match the OpenSea API spec are imported from @opensea/api-types.
+ * CLI-specific types (swap, search UI, token details) are defined locally.
+ */
+
+import type { components } from "@opensea/api-types"
+
+// ── Re-exports from @opensea/api-types ──────────────────────────────
+// These are the canonical API types. When the spec changes, they update
+// automatically after running `pnpm --filter @opensea/api-types run build`.
+
+type Schemas = components["schemas"]
+
+export type Chain = Schemas["ChainIdentifier"]
+export type Fee = Schemas["Fee"]
+export type PaymentToken = Schemas["PaymentToken"]
+export type Price = Schemas["Price"]
+export type Trait = Schemas["Trait"]
+export type Contract = Schemas["Contract"]
+export type Nft = Schemas["Nft"]
+export type NftDetailed = Schemas["NftDetailed"]
+export type Owner = Schemas["Owner"]
+export type Rarity = Schemas["Rarity"]
+export type CollectionRarity = Schemas["CollectionRarity"]
+export type Order = Schemas["Order"]
+export type Offer = Schemas["Offer"]
+export type Listing = Schemas["Listing"]
+export type ListingPrice = Schemas["ListingPrice"]
+export type Payment = Schemas["Payment"]
+export type Event = Schemas["Event"]
+export type SaleEvent = Schemas["SaleEvent"]
+export type TransferEvent = Schemas["TransferEvent"]
+export type OrderEvent = Schemas["OrderEvent"]
+export type SimpleAccount = Schemas["SimpleAccount"]
+export type SocialMediaAccount = Schemas["SocialMediaAccount"]
+export type ProtocolData = Schemas["ProtocolData"]
+export type IntervalStat = Schemas["IntervalStat"]
+export type Total = Schemas["Total"]
+export type PricingCurrencies = Schemas["PricingCurrencies"]
+
+// ── API response types from @opensea/api-types ──────────────────────
+
+export type CollectionResponse = Schemas["CollectionResponse"]
+export type CollectionDetailedResponse = Schemas["CollectionDetailedResponse"]
+export type CollectionPaginatedResponse = Schemas["CollectionPaginatedResponse"]
+export type CollectionStatsResponse = Schemas["CollectionStatsResponse"]
+export type NftResponse = Schemas["NftResponse"]
+export type NftListResponse = Schemas["NftListResponse"]
+export type OrdersResponse = Schemas["OrdersResponse"]
+export type OffersResponse = Schemas["OffersResponse"]
+export type ListingsResponse = Schemas["ListingsResponse"]
+export type GetOrderResponse = Schemas["GetOrderResponse"]
+export type AssetEventsResponse = Schemas["AssetEventsResponse"]
+export type AccountResponse = Schemas["AccountResponse"]
+export type ContractResponse = Schemas["ContractResponse"]
+export type FulfillListingResponse = Schemas["FulfillListingResponse"]
+
+// ── CLI-specific types (not from API spec) ──────────────────────────
 
 export type SafelistStatus =
   | "not_requested"
@@ -48,151 +85,15 @@ export type EventType =
 
 export type OrderSide = "ask" | "bid"
 
-export interface Fee {
-  fee: number
-  recipient: string
-  required: boolean
-}
+// ── Legacy type aliases (backward compat for CLI consumers) ─────────
+// These map old CLI-specific names to the generated types.
 
-export interface PaymentToken {
-  name: string
-  symbol: string
-  decimals: number
-  address: string
-  chain: Chain
-  image_url?: string
-  eth_price?: string
-  usd_price?: string
-}
-
-export interface Collection {
-  name: string
-  collection: string
-  description: string
-  image_url: string
-  banner_image_url: string
-  owner: string
-  safelist_status: SafelistStatus
-  category: string
-  is_disabled: boolean
-  is_nsfw: boolean
-  trait_offers_enabled: boolean
-  collection_offers_enabled: boolean
-  opensea_url: string
-  project_url: string
-  wiki_url: string
-  discord_url: string
-  telegram_url: string
-  twitter_username: string
-  instagram_username: string
-  contracts: { address: string; chain: Chain }[]
-  editors: string[]
-  fees: Fee[]
-  rarity: {
-    strategy_id: string
-    strategy_version: string
-    calculated_at: string
-    max_rank: number
-    tokens_scored: number
-  } | null
-  payment_tokens: PaymentToken[]
-  total_supply: number
-  created_date: string
-  required_zone?: string
-}
-
-export interface CollectionStats {
-  total: {
-    volume: number
-    sales: number
-    average_price: number
-    num_owners: number
-    market_cap: number
-    floor_price: number
-    floor_price_symbol: string
-  }
-  intervals: {
-    interval: "one_day" | "seven_day" | "thirty_day"
-    volume: number
-    volume_diff: number
-    volume_change: number
-    sales: number
-    sales_diff: number
-    average_price: number
-  }[]
-}
-
-export interface NFT {
-  identifier: string
-  collection: string
-  contract: string
-  token_standard: string
-  name: string
-  description: string
-  image_url: string
-  metadata_url: string
-  opensea_url: string
-  updated_at: string
-  is_disabled: boolean
-  is_nsfw: boolean
-  traits: Trait[] | null
-  creator: string
-  owners: { address: string; quantity: number }[]
-  rarity: {
-    strategy_id: string | null
-    strategy_version: string | null
-    rank: number | null
-    score: number | null
-    calculated_at: string
-    max_rank: number | null
-    tokens_scored: number | null
-    ranking_features: { unique_attribute_count: number } | null
-  } | null
-}
-
-export interface Trait {
-  trait_type: string
-  display_type: string
-  max_value: string
-  value: string | number
-}
-
-export interface Price {
-  currency: string
-  decimals: number
-  value: string
-}
-
-export interface Order {
-  order_hash: string
-  chain: string
-  protocol_data: Record<string, unknown>
-  protocol_address: string
-  price: Price
-}
-
-export interface Offer extends Order {
-  criteria?: {
-    collection: { slug: string }
-    contract: { address: string }
-    encoded_token_ids?: string
-    trait?: { type: string; value: string }
-  }
-  status: string
-}
-
-export interface Listing extends Omit<Order, "price"> {
-  type: string
-  price: { current: Price }
-  remaining_quantity: number
-  status: string
-}
-
-export interface EventPayment {
-  quantity: string
-  token_address: string
-  decimals: number
-  symbol: string
+export type {
+  AccountResponse as Account,
+  CollectionDetailedResponse as Collection,
+  CollectionStatsResponse as CollectionStats,
+  NftDetailed as NFT,
+  Payment as EventPayment,
 }
 
 export interface EventAsset {
@@ -216,25 +117,6 @@ export interface AssetEvent {
   chain: string
   quantity: number
   [key: string]: unknown
-}
-
-export interface Contract {
-  address: string
-  chain: string
-  collection: string | null
-  name: string
-  contract_standard: string
-}
-
-export interface Account {
-  address: string
-  username: string
-  profile_image_url: string
-  banner_image_url: string
-  website: string
-  social_media_accounts: { platform: string; username: string }[]
-  bio: string
-  joined_date: string
 }
 
 export interface TraitCategories {

@@ -19,7 +19,8 @@
     "sourceMap": true,
     "outDir": "dist",
     "rootDir": "src",
-    "types": ["node"]
+    "types": ["node"],
+    "ignoreDeprecations": "6.0"
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
