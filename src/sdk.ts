@@ -4,6 +4,7 @@ import type {
   Account,
   AssetEvent,
   Chain,
+  ChainListResponse,
   Collection,
   CollectionOrderBy,
   CollectionStats,
@@ -19,12 +20,16 @@ import type {
   SearchResponse,
   SwapQuoteResponse,
   Token,
+  TokenBalancePaginatedResponse,
+  TokenBalanceSortBy,
   TokenDetails,
+  ValidateMetadataResponse,
 } from "./types/index.js"
 
 export class OpenSeaCLI {
   private client: OpenSeaClient
 
+  readonly chains: ChainsAPI
   readonly collections: CollectionsAPI
   readonly nfts: NFTsAPI
   readonly listings: ListingsAPI
@@ -38,6 +43,7 @@ export class OpenSeaCLI {
 
   constructor(config: OpenSeaClientConfig) {
     this.client = new OpenSeaClient(config)
+    this.chains = new ChainsAPI(this.client)
     this.collections = new CollectionsAPI(this.client)
     this.nfts = new NFTsAPI(this.client)
     this.listings = new ListingsAPI(this.client)
@@ -48,6 +54,14 @@ export class OpenSeaCLI {
     this.search = new SearchAPI(this.client)
     this.swaps = new SwapsAPI(this.client)
     this.health = new HealthAPI(this.client)
+  }
+}
+
+class ChainsAPI {
+  constructor(private client: OpenSeaClient) {}
+
+  async list(): Promise<ChainListResponse> {
+    return this.client.get("/api/v2/chains")
   }
 }
 
@@ -142,6 +156,23 @@ class NFTsAPI {
 
   async getContract(chain: Chain, address: string): Promise<Contract> {
     return this.client.get(`/api/v2/chain/${chain}/contract/${address}`)
+  }
+
+  async validateMetadata(
+    chain: Chain,
+    address: string,
+    identifier: string,
+    options?: { ignoreCachedItemUrls?: boolean },
+  ): Promise<ValidateMetadataResponse> {
+    const params: Record<string, unknown> = {}
+    if (options?.ignoreCachedItemUrls) {
+      params.ignoreCachedItemUrls = true
+    }
+    return this.client.post(
+      `/api/v2/chain/${chain}/contract/${address}/nfts/${identifier}/validate-metadata`,
+      undefined,
+      params,
+    )
   }
 }
 
@@ -304,6 +335,27 @@ class AccountsAPI {
 
   async get(address: string): Promise<Account> {
     return this.client.get(`/api/v2/accounts/${address}`)
+  }
+
+  async tokens(
+    address: string,
+    options?: {
+      chains?: string[]
+      limit?: number
+      sortBy?: TokenBalanceSortBy
+      sortDirection?: "asc" | "desc"
+      disableSpamFiltering?: boolean
+      next?: string
+    },
+  ): Promise<TokenBalancePaginatedResponse> {
+    return this.client.get(`/api/v2/account/${address}/tokens`, {
+      chains: options?.chains?.join(","),
+      limit: options?.limit,
+      sort_by: options?.sortBy,
+      sort_direction: options?.sortDirection,
+      disable_spam_filtering: options?.disableSpamFiltering,
+      cursor: options?.next,
+    })
   }
 }
 

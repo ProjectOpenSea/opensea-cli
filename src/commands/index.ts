@@ -1,4 +1,5 @@
 export { accountsCommand } from "./accounts.js"
+export { chainsCommand } from "./chains.js"
 export { collectionsCommand } from "./collections.js"
 export { eventsCommand } from "./events.js"
 export { healthCommand } from "./health.js"

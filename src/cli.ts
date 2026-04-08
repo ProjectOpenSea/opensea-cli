@@ -2,6 +2,7 @@ import { Command } from "commander"
 import { OpenSeaAPIError, OpenSeaClient } from "./client.js"
 import {
   accountsCommand,
+  chainsCommand,
   collectionsCommand,
   eventsCommand,
   healthCommand,
@@ -110,6 +111,7 @@ program.hook("preAction", () => {
   })
 })
 
+program.addCommand(chainsCommand(getClient, getFormat))
 program.addCommand(collectionsCommand(getClient, getFormat))
 program.addCommand(nftsCommand(getClient, getFormat))
 program.addCommand(listingsCommand(getClient, getFormat))

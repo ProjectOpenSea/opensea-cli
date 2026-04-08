@@ -248,3 +248,72 @@ export interface SearchResult {
 export interface SearchResponse {
   results: SearchResult[]
 }
+
+export interface ChainInfo {
+  chain: string
+  name: string
+  symbol: string
+  supports_swaps: boolean
+  block_explorer: string
+  block_explorer_url: string
+}
+
+export interface ChainListResponse {
+  chains: ChainInfo[]
+}
+
+export interface TokenBalance {
+  address: string
+  chain: string
+  name: string
+  symbol: string
+  image_url?: string
+  usd_price: string
+  decimals: number
+  quantity: string
+  usd_value: string
+  opensea_url: string
+}
+
+export interface TokenBalancePaginatedResponse {
+  token_balances: TokenBalance[]
+  next?: string
+}
+
+export type TokenBalanceSortBy =
+  | "USD_VALUE"
+  | "MARKET_CAP"
+  | "ONE_DAY_VOLUME"
+  | "PRICE"
+  | "ONE_DAY_PRICE_CHANGE"
+  | "SEVEN_DAY_PRICE_CHANGE"
+
+export interface ValidateMetadataResponse {
+  assetIdentifier: {
+    chain: string
+    contractAddress: string
+    tokenId: string
+  }
+  tokenUri?: string
+  metadata?: {
+    name?: string
+    description?: string
+    originalImageUrl?: string
+    processedImageUrl?: string
+    originalAnimationUrl?: string
+    processedAnimationUrl?: string
+    externalUrl?: string
+    backgroundColor?: string
+    attributes: {
+      traitType: string
+      value: string
+      displayType?: string
+    }[]
+  }
+  error?: {
+    errorType: string
+    message: string
+    url?: string
+    statusCode?: number
+  }
+}

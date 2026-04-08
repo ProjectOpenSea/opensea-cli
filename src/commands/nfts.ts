@@ -3,7 +3,7 @@ import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
 import { parseIntOption } from "../parse.js"
-import type { Contract, NFT } from "../types/index.js"
+import type { Contract, NFT, ValidateMetadataResponse } from "../types/index.js"
 
 export function nftsCommand(
   getClient: () => OpenSeaClient,
@@ -124,6 +124,37 @@ export function nftsCommand(
       )
       console.log(formatOutput(result, getFormat()))
     })
+
+  cmd
+    .command("validate-metadata")
+    .description("Validate NFT metadata by fetching and parsing it")
+    .argument("<chain>", "Chain")
+    .argument("<contract>", "Contract address")
+    .argument("<token-id>", "Token ID")
+    .option(
+      "--ignore-cache",
+      "Ignore cached item URLs and re-fetch from source",
+    )
+    .action(
+      async (
+        chain: string,
+        contract: string,
+        tokenId: string,
+        options: { ignoreCache?: boolean },
+      ) => {
+        const client = getClient()
+        const params: Record<string, unknown> = {}
+        if (options.ignoreCache) {
+          params.ignoreCachedItemUrls = true
+        }
+        const result = await client.post<ValidateMetadataResponse>(
+          `/api/v2/chain/${chain}/contract/${contract}/nfts/${tokenId}/validate-metadata`,
+          undefined,
+          params,
+        )
+        console.log(formatOutput(result, getFormat()))
+      },
+    )
 
   return cmd
 }
