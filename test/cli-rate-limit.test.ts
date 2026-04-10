@@ -6,6 +6,7 @@ vi.mock("../src/commands/index.js", () => ({
   accountsCommand: () => new Command("accounts"),
   chainsCommand: () => new Command("chains"),
   collectionsCommand: () => new Command("collections"),
+  dropsCommand: () => new Command("drops"),
   eventsCommand: () => new Command("events"),
   listingsCommand: () => new Command("listings"),
   nftsCommand: () => new Command("nfts"),

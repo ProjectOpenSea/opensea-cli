@@ -4,6 +4,7 @@ import {
   accountsCommand,
   chainsCommand,
   collectionsCommand,
+  dropsCommand,
   eventsCommand,
   healthCommand,
   listingsCommand,
@@ -113,6 +114,7 @@ program.hook("preAction", () => {
 
 program.addCommand(chainsCommand(getClient, getFormat))
 program.addCommand(collectionsCommand(getClient, getFormat))
+program.addCommand(dropsCommand(getClient, getFormat))
 program.addCommand(nftsCommand(getClient, getFormat))
 program.addCommand(listingsCommand(getClient, getFormat))
 program.addCommand(offersCommand(getClient, getFormat))

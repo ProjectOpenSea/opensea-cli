@@ -5,6 +5,7 @@ import { formatOutput } from "../output.js"
 import { parseIntOption } from "../parse.js"
 import type {
   Account,
+  AccountResolveResponse,
   TokenBalancePaginatedResponse,
   TokenBalanceSortBy,
 } from "../types/index.js"
@@ -65,6 +66,23 @@ export function accountsCommand(
         console.log(formatOutput(result, getFormat()))
       },
     )
+
+  cmd
+    .command("resolve")
+    .description(
+      "Resolve an ENS name, OpenSea username, or wallet address to canonical account info",
+    )
+    .argument(
+      "<identifier>",
+      "ENS name (e.g. vitalik.eth), OpenSea username, or wallet address",
+    )
+    .action(async (identifier: string) => {
+      const client = getClient()
+      const result = await client.get<AccountResolveResponse>(
+        `/api/v2/accounts/resolve/${identifier}`,
+      )
+      console.log(formatOutput(result, getFormat()))
+    })
 
   return cmd
 }

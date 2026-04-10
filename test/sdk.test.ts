@@ -33,6 +33,7 @@ describe("OpenSeaCLI", () => {
   describe("constructor", () => {
     it("creates all API namespaces", () => {
       expect(sdk.collections).toBeDefined()
+      expect(sdk.drops).toBeDefined()
       expect(sdk.nfts).toBeDefined()
       expect(sdk.listings).toBeDefined()
       expect(sdk.offers).toBeDefined()
@@ -95,6 +96,72 @@ describe("OpenSeaCLI", () => {
       mockGet.mockResolvedValue({ categories: {} })
       await sdk.collections.traits("test-slug")
       expect(mockGet).toHaveBeenCalledWith("/api/v2/traits/test-slug")
+    })
+
+    it("trending calls correct endpoint with options", async () => {
+      mockGet.mockResolvedValue({ collections: [] })
+      await sdk.collections.trending({
+        timeframe: "seven_days",
+        chains: ["ethereum", "base"],
+        category: "pfps",
+        limit: 10,
+      })
+      expect(mockGet).toHaveBeenCalledWith("/api/v2/collections/trending", {
+        timeframe: "seven_days",
+        chains: "ethereum,base",
+        category: "pfps",
+        limit: 10,
+        cursor: undefined,
+      })
+    })
+
+    it("top calls correct endpoint with options", async () => {
+      mockGet.mockResolvedValue({ collections: [] })
+      await sdk.collections.top({
+        sortBy: "one_day_volume",
+        chains: ["ethereum"],
+        limit: 50,
+      })
+      expect(mockGet).toHaveBeenCalledWith("/api/v2/collections/top", {
+        sort_by: "one_day_volume",
+        chains: "ethereum",
+        category: undefined,
+        limit: 50,
+        cursor: undefined,
+      })
+    })
+  })
+
+  describe("drops", () => {
+    it("list calls correct endpoint", async () => {
+      mockGet.mockResolvedValue({ drops: [] })
+      await sdk.drops.list({ type: "upcoming", limit: 10 })
+      expect(mockGet).toHaveBeenCalledWith("/api/v2/drops", {
+        type: "upcoming",
+        chains: undefined,
+        limit: 10,
+        cursor: undefined,
+      })
+    })
+
+    it("get calls correct endpoint", async () => {
+      mockGet.mockResolvedValue({ collection_slug: "cool-cats" })
+      await sdk.drops.get("cool-cats")
+      expect(mockGet).toHaveBeenCalledWith("/api/v2/drops/cool-cats")
+    })
+
+    it("mint calls correct endpoint", async () => {
+      mockPost.mockResolvedValue({
+        to: "0x123",
+        data: "0x",
+        value: "0x0",
+        chain: "ethereum",
+      })
+      await sdk.drops.mint("cool-cats", { minter: "0xabc", quantity: 2 })
+      expect(mockPost).toHaveBeenCalledWith("/api/v2/drops/cool-cats/mint", {
+        minter: "0xabc",
+        quantity: 2,
+      })
     })
   })
 
@@ -283,6 +350,14 @@ describe("OpenSeaCLI", () => {
       mockGet.mockResolvedValue({ address: "0xabc" })
       await sdk.accounts.get("0xabc")
       expect(mockGet).toHaveBeenCalledWith("/api/v2/accounts/0xabc")
+    })
+
+    it("resolve calls correct endpoint", async () => {
+      mockGet.mockResolvedValue({ address: "0xabc", ens_name: "vitalik.eth" })
+      await sdk.accounts.resolve("vitalik.eth")
+      expect(mockGet).toHaveBeenCalledWith(
+        "/api/v2/accounts/resolve/vitalik.eth",
+      )
     })
   })
 

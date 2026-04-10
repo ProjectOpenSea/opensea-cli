@@ -57,6 +57,16 @@ export type AccountResponse = Schemas["AccountResponse"]
 export type ContractResponse = Schemas["ContractResponse"]
 export type FulfillListingResponse = Schemas["FulfillListingResponse"]
 
+// ── Drop types from @opensea/api-types ─────────────────────────────
+
+export type DropResponse = Schemas["DropResponse"]
+export type DropDetailedResponse = Schemas["DropDetailedResponse"]
+export type DropStageResponse = Schemas["DropStageResponse"]
+export type DropPaginatedResponse = Schemas["DropPaginatedResponse"]
+export type DropMintRequest = Schemas["DropMintRequest"]
+export type DropMintResponse = Schemas["DropMintResponse"]
+export type AccountResolveResponse = Schemas["AccountResolveResponse"]
+
 // ── CLI-specific types (not from API spec) ──────────────────────────
 
 export type SafelistStatus =

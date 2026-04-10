@@ -2,13 +2,18 @@ import { OpenSeaClient } from "./client.js"
 import { checkHealth } from "./health.js"
 import type {
   Account,
+  AccountResolveResponse,
   AssetEvent,
   Chain,
   ChainListResponse,
   Collection,
   CollectionOrderBy,
+  CollectionPaginatedResponse,
   CollectionStats,
   Contract,
+  DropDetailedResponse,
+  DropMintResponse,
+  DropPaginatedResponse,
   EventType,
   GetTraitsResponse,
   HealthResult,
@@ -25,12 +30,15 @@ import type {
   TokenDetails,
   ValidateMetadataResponse,
 } from "./types/index.js"
+import type { TransactionResult, WalletAdapter } from "./wallet/index.js"
+import { resolveChainId } from "./wallet/index.js"
 
 export class OpenSeaCLI {
   private client: OpenSeaClient
 
   readonly chains: ChainsAPI
   readonly collections: CollectionsAPI
+  readonly drops: DropsAPI
   readonly nfts: NFTsAPI
   readonly listings: ListingsAPI
   readonly offers: OffersAPI
@@ -45,6 +53,7 @@ export class OpenSeaCLI {
     this.client = new OpenSeaClient(config)
     this.chains = new ChainsAPI(this.client)
     this.collections = new CollectionsAPI(this.client)
+    this.drops = new DropsAPI(this.client)
     this.nfts = new NFTsAPI(this.client)
     this.listings = new ListingsAPI(this.client)
     this.offers = new OffersAPI(this.client)
@@ -96,6 +105,70 @@ class CollectionsAPI {
 
   async traits(slug: string): Promise<GetTraitsResponse> {
     return this.client.get<GetTraitsResponse>(`/api/v2/traits/${slug}`)
+  }
+
+  async trending(options?: {
+    timeframe?: string
+    chains?: string[]
+    category?: string
+    limit?: number
+    next?: string
+  }): Promise<CollectionPaginatedResponse> {
+    return this.client.get("/api/v2/collections/trending", {
+      timeframe: options?.timeframe,
+      chains: options?.chains?.join(","),
+      category: options?.category,
+      limit: options?.limit,
+      cursor: options?.next,
+    })
+  }
+
+  async top(options?: {
+    sortBy?: string
+    chains?: string[]
+    category?: string
+    limit?: number
+    next?: string
+  }): Promise<CollectionPaginatedResponse> {
+    return this.client.get("/api/v2/collections/top", {
+      sort_by: options?.sortBy,
+      chains: options?.chains?.join(","),
+      category: options?.category,
+      limit: options?.limit,
+      cursor: options?.next,
+    })
+  }
+}
+
+class DropsAPI {
+  constructor(private client: OpenSeaClient) {}
+
+  async list(options?: {
+    type?: string
+    chains?: string[]
+    limit?: number
+    next?: string
+  }): Promise<DropPaginatedResponse> {
+    return this.client.get("/api/v2/drops", {
+      type: options?.type,
+      chains: options?.chains?.join(","),
+      limit: options?.limit,
+      cursor: options?.next,
+    })
+  }
+
+  async get(slug: string): Promise<DropDetailedResponse> {
+    return this.client.get(`/api/v2/drops/${slug}`)
+  }
+
+  async mint(
+    slug: string,
+    options: { minter: string; quantity?: number },
+  ): Promise<DropMintResponse> {
+    return this.client.post(`/api/v2/drops/${slug}/mint`, {
+      minter: options.minter,
+      quantity: options.quantity ?? 1,
+    })
   }
 }
 
@@ -357,6 +430,10 @@ class AccountsAPI {
       cursor: options?.next,
     })
   }
+
+  async resolve(identifier: string): Promise<AccountResolveResponse> {
+    return this.client.get(`/api/v2/accounts/resolve/${identifier}`)
+  }
 }
 
 class TokensAPI {
@@ -415,7 +492,7 @@ class SearchAPI {
   }
 }
 
-class SwapsAPI {
+export class SwapsAPI {
   constructor(private client: OpenSeaClient) {}
 
   async quote(options: {
@@ -438,6 +515,73 @@ class SwapsAPI {
       slippage: options.slippage,
       recipient: options.recipient,
     })
+  }
+
+  /**
+   * Get a swap quote and execute all transactions using the provided wallet adapter.
+   * Returns an array of transaction results (one per transaction in the quote).
+   *
+   * @param options - Swap parameters (chains, addresses, quantity, etc.)
+   * @param wallet - Wallet adapter to sign and send transactions
+   * @param callbacks - Optional callbacks for progress reporting and skipped txs
+   */
+  async execute(
+    options: {
+      fromChain: string
+      fromAddress: string
+      toChain: string
+      toAddress: string
+      quantity: string
+      slippage?: number
+      recipient?: string
+      address?: string
+    },
+    wallet: WalletAdapter,
+    callbacks?: {
+      onQuote?: (quote: SwapQuoteResponse) => void
+      onSending?: (tx: { to: string; chain: string; chainId: number }) => void
+      onSkipped?: (tx: { chain: string; reason: string }) => void
+    },
+  ): Promise<TransactionResult[]> {
+    const address = options.address ?? (await wallet.getAddress())
+    const quote = await this.quote({ ...options, address })
+
+    callbacks?.onQuote?.(quote)
+
+    if (!quote.transactions || quote.transactions.length === 0) {
+      throw new Error(
+        "Swap quote returned zero transactions — the swap may not be available for these tokens/chains.",
+      )
+    }
+
+    const results: TransactionResult[] = []
+
+    for (const tx of quote.transactions) {
+      if (!tx.to) {
+        callbacks?.onSkipped?.({
+          chain: tx.chain,
+          reason: "missing 'to' address",
+        })
+        continue
+      }
+      const chainId = resolveChainId(tx.chain)
+      callbacks?.onSending?.({ to: tx.to, chain: tx.chain, chainId })
+      const result = await wallet.sendTransaction({
+        to: tx.to,
+        data: tx.data,
+        value: tx.value ?? "0",
+        chainId,
+      })
+      results.push(result)
+    }
+
+    if (results.length === 0) {
+      throw new Error(
+        "All swap transactions were skipped (no valid 'to' addresses). The quote may be malformed.",
+      )
+    }
+
+    return results
   }
 }
 

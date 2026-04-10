@@ -7,6 +7,7 @@ import type {
   Chain,
   Collection,
   CollectionOrderBy,
+  CollectionPaginatedResponse,
   CollectionStats,
   GetTraitsResponse,
 } from "../types/index.js"
@@ -89,6 +90,82 @@ export function collectionsCommand(
       )
       console.log(formatOutput(result, getFormat()))
     })
+
+  cmd
+    .command("trending")
+    .description("Get trending collections by sales activity")
+    .option(
+      "--timeframe <timeframe>",
+      "Time window (one_minute, five_minutes, fifteen_minutes, one_hour, one_day, seven_days, thirty_days, one_year, all_time)",
+      "one_day",
+    )
+    .option("--chains <chains>", "Comma-separated list of chains to filter by")
+    .option(
+      "--category <category>",
+      "Category (art, gaming, memberships, music, pfps, photography, domain-names, virtual-worlds, sports-collectibles)",
+    )
+    .option("--limit <limit>", "Number of results (max 100)", "20")
+    .option("--next <cursor>", "Pagination cursor")
+    .action(
+      async (options: {
+        timeframe: string
+        chains?: string
+        category?: string
+        limit: string
+        next?: string
+      }) => {
+        const client = getClient()
+        const result = await client.get<CollectionPaginatedResponse>(
+          "/api/v2/collections/trending",
+          {
+            timeframe: options.timeframe,
+            chains: options.chains,
+            category: options.category,
+            limit: parseIntOption(options.limit, "--limit"),
+            cursor: options.next,
+          },
+        )
+        console.log(formatOutput(result, getFormat()))
+      },
+    )
+
+  cmd
+    .command("top")
+    .description("Get top collections ranked by volume, sales, or floor price")
+    .option(
+      "--sort-by <field>",
+      "Sort by (one_day_volume, seven_days_volume, thirty_days_volume, floor_price, one_day_sales, seven_days_sales, thirty_days_sales, total_volume, total_sales)",
+      "one_day_volume",
+    )
+    .option("--chains <chains>", "Comma-separated list of chains to filter by")
+    .option(
+      "--category <category>",
+      "Category (art, gaming, memberships, music, pfps, photography, domain-names, virtual-worlds, sports-collectibles)",
+    )
+    .option("--limit <limit>", "Number of results (max 100)", "50")
+    .option("--next <cursor>", "Pagination cursor")
+    .action(
+      async (options: {
+        sortBy: string
+        chains?: string
+        category?: string
+        limit: string
+        next?: string
+      }) => {
+        const client = getClient()
+        const result = await client.get<CollectionPaginatedResponse>(
+          "/api/v2/collections/top",
+          {
+            sort_by: options.sortBy,
+            chains: options.chains,
+            category: options.category,
+            limit: parseIntOption(options.limit, "--limit"),
+            cursor: options.next,
+          },
+        )
+        console.log(formatOutput(result, getFormat()))
+      },
+    )
 
   return cmd
 }
