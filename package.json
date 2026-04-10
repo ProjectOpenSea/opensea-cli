@@ -23,6 +23,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
+    "@opensea/api-types": "^0.2.0",
     "commander": "^14.0.3",
     "zod": "^4.3.6"
   },
