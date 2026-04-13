@@ -17,6 +17,8 @@ import {
 import { type OutputFormat, setOutputOptions } from "./output.js"
 import { parseIntOption } from "./parse.js"
 
+declare const __VERSION__: string
+
 const EXIT_API_ERROR = 1
 const EXIT_AUTH_ERROR = 2
 const EXIT_RATE_LIMITED = 3
@@ -37,7 +39,7 @@ const program = new Command()
 program
   .name("opensea")
   .description("OpenSea CLI - Query the OpenSea API from the command line")
-  .version(process.env.npm_package_version ?? "0.0.0")
+  .version(__VERSION__)
   .addHelpText("before", BANNER)
   .option("--api-key <key>", "OpenSea API key (or set OPENSEA_API_KEY env var)")
   .option("--chain <chain>", "Default chain", "ethereum")

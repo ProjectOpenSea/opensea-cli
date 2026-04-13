@@ -3,7 +3,7 @@ import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
 import { parseFloatOption } from "../parse.js"
-import { SwapsAPI } from "../sdk.js"
+import { resolveQuantity, SwapsAPI } from "../sdk.js"
 import type { SwapQuoteResponse } from "../types/index.js"
 import type { WalletProvider } from "../wallet/index.js"
 import { createWalletFromEnv, WALLET_PROVIDERS } from "../wallet/index.js"
@@ -31,7 +31,10 @@ export function swapsCommand(
       "--to-address <address>",
       "Contract address of the token to swap to",
     )
-    .requiredOption("--quantity <quantity>", "Amount to swap (in token units)")
+    .requiredOption(
+      "--quantity <quantity>",
+      "Amount to swap (decimals like 0.1 are auto-converted to smallest units)",
+    )
     .requiredOption("--address <address>", "Wallet address executing the swap")
     .option(
       "--slippage <slippage>",
@@ -53,6 +56,12 @@ export function swapsCommand(
         recipient?: string
       }) => {
         const client = getClient()
+        const quantity = await resolveQuantity(
+          client,
+          options.fromChain,
+          options.fromAddress,
+          options.quantity,
+        )
         const result = await client.get<SwapQuoteResponse>(
           "/api/v2/swap/quote",
           {
@@ -60,7 +69,7 @@ export function swapsCommand(
             from_address: options.fromAddress,
             to_chain: options.toChain,
             to_address: options.toAddress,
-            quantity: options.quantity,
+            quantity,
             address: options.address,
             slippage: options.slippage
               ? parseFloatOption(options.slippage, "--slippage")
@@ -88,7 +97,10 @@ export function swapsCommand(
       "--to-address <address>",
       "Contract address of the token to swap to",
     )
-    .requiredOption("--quantity <quantity>", "Amount to swap (in token units)")
+    .requiredOption(
+      "--quantity <quantity>",
+      "Amount to swap (decimals like 0.1 are auto-converted to smallest units)",
+    )
     .option(
       "--slippage <slippage>",
       "Slippage tolerance (0.0 to 0.5, default: 0.01)",
@@ -120,7 +132,14 @@ export function swapsCommand(
         const address = await wallet.getAddress()
         console.error(`Using ${wallet.name} wallet: ${address}`)
 
-        const swaps = new SwapsAPI(getClient())
+        const client = getClient()
+        const quantity = await resolveQuantity(
+          client,
+          options.fromChain,
+          options.fromAddress,
+          options.quantity,
+        )
+        const swaps = new SwapsAPI(client)
         const format = getFormat()
         const slippage = options.slippage
           ? parseFloatOption(options.slippage, "--slippage")
@@ -129,6 +148,7 @@ export function swapsCommand(
         if (options.dryRun) {
           const quote = await swaps.quote({
             ...options,
+            quantity,
             address,
             slippage,
           })
@@ -139,6 +159,7 @@ export function swapsCommand(
         const results = await swaps.execute(
           {
             ...options,
+            quantity,
             address,
             slippage,
           },

@@ -33,6 +33,43 @@ import type {
 import type { TransactionResult, WalletAdapter } from "./wallet/index.js"
 import { resolveChainId } from "./wallet/index.js"
 
+function convertToSmallestUnit(amount: string, decimals: number): string {
+  const [whole = "0", frac = ""] = amount.split(".")
+  if (frac.length > decimals) {
+    throw new Error(
+      `Too many decimal places (${frac.length}) for token with ${decimals} decimals`,
+    )
+  }
+  const paddedFrac = frac.padEnd(decimals, "0")
+  return (
+    BigInt(whole) * BigInt(10) ** BigInt(decimals) +
+    BigInt(paddedFrac)
+  ).toString()
+}
+
+export async function resolveQuantity(
+  client: OpenSeaClient,
+  chain: string,
+  tokenAddress: string,
+  quantity: string,
+): Promise<string> {
+  if (/^\d+$/.test(quantity)) {
+    return quantity
+  }
+  if (!/^\d+\.\d+$/.test(quantity)) {
+    throw new Error(
+      `Invalid quantity "${quantity}": must be an integer or decimal number`,
+    )
+  }
+  const token = await client.get<TokenDetails>(
+    `/api/v2/chain/${chain}/token/${tokenAddress}`,
+  )
+  return convertToSmallestUnit(quantity, token.decimals)
+}
+
+/** @internal Exported for testing only */
+export { convertToSmallestUnit as _convertToSmallestUnit }
+
 export class OpenSeaCLI {
   private client: OpenSeaClient
 

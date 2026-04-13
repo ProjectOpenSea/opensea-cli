@@ -1,5 +1,11 @@
 # @opensea/cli
 
+## 1.0.1
+
+### Patch Changes
+
+- 6bb30d7: Fix `--version` to report correct version; auto-convert decimal quantities in swap commands
+
 ## 1.0.0
 
 ### Minor Changes

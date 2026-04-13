@@ -5,22 +5,9 @@ on:
     types: [published]
 
 jobs:
-  publish-npm:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: .nvmrc
-          registry-url: https://registry.npmjs.org/
-      # Publish @opensea/cli
-      - run: npm install
-      - run: npm publish --provenance --access public
-
-      # Publish opensea-cli stub (skip if version already exists)
-      - run: npm publish --provenance --access public
-        working-directory: packages/opensea-cli-stub
-        continue-on-error: true
+  publish:
+    uses: ./.github/workflows/npm-publish-reusable.yml
+    with:
+      build-before-publish: false
+      stub-package-dir: packages/opensea-cli-stub
+    secrets: inherit
