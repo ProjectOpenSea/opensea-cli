@@ -28,8 +28,7 @@ export const WALLET_PROVIDERS: WalletProvider[] = [
  * Create a WalletAdapter from the current environment.
  *
  * When no provider is specified, auto-detects based on which
- * environment variables are set. Priority: Turnkey > Fireblocks > PrivateKey > Privy.
- * If no provider-specific vars are found, defaults to Privy.
+ * environment variables are set. Priority: Privy > Fireblocks > Turnkey > PrivateKey.
  */
 export function createWalletFromEnv(provider?: WalletProvider): WalletAdapter {
   if (provider) {
@@ -37,19 +36,19 @@ export function createWalletFromEnv(provider?: WalletProvider): WalletAdapter {
   }
 
   // Auto-detect based on available env vars
+  const hasPrivy = !!process.env.PRIVY_APP_ID && !!process.env.PRIVY_APP_SECRET
+  const hasFireblocks =
+    !!process.env.FIREBLOCKS_API_KEY && !!process.env.FIREBLOCKS_VAULT_ID
   const hasTurnkey =
     !!process.env.TURNKEY_API_PUBLIC_KEY &&
     !!process.env.TURNKEY_ORGANIZATION_ID
-  const hasFireblocks =
-    !!process.env.FIREBLOCKS_API_KEY && !!process.env.FIREBLOCKS_VAULT_ID
   const hasPrivateKey = !!process.env.PRIVATE_KEY && !!process.env.RPC_URL
-  const hasPrivy = !!process.env.PRIVY_APP_ID && !!process.env.PRIVY_APP_SECRET
 
   const detected = [
-    hasTurnkey && "turnkey",
-    hasFireblocks && "fireblocks",
-    hasPrivateKey && "private-key",
     hasPrivy && "privy",
+    hasFireblocks && "fireblocks",
+    hasTurnkey && "turnkey",
+    hasPrivateKey && "private-key",
   ].filter(Boolean) as WalletProvider[]
 
   if (detected.length > 1) {
@@ -59,11 +58,12 @@ export function createWalletFromEnv(provider?: WalletProvider): WalletAdapter {
     )
   }
 
-  if (hasTurnkey) return TurnkeyAdapter.fromEnv()
+  if (hasPrivy) return PrivyAdapter.fromEnv()
   if (hasFireblocks) return FireblocksAdapter.fromEnv()
+  if (hasTurnkey) return TurnkeyAdapter.fromEnv()
   if (hasPrivateKey) return PrivateKeyAdapter.fromEnv()
 
-  // Default to Privy
+  // No provider env vars found — fall back to Privy (will fail with a clear error if not configured)
   return PrivyAdapter.fromEnv()
 }
 

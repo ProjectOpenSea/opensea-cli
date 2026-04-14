@@ -41,14 +41,15 @@ npx @opensea/cli collections get mfers
 Set your API key via environment variable or flag:
 
 ```bash
-export OPENSEA_API_KEY=your-api-key
+# Get an instant free-tier API key (no signup needed)
+export OPENSEA_API_KEY=$(curl -s -X POST https://api.opensea.io/api/v2/auth/keys | jq -r '.api_key')
 opensea collections get mfers
 
 # or pass inline
 opensea --api-key your-api-key collections get mfers
 ```
 
-Get an API key at [docs.opensea.io](https://docs.opensea.io/reference/api-keys).
+Get an API key instantly via the command above, or get a full key at [opensea.io/settings/developer](https://opensea.io/settings/developer) for higher rate limits. See [API key docs](https://docs.opensea.io/reference/api-keys) for details.
 
 ## Quick Start
 
@@ -174,7 +175,7 @@ console.log(formatToon(data))
 ## Requirements
 
 - Node.js >= 18.0.0
-- OpenSea API key ([get one here](https://docs.opensea.io/reference/api-keys))
+- OpenSea API key — get one instantly: `curl -s -X POST https://api.opensea.io/api/v2/auth/keys | jq -r '.api_key'` or from [opensea.io/settings/developer](https://opensea.io/settings/developer)
 
 ## Development
 
