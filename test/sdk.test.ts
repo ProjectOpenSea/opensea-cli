@@ -216,6 +216,25 @@ describe("OpenSeaCLI", () => {
         "/api/v2/chain/ethereum/contract/0xabc",
       )
     })
+
+    it("getCollection calls correct endpoint", async () => {
+      mockGet.mockResolvedValue({
+        name: "Art Blocks",
+        collection: "art-blocks",
+      })
+      const result = await sdk.nfts.getCollection("ethereum", "0xabc", "42")
+      expect(mockGet).toHaveBeenCalledWith(
+        "/api/v2/chain/ethereum/contract/0xabc/nfts/42/collection",
+      )
+      expect(result.name).toBe("Art Blocks")
+    })
+
+    it("getMetadata calls correct endpoint", async () => {
+      mockGet.mockResolvedValue({ name: "Cool NFT", traits: [] })
+      const result = await sdk.nfts.getMetadata("ethereum", "0xabc", "1")
+      expect(mockGet).toHaveBeenCalledWith("/api/v2/metadata/ethereum/0xabc/1")
+      expect(result.name).toBe("Cool NFT")
+    })
   })
 
   describe("listings", () => {

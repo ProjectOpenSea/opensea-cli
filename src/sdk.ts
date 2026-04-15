@@ -4,9 +4,11 @@ import type {
   Account,
   AccountResolveResponse,
   AssetEvent,
+  AssetMetadataResponse,
   Chain,
   ChainListResponse,
   Collection,
+  CollectionDetailedResponse,
   CollectionOrderBy,
   CollectionPaginatedResponse,
   CollectionStats,
@@ -283,6 +285,24 @@ class NFTsAPI {
       undefined,
       params,
     )
+  }
+
+  async getCollection(
+    chain: Chain,
+    address: string,
+    identifier: string,
+  ): Promise<CollectionDetailedResponse> {
+    return this.client.get(
+      `/api/v2/chain/${chain}/contract/${address}/nfts/${identifier}/collection`,
+    )
+  }
+
+  async getMetadata(
+    chain: Chain,
+    address: string,
+    tokenId: string,
+  ): Promise<AssetMetadataResponse> {
+    return this.client.get(`/api/v2/metadata/${chain}/${address}/${tokenId}`)
   }
 }
 

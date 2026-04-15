@@ -66,6 +66,7 @@ export type DropPaginatedResponse = Schemas["DropPaginatedResponse"]
 export type DropMintRequest = Schemas["DropMintRequest"]
 export type DropMintResponse = Schemas["DropMintResponse"]
 export type AccountResolveResponse = Schemas["AccountResolveResponse"]
+export type AssetMetadataResponse = Schemas["AssetMetadataResponse"]
 
 // ── CLI-specific types (not from API spec) ──────────────────────────
 
