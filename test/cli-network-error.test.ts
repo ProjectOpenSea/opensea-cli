@@ -3,6 +3,7 @@ import { afterAll, expect, it, vi } from "vitest"
 
 vi.mock("../src/commands/index.js", () => ({
   accountsCommand: () => new Command("accounts"),
+  authCommand: () => new Command("auth"),
   chainsCommand: () => new Command("chains"),
   collectionsCommand: () => new Command("collections"),
   dropsCommand: () => new Command("drops"),
@@ -12,6 +13,7 @@ vi.mock("../src/commands/index.js", () => ({
   offersCommand: () => new Command("offers"),
   searchCommand: () => new Command("search"),
   swapsCommand: () => new Command("swaps"),
+  tokenGroupsCommand: () => new Command("token-groups"),
   tokensCommand: () => new Command("tokens"),
   healthCommand: () => new Command("health"),
 }))

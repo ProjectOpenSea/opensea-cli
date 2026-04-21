@@ -2,6 +2,7 @@ import { Command } from "commander"
 import { OpenSeaAPIError, OpenSeaClient } from "./client.js"
 import {
   accountsCommand,
+  authCommand,
   chainsCommand,
   collectionsCommand,
   dropsCommand,
@@ -12,6 +13,7 @@ import {
   offersCommand,
   searchCommand,
   swapsCommand,
+  tokenGroupsCommand,
   tokensCommand,
 } from "./commands/index.js"
 import { type OutputFormat, setOutputOptions } from "./output.js"
@@ -123,6 +125,10 @@ program.addCommand(offersCommand(getClient, getFormat))
 program.addCommand(eventsCommand(getClient, getFormat))
 program.addCommand(accountsCommand(getClient, getFormat))
 program.addCommand(tokensCommand(getClient, getFormat))
+program.addCommand(tokenGroupsCommand(getClient, getFormat))
+program.addCommand(
+  authCommand(() => program.opts<{ baseUrl?: string }>().baseUrl, getFormat),
+)
 program.addCommand(searchCommand(getClient, getFormat))
 program.addCommand(swapsCommand(getClient, getFormat))
 program.addCommand(healthCommand(getClient, getFormat))
