@@ -1,85 +1,20 @@
-import type { WalletAdapter } from "./adapter.js"
-import { FireblocksAdapter } from "./fireblocks.js"
-import { PrivateKeyAdapter } from "./private-key.js"
-import { PrivyAdapter } from "./privy.js"
-import { TurnkeyAdapter } from "./turnkey.js"
-
 export type {
+  SignMessageRequest,
+  SignTypedDataRequest,
   TransactionRequest,
   TransactionResult,
   WalletAdapter,
-} from "./adapter.js"
+  WalletCapabilities,
+  WalletProvider,
+} from "@opensea/wallet-adapters"
+export {
+  CHAIN_TO_FIREBLOCKS_ASSET,
+  createWalletForProvider,
+  createWalletFromEnv,
+  FireblocksAdapter,
+  PrivateKeyAdapter,
+  PrivyAdapter,
+  TurnkeyAdapter,
+  WALLET_PROVIDERS,
+} from "@opensea/wallet-adapters"
 export { CHAIN_IDS, resolveChainId } from "./chains.js"
-export { FireblocksAdapter } from "./fireblocks.js"
-export { PrivateKeyAdapter } from "./private-key.js"
-export { PrivyAdapter } from "./privy.js"
-export { TurnkeyAdapter } from "./turnkey.js"
-
-export type WalletProvider = "privy" | "turnkey" | "fireblocks" | "private-key"
-
-export const WALLET_PROVIDERS: WalletProvider[] = [
-  "privy",
-  "turnkey",
-  "fireblocks",
-  "private-key",
-]
-
-/**
- * Create a WalletAdapter from the current environment.
- *
- * When no provider is specified, auto-detects based on which
- * environment variables are set. Priority: Privy > Fireblocks > Turnkey > PrivateKey.
- */
-export function createWalletFromEnv(provider?: WalletProvider): WalletAdapter {
-  if (provider) {
-    return createAdapter(provider)
-  }
-
-  // Auto-detect based on available env vars
-  const hasPrivy = !!process.env.PRIVY_APP_ID && !!process.env.PRIVY_APP_SECRET
-  const hasFireblocks =
-    !!process.env.FIREBLOCKS_API_KEY && !!process.env.FIREBLOCKS_VAULT_ID
-  const hasTurnkey =
-    !!process.env.TURNKEY_API_PUBLIC_KEY &&
-    !!process.env.TURNKEY_ORGANIZATION_ID
-  const hasPrivateKey = !!process.env.PRIVATE_KEY && !!process.env.RPC_URL
-
-  const detected = [
-    hasPrivy && "privy",
-    hasFireblocks && "fireblocks",
-    hasTurnkey && "turnkey",
-    hasPrivateKey && "private-key",
-  ].filter(Boolean) as WalletProvider[]
-
-  if (detected.length > 1) {
-    console.warn(
-      `WARNING: Multiple wallet providers detected: ${detected.join(", ")}. ` +
-        `Using ${detected[0]}. Set --wallet-provider explicitly to avoid ambiguity.`,
-    )
-  }
-
-  if (hasPrivy) return PrivyAdapter.fromEnv()
-  if (hasFireblocks) return FireblocksAdapter.fromEnv()
-  if (hasTurnkey) return TurnkeyAdapter.fromEnv()
-  if (hasPrivateKey) return PrivateKeyAdapter.fromEnv()
-
-  // No provider env vars found — fall back to Privy (will fail with a clear error if not configured)
-  return PrivyAdapter.fromEnv()
-}
-
-function createAdapter(provider: WalletProvider): WalletAdapter {
-  switch (provider) {
-    case "privy":
-      return PrivyAdapter.fromEnv()
-    case "turnkey":
-      return TurnkeyAdapter.fromEnv()
-    case "fireblocks":
-      return FireblocksAdapter.fromEnv()
-    case "private-key":
-      return PrivateKeyAdapter.fromEnv()
-    default:
-      throw new Error(
-        `Unknown wallet provider "${provider}". Valid providers: ${WALLET_PROVIDERS.join(", ")}`,
-      )
-  }
-}

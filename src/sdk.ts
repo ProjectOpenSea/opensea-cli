@@ -30,10 +30,16 @@ import type {
   TokenBalancePaginatedResponse,
   TokenBalanceSortBy,
   TokenDetails,
+  TraitFilter,
   ValidateMetadataResponse,
 } from "./types/index.js"
 import type { TransactionResult, WalletAdapter } from "./wallet/index.js"
 import { resolveChainId } from "./wallet/index.js"
+
+function encodeTraits(traits?: TraitFilter[]): string | undefined {
+  if (!traits || traits.length === 0) return undefined
+  return JSON.stringify(traits)
+}
 
 function convertToSmallestUnit(amount: string, decimals: number): string {
   const [whole = "0", frac = ""] = amount.split(".")
@@ -226,11 +232,12 @@ class NFTsAPI {
 
   async listByCollection(
     slug: string,
-    options?: { limit?: number; next?: string },
+    options?: { limit?: number; next?: string; traits?: TraitFilter[] },
   ): Promise<{ nfts: NFT[]; next?: string }> {
     return this.client.get(`/api/v2/collection/${slug}/nfts`, {
       limit: options?.limit,
       next: options?.next,
+      traits: encodeTraits(options?.traits),
     })
   }
 
@@ -321,11 +328,15 @@ class ListingsAPI {
 
   async best(
     collectionSlug: string,
-    options?: { limit?: number; next?: string },
+    options?: { limit?: number; next?: string; traits?: TraitFilter[] },
   ): Promise<{ listings: Listing[]; next?: string }> {
     return this.client.get(
       `/api/v2/listings/collection/${collectionSlug}/best`,
-      { limit: options?.limit, next: options?.next },
+      {
+        limit: options?.limit,
+        next: options?.next,
+        traits: encodeTraits(options?.traits),
+      },
     )
   }
 
@@ -430,12 +441,14 @@ class EventsAPI {
       eventType?: EventType
       limit?: number
       next?: string
+      traits?: TraitFilter[]
     },
   ): Promise<{ asset_events: AssetEvent[]; next?: string }> {
     return this.client.get(`/api/v2/events/collection/${collectionSlug}`, {
       event_type: options?.eventType,
       limit: options?.limit,
       next: options?.next,
+      traits: encodeTraits(options?.traits),
     })
   }
 

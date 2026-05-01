@@ -2,7 +2,7 @@ import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
-import { parseIntOption } from "../parse.js"
+import { addTraitsOption, parseIntOption, parseTraitsOption } from "../parse.js"
 import type { AssetEvent } from "../types/index.js"
 
 export function eventsCommand(
@@ -84,34 +84,37 @@ export function eventsCommand(
       },
     )
 
-  cmd
-    .command("by-collection")
-    .description("Get events for a collection")
-    .argument("<slug>", "Collection slug")
-    .option("--event-type <type>", "Event type")
-    .option("--limit <limit>", "Number of results", "20")
-    .option("--next <cursor>", "Pagination cursor")
-    .action(
-      async (
-        slug: string,
-        options: {
-          eventType?: string
-          limit: string
-          next?: string
-        },
-      ) => {
-        const client = getClient()
-        const result = await client.get<{
-          asset_events: AssetEvent[]
-          next?: string
-        }>(`/api/v2/events/collection/${slug}`, {
-          event_type: options.eventType,
-          limit: parseIntOption(options.limit, "--limit"),
-          next: options.next,
-        })
-        console.log(formatOutput(result, getFormat()))
+  addTraitsOption(
+    cmd
+      .command("by-collection")
+      .description("Get events for a collection")
+      .argument("<slug>", "Collection slug")
+      .option("--event-type <type>", "Event type")
+      .option("--limit <limit>", "Number of results", "20")
+      .option("--next <cursor>", "Pagination cursor"),
+  ).action(
+    async (
+      slug: string,
+      options: {
+        eventType?: string
+        limit: string
+        next?: string
+        traits?: string
       },
-    )
+    ) => {
+      const client = getClient()
+      const result = await client.get<{
+        asset_events: AssetEvent[]
+        next?: string
+      }>(`/api/v2/events/collection/${slug}`, {
+        event_type: options.eventType,
+        limit: parseIntOption(options.limit, "--limit"),
+        next: options.next,
+        traits: options.traits ? parseTraitsOption(options.traits) : undefined,
+      })
+      console.log(formatOutput(result, getFormat()))
+    },
+  )
 
   cmd
     .command("by-nft")

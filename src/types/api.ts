@@ -68,6 +68,18 @@ export type DropMintResponse = Schemas["DropMintResponse"]
 export type AccountResolveResponse = Schemas["AccountResolveResponse"]
 export type AssetMetadataResponse = Schemas["AssetMetadataResponse"]
 
+// ── Query helpers ───────────────────────────────────────────────────
+
+/**
+ * Single trait filter passed to collection-scoped read endpoints (NFTs by
+ * collection, best listings by collection, events by collection). Multiple
+ * filters are AND-combined: returned items must match every trait.
+ */
+export interface TraitFilter {
+  traitType: string
+  value: string
+}
+
 // ── CLI-specific types (not from API spec) ──────────────────────────
 
 export type SafelistStatus =

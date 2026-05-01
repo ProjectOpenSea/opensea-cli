@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest"
-import { parseFloatOption, parseIntOption } from "../src/parse.js"
+import {
+  parseFloatOption,
+  parseIntOption,
+  parseTraitsOption,
+} from "../src/parse.js"
 
 describe("parseIntOption", () => {
   it("parses valid integers", () => {
@@ -38,5 +42,55 @@ describe("parseFloatOption", () => {
     expect(() => parseFloatOption("", "--slippage")).toThrow(
       'Invalid value for --slippage: "" is not a number',
     )
+  })
+})
+
+describe("parseTraitsOption", () => {
+  it("returns the normalized JSON string for a valid filter array", () => {
+    const input = '[{"traitType":"Background","value":"Red"}]'
+    expect(parseTraitsOption(input)).toBe(input)
+  })
+
+  it("re-stringifies to normalize whitespace", () => {
+    const input = '[ { "traitType": "Background", "value": "Red" } ]'
+    expect(parseTraitsOption(input)).toBe(
+      '[{"traitType":"Background","value":"Red"}]',
+    )
+  })
+
+  it("accepts multiple trait filters", () => {
+    const input =
+      '[{"traitType":"Background","value":"Red"},{"traitType":"Eyes","value":"Laser"}]'
+    expect(parseTraitsOption(input)).toBe(input)
+  })
+
+  it("throws on malformed JSON", () => {
+    expect(() => parseTraitsOption("not-json")).toThrow(
+      "Invalid value for --traits: not valid JSON",
+    )
+  })
+
+  it("throws when input is not an array", () => {
+    expect(() =>
+      parseTraitsOption('{"traitType":"Background","value":"Red"}'),
+    ).toThrow("--traits must be a non-empty JSON array")
+  })
+
+  it("throws on an empty array", () => {
+    expect(() => parseTraitsOption("[]")).toThrow(
+      "--traits must be a non-empty JSON array",
+    )
+  })
+
+  it("throws when an item is missing traitType", () => {
+    expect(() => parseTraitsOption('[{"value":"Red"}]')).toThrow(
+      "--traits[0] must be { traitType: string, value: string }",
+    )
+  })
+
+  it("throws when an item has wrong types", () => {
+    expect(() =>
+      parseTraitsOption('[{"traitType":"Background","value":42}]'),
+    ).toThrow("--traits[0] must be { traitType: string, value: string }")
   })
 })

@@ -9,10 +9,13 @@ export type {
   TransactionRequest,
   TransactionResult,
   WalletAdapter,
+  WalletCapabilities,
   WalletProvider,
 } from "./wallet/index.js"
 export {
   CHAIN_IDS,
+  CHAIN_TO_FIREBLOCKS_ASSET,
+  createWalletForProvider,
   createWalletFromEnv,
   FireblocksAdapter,
   PrivateKeyAdapter,

@@ -2,7 +2,7 @@ import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
-import { parseIntOption } from "../parse.js"
+import { addTraitsOption, parseIntOption, parseTraitsOption } from "../parse.js"
 import type { Contract, NFT, ValidateMetadataResponse } from "../types/index.js"
 
 export function nftsCommand(
@@ -25,23 +25,32 @@ export function nftsCommand(
       console.log(formatOutput(result, getFormat()))
     })
 
-  cmd
-    .command("list-by-collection")
-    .description("List NFTs in a collection")
-    .argument("<slug>", "Collection slug")
-    .option("--limit <limit>", "Number of results", "20")
-    .option("--next <cursor>", "Pagination cursor")
-    .action(async (slug: string, options: { limit: string; next?: string }) => {
+  addTraitsOption(
+    cmd
+      .command("list-by-collection")
+      .description("List NFTs in a collection")
+      .argument("<slug>", "Collection slug")
+      .option("--limit <limit>", "Number of results", "20")
+      .option("--next <cursor>", "Pagination cursor"),
+  ).action(
+    async (
+      slug: string,
+      options: { limit: string; next?: string; traits?: string },
+    ) => {
       const client = getClient()
       const result = await client.get<{ nfts: NFT[]; next?: string }>(
         `/api/v2/collection/${slug}/nfts`,
         {
           limit: parseIntOption(options.limit, "--limit"),
           next: options.next,
+          traits: options.traits
+            ? parseTraitsOption(options.traits)
+            : undefined,
         },
       )
       console.log(formatOutput(result, getFormat()))
-    })
+    },
+  )
 
   cmd
     .command("list-by-contract")

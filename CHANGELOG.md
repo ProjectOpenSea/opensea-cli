@@ -1,5 +1,15 @@
 # @opensea/cli
 
+## 1.3.0
+
+### Minor Changes
+
+- d247639: Replace duplicated wallet adapter implementations with `@opensea/wallet-adapters` package. All adapter code (Privy, Turnkey, Fireblocks, PrivateKey) now comes from the shared package, reducing ~1200 lines of duplicated code. The CLI re-exports all wallet types and adapters from `@opensea/wallet-adapters` alongside the CLI-specific chain resolution utilities (`CHAIN_IDS`, `resolveChainId`).
+
+### Patch Changes
+
+- 4a76bc1: Add `--traits <json>` flag to `nfts list-by-collection`, `listings best`, and `events by-collection` for server-side trait filtering. Accepts a JSON-encoded array of `{ traitType, value }` filters; multiple entries are AND-combined. Programmatic SDK methods (`client.nfts.listByCollection`, `client.listings.best`, `client.events.byCollection`) accept a structured `TraitFilter[]` array.
+
 ## 1.2.0
 
 ### Minor Changes

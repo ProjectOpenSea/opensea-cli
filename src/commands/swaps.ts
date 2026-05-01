@@ -6,7 +6,11 @@ import { parseFloatOption } from "../parse.js"
 import { resolveQuantity, SwapsAPI } from "../sdk.js"
 import type { SwapQuoteResponse } from "../types/index.js"
 import type { WalletProvider } from "../wallet/index.js"
-import { createWalletFromEnv, WALLET_PROVIDERS } from "../wallet/index.js"
+import {
+  createWalletForProvider,
+  createWalletFromEnv,
+  WALLET_PROVIDERS,
+} from "../wallet/index.js"
 
 export function swapsCommand(
   getClient: () => OpenSeaClient,
@@ -126,9 +130,9 @@ export function swapsCommand(
         walletProvider?: string
         dryRun?: boolean
       }) => {
-        const wallet = createWalletFromEnv(
-          options.walletProvider as WalletProvider | undefined,
-        )
+        const wallet = options.walletProvider
+          ? createWalletForProvider(options.walletProvider as WalletProvider)
+          : createWalletFromEnv()
         const address = await wallet.getAddress()
         console.error(`Using ${wallet.name} wallet: ${address}`)
 
