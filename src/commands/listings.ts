@@ -3,7 +3,10 @@ import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
 import { addTraitsOption, parseIntOption, parseTraitsOption } from "../parse.js"
-import type { Listing } from "../types/index.js"
+import type {
+  CrossChainFulfillmentDataResponse,
+  Listing,
+} from "../types/index.js"
 
 export function listingsCommand(
   getClient: () => OpenSeaClient,
@@ -68,6 +71,70 @@ export function listingsCommand(
       )
       console.log(formatOutput(result, getFormat()))
     })
+
+  cmd
+    .command("cross-chain-fulfill")
+    .description(
+      "Get cross-chain fulfillment data for one or more listings. " +
+        "Supports same-chain, cross-token, and cross-chain purchases.",
+    )
+    .requiredOption(
+      "--hashes <hashes>",
+      "Comma-separated order hashes to fulfill",
+    )
+    .requiredOption(
+      "--listing-chain <chain>",
+      "Chain slug where the listings live (must be EVM)",
+    )
+    .requiredOption(
+      "--protocol-address <address>",
+      "Seaport contract address for the listings",
+    )
+    .requiredOption("--fulfiller <address>", "Buyer wallet address")
+    .requiredOption(
+      "--payment-chain <chain>",
+      "Chain slug of the payment token (EVM or SVM)",
+    )
+    .requiredOption(
+      "--payment-token <address>",
+      "Payment token contract address (0x0...0 for native)",
+    )
+    .option("--recipient <address>", "Different recipient address for NFTs")
+    .action(
+      async (options: {
+        hashes: string
+        listingChain: string
+        protocolAddress: string
+        fulfiller: string
+        paymentChain: string
+        paymentToken: string
+        recipient?: string
+      }) => {
+        const client = getClient()
+        const hashes = options.hashes.split(",").map(h => h.trim())
+        const listings = hashes.map(hash => ({
+          hash,
+          chain: options.listingChain,
+          protocol_address: options.protocolAddress,
+        }))
+        const body: Record<string, unknown> = {
+          listings,
+          fulfiller: { address: options.fulfiller },
+          payment: {
+            chain: options.paymentChain,
+            token_address: options.paymentToken,
+          },
+        }
+        if (options.recipient) {
+          body.recipient = options.recipient
+        }
+        const result = await client.post<CrossChainFulfillmentDataResponse>(
+          "/api/v2/listings/cross_chain_fulfillment_data",
+          body,
+        )
+        console.log(formatOutput(result, getFormat()))
+      },
+    )
 
   return cmd
 }

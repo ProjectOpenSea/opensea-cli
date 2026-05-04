@@ -13,6 +13,7 @@ import type {
   CollectionPaginatedResponse,
   CollectionStats,
   Contract,
+  CrossChainFulfillmentDataResponse,
   DropDetailedResponse,
   DropMintResponse,
   DropPaginatedResponse,
@@ -343,6 +344,38 @@ class ListingsAPI {
   async bestForNFT(collectionSlug: string, tokenId: string): Promise<Listing> {
     return this.client.get(
       `/api/v2/listings/collection/${collectionSlug}/nfts/${tokenId}/best`,
+    )
+  }
+
+  async crossChainFulfillmentData(options: {
+    listings: Array<{
+      hash: string
+      chain: string
+      protocolAddress: string
+    }>
+    fulfillerAddress: string
+    paymentChain: string
+    paymentTokenAddress: string
+    recipient?: string
+  }): Promise<CrossChainFulfillmentDataResponse> {
+    const body: Record<string, unknown> = {
+      listings: options.listings.map(l => ({
+        hash: l.hash,
+        chain: l.chain,
+        protocol_address: l.protocolAddress,
+      })),
+      fulfiller: { address: options.fulfillerAddress },
+      payment: {
+        chain: options.paymentChain,
+        token_address: options.paymentTokenAddress,
+      },
+    }
+    if (options.recipient) {
+      body.recipient = options.recipient
+    }
+    return this.client.post(
+      "/api/v2/listings/cross_chain_fulfillment_data",
+      body,
     )
   }
 }

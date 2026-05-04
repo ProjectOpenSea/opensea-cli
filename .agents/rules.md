@@ -57,14 +57,20 @@ CLI (src/cli.ts)              SDK (src/sdk.ts)
 
 Each domain has both a CLI command file (`src/commands/<domain>.ts`) and an SDK class (`src/sdk.ts`):
 
-- **collections** - Collection metadata, stats, traits
-- **nfts** - NFT lookup, listing by collection/contract/account, metadata refresh
-- **listings** - Active listings (all, best, best-for-nft)
-- **offers** - Offers (all, collection, best-for-nft, trait offers)
-- **events** - Marketplace events (sales, transfers, mints, etc.)
 - **accounts** - Account profile lookup
-- **tokens** - Fungible token trending/top/details
+- **auth** - API key request and management
+- **chains** - Chain information and supported networks
+- **collections** - Collection metadata, stats, traits
+- **drops** - NFT drop details, listing, and minting
+- **events** - Marketplace events (sales, transfers, mints, etc.)
+- **health** - API health check
+- **listings** - Active listings (all, best, best-for-nft)
+- **nfts** - NFT lookup, listing by collection/contract/account, metadata refresh
+- **offers** - Offers (all, collection, best-for-nft, trait offers)
+- **search** - Search collections, NFTs, and accounts
 - **swaps** - Token swap quotes
+- **token-groups** - Token group details and listings
+- **tokens** - Fungible token trending/top/details
 
 ## Conventions
 

@@ -20,6 +20,7 @@ describe("listingsCommand", () => {
     expect(subcommands).toContain("all")
     expect(subcommands).toContain("best")
     expect(subcommands).toContain("best-for-nft")
+    expect(subcommands).toContain("cross-chain-fulfill")
   })
 
   it("all subcommand fetches all listings", async () => {
@@ -58,6 +59,117 @@ describe("listingsCommand", () => {
 
     expect(ctx.mockClient.get).toHaveBeenCalledWith(
       "/api/v2/listings/collection/cool-cats/nfts/123/best",
+    )
+  })
+
+  it("cross-chain-fulfill subcommand posts correct body", async () => {
+    ctx.mockClient.post.mockResolvedValue({ transactions: [] })
+
+    const cmd = listingsCommand(ctx.getClient, ctx.getFormat)
+    await cmd.parseAsync(
+      [
+        "cross-chain-fulfill",
+        "--hashes",
+        "0xabc",
+        "--listing-chain",
+        "ethereum",
+        "--protocol-address",
+        "0x00000000000000ADc04C56Bf30aC9d3c0aAF14dC",
+        "--fulfiller",
+        "0x1234567890abcdef1234567890abcdef12345678",
+        "--payment-chain",
+        "base",
+        "--payment-token",
+        "0x0000000000000000000000000000000000000000",
+      ],
+      { from: "user" },
+    )
+
+    expect(ctx.mockClient.post).toHaveBeenCalledWith(
+      "/api/v2/listings/cross_chain_fulfillment_data",
+      {
+        listings: [
+          {
+            hash: "0xabc",
+            chain: "ethereum",
+            protocol_address: "0x00000000000000ADc04C56Bf30aC9d3c0aAF14dC",
+          },
+        ],
+        fulfiller: {
+          address: "0x1234567890abcdef1234567890abcdef12345678",
+        },
+        payment: {
+          chain: "base",
+          token_address: "0x0000000000000000000000000000000000000000",
+        },
+      },
+    )
+  })
+
+  it("cross-chain-fulfill supports multiple hashes", async () => {
+    ctx.mockClient.post.mockResolvedValue({ transactions: [] })
+
+    const cmd = listingsCommand(ctx.getClient, ctx.getFormat)
+    await cmd.parseAsync(
+      [
+        "cross-chain-fulfill",
+        "--hashes",
+        "0xabc,0xdef",
+        "--listing-chain",
+        "ethereum",
+        "--protocol-address",
+        "0x00000000000000ADc04C56Bf30aC9d3c0aAF14dC",
+        "--fulfiller",
+        "0x1234567890abcdef1234567890abcdef12345678",
+        "--payment-chain",
+        "base",
+        "--payment-token",
+        "0x0000000000000000000000000000000000000000",
+      ],
+      { from: "user" },
+    )
+
+    expect(ctx.mockClient.post).toHaveBeenCalledWith(
+      "/api/v2/listings/cross_chain_fulfillment_data",
+      expect.objectContaining({
+        listings: [
+          expect.objectContaining({ hash: "0xabc" }),
+          expect.objectContaining({ hash: "0xdef" }),
+        ],
+      }),
+    )
+  })
+
+  it("cross-chain-fulfill passes optional recipient", async () => {
+    ctx.mockClient.post.mockResolvedValue({ transactions: [] })
+
+    const cmd = listingsCommand(ctx.getClient, ctx.getFormat)
+    await cmd.parseAsync(
+      [
+        "cross-chain-fulfill",
+        "--hashes",
+        "0xabc",
+        "--listing-chain",
+        "ethereum",
+        "--protocol-address",
+        "0x00000000000000ADc04C56Bf30aC9d3c0aAF14dC",
+        "--fulfiller",
+        "0x1234567890abcdef1234567890abcdef12345678",
+        "--payment-chain",
+        "base",
+        "--payment-token",
+        "0x0000000000000000000000000000000000000000",
+        "--recipient",
+        "0xrecipient",
+      ],
+      { from: "user" },
+    )
+
+    expect(ctx.mockClient.post).toHaveBeenCalledWith(
+      "/api/v2/listings/cross_chain_fulfillment_data",
+      expect.objectContaining({
+        recipient: "0xrecipient",
+      }),
     )
   })
 })

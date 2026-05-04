@@ -597,4 +597,68 @@ describe("OpenSeaCLI", () => {
       expect(result.message).toContain("Network error: fetch failed")
     })
   })
+
+  describe("listings.crossChainFulfillmentData", () => {
+    it("posts to correct endpoint with snake_case body", async () => {
+      mockPost.mockResolvedValue({
+        transactions: [
+          { chain: "ethereum", to: "0xabc", data: "0x123", value: "0" },
+        ],
+      })
+      const result = await sdk.listings.crossChainFulfillmentData({
+        listings: [
+          {
+            hash: "0xorderhash",
+            chain: "ethereum",
+            protocolAddress: "0xseaport",
+          },
+        ],
+        fulfillerAddress: "0xbuyer",
+        paymentChain: "base",
+        paymentTokenAddress: "0x0000000000000000000000000000000000000000",
+      })
+      expect(mockPost).toHaveBeenCalledWith(
+        "/api/v2/listings/cross_chain_fulfillment_data",
+        {
+          listings: [
+            {
+              hash: "0xorderhash",
+              chain: "ethereum",
+              protocol_address: "0xseaport",
+            },
+          ],
+          fulfiller: { address: "0xbuyer" },
+          payment: {
+            chain: "base",
+            token_address: "0x0000000000000000000000000000000000000000",
+          },
+        },
+      )
+      expect(result.transactions).toHaveLength(1)
+      expect(result.transactions[0].chain).toBe("ethereum")
+    })
+
+    it("includes recipient when provided", async () => {
+      mockPost.mockResolvedValue({ transactions: [] })
+      await sdk.listings.crossChainFulfillmentData({
+        listings: [
+          {
+            hash: "0xhash",
+            chain: "ethereum",
+            protocolAddress: "0xseaport",
+          },
+        ],
+        fulfillerAddress: "0xbuyer",
+        paymentChain: "base",
+        paymentTokenAddress: "0x0000000000000000000000000000000000000000",
+        recipient: "0xrecipient",
+      })
+      expect(mockPost).toHaveBeenCalledWith(
+        "/api/v2/listings/cross_chain_fulfillment_data",
+        expect.objectContaining({
+          recipient: "0xrecipient",
+        }),
+      )
+    })
+  })
 })
