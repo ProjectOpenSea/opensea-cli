@@ -3,10 +3,7 @@ import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
 import { addTraitsOption, parseIntOption, parseTraitsOption } from "../parse.js"
-import type {
-  CrossChainFulfillmentDataResponse,
-  Listing,
-} from "../types/index.js"
+import type { CrossChainFulfillmentResponse, Listing } from "../types/index.js"
 
 export function listingsCommand(
   getClient: () => OpenSeaClient,
@@ -128,7 +125,7 @@ export function listingsCommand(
         if (options.recipient) {
           body.recipient = options.recipient
         }
-        const result = await client.post<CrossChainFulfillmentDataResponse>(
+        const result = await client.post<CrossChainFulfillmentResponse>(
           "/api/v2/listings/cross_chain_fulfillment_data",
           body,
         )

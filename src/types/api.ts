@@ -311,16 +311,11 @@ export type TokenBalanceSortBy =
   | "ONE_DAY_PRICE_CHANGE"
   | "SEVEN_DAY_PRICE_CHANGE"
 
-export interface CrossChainFulfillmentTransaction {
-  chain: string
-  to: string
-  data: string
-  value: string
-}
-
-export interface CrossChainFulfillmentDataResponse {
-  transactions: CrossChainFulfillmentTransaction[]
-}
+export type CrossChainFulfillmentRequest =
+  Schemas["CrossChainFulfillmentRequest"]
+export type CrossChainFulfillmentResponse =
+  Schemas["CrossChainFulfillmentResponse"]
+export type SwapTransactionResponse = Schemas["SwapTransactionResponse"]
 
 export interface ValidateMetadataResponse {
   assetIdentifier: {

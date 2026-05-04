@@ -13,7 +13,7 @@ import type {
   CollectionPaginatedResponse,
   CollectionStats,
   Contract,
-  CrossChainFulfillmentDataResponse,
+  CrossChainFulfillmentResponse,
   DropDetailedResponse,
   DropMintResponse,
   DropPaginatedResponse,
@@ -357,7 +357,7 @@ class ListingsAPI {
     paymentChain: string
     paymentTokenAddress: string
     recipient?: string
-  }): Promise<CrossChainFulfillmentDataResponse> {
+  }): Promise<CrossChainFulfillmentResponse> {
     const body: Record<string, unknown> = {
       listings: options.listings.map(l => ({
         hash: l.hash,

@@ -53,6 +53,16 @@ CLI (src/cli.ts)              SDK (src/sdk.ts)
 | `src/types/api.ts` | TypeScript interfaces matching OpenSea API v2 response shapes. |
 | `src/types/index.ts` | Re-exports API types plus internal config types. |
 
+### API Types
+
+API request/response types live in `src/types/api.ts` and are mostly thin re-exports of `components["schemas"]["..."]` from `@opensea/api-types`. **Never hand-roll types for OpenSea API v2 endpoints.** When adding a new endpoint:
+
+1. Run `/sync-openapi` (or `pnpm --filter @opensea/api-types run update-spec && build`) to refresh the OpenAPI spec.
+2. Add a re-export in `src/types/api.ts`: `export type X = Schemas["X"]`.
+3. Use the canonical schema name from the spec — don't rename.
+
+CI runs `pnpm check-api-paths` on every PR; it fails if `src/sdk.ts` or `src/commands/*.ts` references an `/api/v2/...` URL not present in `packages/api-types/opensea-api.json`. See top-level [AGENTS.md → "Adding a new OpenSea API endpoint"](../../../AGENTS.md#adding-a-new-opensea-api-endpoint-to-the-sdk-or-cli).
+
 ### API Domains
 
 Each domain has both a CLI command file (`src/commands/<domain>.ts`) and an SDK class (`src/sdk.ts`):
