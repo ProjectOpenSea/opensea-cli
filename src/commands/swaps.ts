@@ -89,7 +89,7 @@ export function swapsCommand(
     .command("execute")
     .description(
       "Get a swap quote and execute it onchain using a managed wallet. " +
-        "Supports Privy (default), Turnkey, and Fireblocks providers.",
+        "Supports Privy (default), Turnkey, Fireblocks, and Bankr providers.",
     )
     .requiredOption("--from-chain <chain>", "Chain of the token to swap from")
     .requiredOption(

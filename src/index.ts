@@ -13,6 +13,7 @@ export type {
   WalletProvider,
 } from "./wallet/index.js"
 export {
+  BankrAdapter,
   CHAIN_IDS,
   CHAIN_TO_FIREBLOCKS_ASSET,
   createWalletForProvider,

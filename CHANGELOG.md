@@ -1,5 +1,13 @@
 # @opensea/cli
 
+## 1.4.2
+
+### Patch Changes
+
+- 16f4b7e: Re-export `BankrAdapter` and `BankrConfig` from `@opensea/wallet-adapters`. The `swaps execute` command description now lists Bankr alongside Privy, Turnkey, and Fireblocks. `createWalletFromEnv()` already auto-detects Bankr when `BANKR_API_KEY` is set; this just makes the named adapter directly importable from `@opensea/cli`.
+- Updated dependencies [a81071b]
+  - @opensea/wallet-adapters@0.2.0
+
 ## 1.4.1
 
 ### Patch Changes
