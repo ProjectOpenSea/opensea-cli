@@ -6,6 +6,7 @@ export type {
   TransactionResult,
   WalletAdapter,
   WalletCapabilities,
+  WalletInfo,
   WalletProvider,
 } from "@opensea/wallet-adapters"
 export {

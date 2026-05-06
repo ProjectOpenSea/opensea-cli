@@ -17,6 +17,7 @@ vi.mock("../src/commands/index.js", () => ({
   tokenGroupsCommand: () => new Command("token-groups"),
   tokensCommand: () => new Command("tokens"),
   healthCommand: () => new Command("health"),
+  walletCommand: () => new Command("wallet"),
 }))
 
 const exitSpy = vi

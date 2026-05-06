@@ -1,5 +1,32 @@
 # @opensea/cli
 
+## 1.5.0
+
+### Minor Changes
+
+- 9ecf704: Provider-aware wallet hardening across Privy, Turnkey, Fireblocks, and Bankr.
+
+  **`@opensea/wallet-adapters`**
+
+  - New `WalletInfo` discriminated union exported.
+  - New optional `getWalletInfo()` method on `WalletAdapter` (implemented by all four managed providers).
+  - Privy adapter: optional `PRIVY_AUTH_SIGNING_KEY` env var enables `privy-authorization-signature` header on `/rpc` requests via `@privy-io/node` (added as optional peer dependency), supporting the `owner_id` + `additional_signer` hardening pattern.
+  - Privy adapter: `personal_sign` now sends `params.encoding` ("utf-8" / "hex") to satisfy Privy's RPC schema (was previously omitting this and getting 400s on owner-gated wallets).
+  - Privy adapter: 401 errors with `Invalid app ID or app secret` body now include a `printf %s` hint for the `echo` vs `echo -n` debugging dead-end.
+  - Top-of-file security-model docstrings on all four adapters declaring signing-only intent and forbidding mutation surfaces.
+
+  **`@opensea/cli`**
+
+  - New `opensea wallet` command group with three subcommands:
+    - `wallet info` — provider-aware posture readout, hardening warnings to stderr, structured info to stdout.
+    - `wallet create` — Privy-only, `POST /v1/wallets`. Optional `--owner-public-key` registers an `owner_id` at create time. Narrow mutation surface: creates new resources only.
+    - `wallet generate-auth-key` — pure-local P-256 keypair generation, no API calls.
+
+### Patch Changes
+
+- Updated dependencies [9ecf704]
+  - @opensea/wallet-adapters@0.3.0
+
 ## 1.4.2
 
 ### Patch Changes

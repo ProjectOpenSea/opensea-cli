@@ -15,6 +15,7 @@ import {
   swapsCommand,
   tokenGroupsCommand,
   tokensCommand,
+  walletCommand,
 } from "./commands/index.js"
 import { type OutputFormat, setOutputOptions } from "./output.js"
 import { parseIntOption } from "./parse.js"
@@ -132,6 +133,7 @@ program.addCommand(
 program.addCommand(searchCommand(getClient, getFormat))
 program.addCommand(swapsCommand(getClient, getFormat))
 program.addCommand(healthCommand(getClient, getFormat))
+program.addCommand(walletCommand(getFormat))
 
 async function main() {
   try {
