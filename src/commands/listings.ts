@@ -17,8 +17,12 @@ export function listingsCommand(
     .argument("<collection>", "Collection slug")
     .option("--limit <limit>", "Number of results", "20")
     .option("--next <cursor>", "Pagination cursor")
+    .option("--maker <address>", "Filter by order maker address")
     .action(
-      async (collection: string, options: { limit: string; next?: string }) => {
+      async (
+        collection: string,
+        options: { limit: string; next?: string; maker?: string },
+      ) => {
         const client = getClient()
         const result = await client.get<{
           listings: Listing[]
@@ -26,7 +30,58 @@ export function listingsCommand(
         }>(`/api/v2/listings/collection/${collection}/all`, {
           limit: parseIntOption(options.limit, "--limit"),
           next: options.next,
+          maker: options.maker,
         })
+        console.log(formatOutput(result, getFormat()))
+      },
+    )
+
+  cmd
+    .command("sweep")
+    .description("Bulk-buy items from a collection (any payment token)")
+    .requiredOption("--collection <slug>", "Collection slug to sweep")
+    .requiredOption("--max-items <n>", "Maximum number of items to buy", v =>
+      parseIntOption(v, "--max-items"),
+    )
+    .requiredOption(
+      "--max-price-per-item <wei>",
+      "Maximum price per item in wei of the payment token",
+    )
+    .requiredOption("--buyer <address>", "Buyer wallet address")
+    .requiredOption(
+      "--payment-chain <chain>",
+      "Chain slug of the payment token (EVM or SVM)",
+    )
+    .requiredOption(
+      "--payment-token <address>",
+      "Payment token contract address (0x0...0 for native)",
+    )
+    .option("--recipient <address>", "Different recipient address for NFTs")
+    .action(
+      async (options: {
+        collection: string
+        maxItems: number
+        maxPricePerItem: string
+        buyer: string
+        paymentChain: string
+        paymentToken: string
+        recipient?: string
+      }) => {
+        const client = getClient()
+        const body: Record<string, unknown> = {
+          collection_slug: options.collection,
+          max_items: options.maxItems,
+          max_price_per_item: options.maxPricePerItem,
+          buyer: options.buyer,
+          payment: {
+            chain: options.paymentChain,
+            token_address: options.paymentToken,
+          },
+        }
+        if (options.recipient) {
+          body.recipient = options.recipient
+        }
+        const result = await client.post("/api/v2/listings/sweep", body)
         console.log(formatOutput(result, getFormat()))
       },
     )

@@ -26,12 +26,18 @@ import type {
   OpenSeaClientConfig,
   SearchAssetType,
   SearchResponse,
+  SwapExecuteRequest,
+  SwapExecuteResponse,
   SwapQuoteResponse,
+  SweepCollectionRequest,
+  SweepCollectionResponse,
   Token,
   TokenBalancePaginatedResponse,
   TokenBalanceSortBy,
   TokenDetails,
   TraitFilter,
+  TransactionReceiptRequest,
+  TransactionReceiptResponse,
   ValidateMetadataResponse,
 } from "./types/index.js"
 import type { TransactionResult, WalletAdapter } from "./wallet/index.js"
@@ -93,6 +99,7 @@ export class OpenSeaCLI {
   readonly tokens: TokensAPI
   readonly search: SearchAPI
   readonly swaps: SwapsAPI
+  readonly transactions: TransactionsAPI
   readonly health: HealthAPI
 
   constructor(config: OpenSeaClientConfig) {
@@ -108,6 +115,7 @@ export class OpenSeaCLI {
     this.tokens = new TokensAPI(this.client)
     this.search = new SearchAPI(this.client)
     this.swaps = new SwapsAPI(this.client)
+    this.transactions = new TransactionsAPI(this.client)
     this.health = new HealthAPI(this.client)
   }
 }
@@ -319,11 +327,15 @@ class ListingsAPI {
 
   async all(
     collectionSlug: string,
-    options?: { limit?: number; next?: string },
+    options?: { limit?: number; next?: string; maker?: string },
   ): Promise<{ listings: Listing[]; next?: string }> {
     return this.client.get(
       `/api/v2/listings/collection/${collectionSlug}/all`,
-      { limit: options?.limit, next: options?.next },
+      {
+        limit: options?.limit,
+        next: options?.next,
+        maker: options?.maker,
+      },
     )
   }
 
@@ -345,6 +357,12 @@ class ListingsAPI {
     return this.client.get(
       `/api/v2/listings/collection/${collectionSlug}/nfts/${tokenId}/best`,
     )
+  }
+
+  async sweep(
+    request: SweepCollectionRequest,
+  ): Promise<SweepCollectionResponse> {
+    return this.client.post("/api/v2/listings/sweep", request)
   }
 
   async crossChainFulfillmentData(options: {
@@ -385,11 +403,12 @@ class OffersAPI {
 
   async all(
     collectionSlug: string,
-    options?: { limit?: number; next?: string },
+    options?: { limit?: number; next?: string; maker?: string },
   ): Promise<{ offers: Offer[]; next?: string }> {
     return this.client.get(`/api/v2/offers/collection/${collectionSlug}/all`, {
       limit: options?.limit,
       next: options?.next,
+      maker: options?.maker,
     })
   }
 
@@ -401,6 +420,17 @@ class OffersAPI {
       limit: options?.limit,
       next: options?.next,
     })
+  }
+
+  async byNFT(
+    collectionSlug: string,
+    tokenId: string,
+    options?: { limit?: number; next?: string },
+  ): Promise<{ offers: Offer[]; next?: string }> {
+    return this.client.get(
+      `/api/v2/offers/collection/${collectionSlug}/nfts/${tokenId}`,
+      { limit: options?.limit, next: options?.next },
+    )
   }
 
   async bestForNFT(collectionSlug: string, tokenId: string): Promise<Offer> {
@@ -685,6 +715,32 @@ export class SwapsAPI {
     }
 
     return results
+  }
+
+  /**
+   * Multi-asset swap: get executable transactions for token-to-token swaps with
+   * arbitrary numbers of from/to assets. Returns the quote alongside the
+   * transactions to sign and submit. POST /api/v2/swap/execute.
+   */
+  async executeMulti(
+    request: SwapExecuteRequest,
+  ): Promise<SwapExecuteResponse> {
+    return this.client.post("/api/v2/swap/execute", request)
+  }
+}
+
+export class TransactionsAPI {
+  constructor(private client: OpenSeaClient) {}
+
+  /**
+   * Fetch the receipt/status for a submitted transaction. Works for all
+   * transaction types: listing fulfillments, cross-chain buys, sweeps, offer
+   * fulfillments, and token swaps.
+   */
+  async receipt(
+    request: TransactionReceiptRequest,
+  ): Promise<TransactionReceiptResponse> {
+    return this.client.post("/api/v2/transactions/receipt", request)
   }
 }
 

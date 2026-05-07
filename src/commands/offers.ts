@@ -17,13 +17,43 @@ export function offersCommand(
     .argument("<collection>", "Collection slug")
     .option("--limit <limit>", "Number of results", "20")
     .option("--next <cursor>", "Pagination cursor")
+    .option("--maker <address>", "Filter by order maker address")
     .action(
-      async (collection: string, options: { limit: string; next?: string }) => {
+      async (
+        collection: string,
+        options: { limit: string; next?: string; maker?: string },
+      ) => {
         const client = getClient()
         const result = await client.get<{
           offers: Offer[]
           next?: string
         }>(`/api/v2/offers/collection/${collection}/all`, {
+          limit: parseIntOption(options.limit, "--limit"),
+          next: options.next,
+          maker: options.maker,
+        })
+        console.log(formatOutput(result, getFormat()))
+      },
+    )
+
+  cmd
+    .command("by-nft")
+    .description("Get all offers for a specific NFT")
+    .argument("<collection>", "Collection slug")
+    .argument("<token-id>", "Token ID")
+    .option("--limit <limit>", "Number of results", "20")
+    .option("--next <cursor>", "Pagination cursor")
+    .action(
+      async (
+        collection: string,
+        tokenId: string,
+        options: { limit: string; next?: string },
+      ) => {
+        const client = getClient()
+        const result = await client.get<{
+          offers: Offer[]
+          next?: string
+        }>(`/api/v2/offers/collection/${collection}/nfts/${tokenId}`, {
           limit: parseIntOption(options.limit, "--limit"),
           next: options.next,
         })

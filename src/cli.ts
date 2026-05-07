@@ -15,6 +15,7 @@ import {
   swapsCommand,
   tokenGroupsCommand,
   tokensCommand,
+  transactionsCommand,
   walletCommand,
 } from "./commands/index.js"
 import { type OutputFormat, setOutputOptions } from "./output.js"
@@ -132,6 +133,7 @@ program.addCommand(
 )
 program.addCommand(searchCommand(getClient, getFormat))
 program.addCommand(swapsCommand(getClient, getFormat))
+program.addCommand(transactionsCommand(getClient, getFormat))
 program.addCommand(healthCommand(getClient, getFormat))
 program.addCommand(walletCommand(getFormat))
 
