@@ -81,6 +81,8 @@ Each domain has both a CLI command file (`src/commands/<domain>.ts`) and an SDK 
 - **swaps** - Token swap quotes
 - **token-groups** - Token group details and listings
 - **tokens** - Fungible token trending/top/details
+- **transactions** - Transaction status and receipts
+- **wallet** - Inspect the active wallet adapter's security posture
 
 ## Conventions
 
