@@ -4,6 +4,10 @@ import type { OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
 import { parseIntOption } from "../parse.js"
 import type {
+  Chain,
+  DropDeployReceiptResponse,
+  DropDeployRequest,
+  DropDeployResponse,
   DropDetailedResponse,
   DropMintResponse,
   DropPaginatedResponse,
@@ -84,6 +88,56 @@ export function dropsCommand(
         console.log(formatOutput(result, getFormat()))
       },
     )
+
+  cmd
+    .command("deploy")
+    .description("Build a deploy-contract transaction for a new drop")
+    .requiredOption("--chain <chain>", "Chain slug (e.g. ethereum, base)")
+    .requiredOption("--name <name>", "Contract name")
+    .requiredOption("--symbol <symbol>", "Contract symbol")
+    .requiredOption("--drop-type <type>", "Drop type (e.g. seadrop_v1_erc721)")
+    .requiredOption("--token-type <type>", "Token type (e.g. erc721_standard)")
+    .requiredOption("--sender <address>", "Deployer wallet address")
+    .action(
+      async (options: {
+        chain: string
+        name: string
+        symbol: string
+        dropType: string
+        tokenType: string
+        sender: string
+      }) => {
+        const client = getClient()
+        const body: DropDeployRequest = {
+          chain: options.chain,
+          contract_name: options.name,
+          contract_symbol: options.symbol,
+          drop_type: options.dropType,
+          token_type: options.tokenType,
+          sender: options.sender,
+        }
+        const result = await client.post<DropDeployResponse>(
+          "/api/v2/drops/deploy",
+          body,
+        )
+        console.log(formatOutput(result, getFormat()))
+      },
+    )
+
+  cmd
+    .command("deploy-receipt")
+    .description(
+      "Get the receipt for a previously submitted deploy transaction",
+    )
+    .argument("<chain>", "Chain slug")
+    .argument("<tx-hash>", "Transaction hash")
+    .action(async (chain: string, txHash: string) => {
+      const client = getClient()
+      const result = await client.get<DropDeployReceiptResponse>(
+        `/api/v2/drops/deploy/${chain as Chain}/${txHash}/receipt`,
+      )
+      console.log(formatOutput(result, getFormat()))
+    })
 
   return cmd
 }

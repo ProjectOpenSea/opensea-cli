@@ -1,4 +1,32 @@
+import { readFileSync } from "node:fs"
 import type { Command } from "commander"
+
+/**
+ * Read and parse a JSON file passed via a `--body <path>` style option. Wraps
+ * raw `fs.readFileSync` + `JSON.parse` errors with a message that names the
+ * option and the file path so users see "Could not read --body from 'foo.json':
+ * ENOENT…" instead of a bare Node stack trace.
+ */
+export function readJsonBodyOption<T = unknown>(
+  path: string,
+  optionName: string,
+): T {
+  let raw: string
+  try {
+    raw = readFileSync(path, "utf8")
+  } catch (err) {
+    throw new Error(
+      `Could not read ${optionName} from '${path}': ${(err as Error).message}`,
+    )
+  }
+  try {
+    return JSON.parse(raw) as T
+  } catch (err) {
+    throw new Error(
+      `Could not parse ${optionName} '${path}' as JSON: ${(err as Error).message}`,
+    )
+  }
+}
 
 export function parseIntOption(value: string, name: string): number {
   const parsed = Number.parseInt(value, 10)

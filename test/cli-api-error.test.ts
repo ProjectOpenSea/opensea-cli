@@ -4,6 +4,7 @@ import { OpenSeaAPIError } from "../src/client.js"
 
 vi.mock("../src/commands/index.js", () => ({
   accountsCommand: () => new Command("accounts"),
+  assetsCommand: () => new Command("assets"),
   authCommand: () => new Command("auth"),
   chainsCommand: () => new Command("chains"),
   collectionsCommand: () => new Command("collections"),

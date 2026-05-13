@@ -2,8 +2,18 @@ import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
-import { addTraitsOption, parseIntOption, parseTraitsOption } from "../parse.js"
-import type { CrossChainFulfillmentResponse, Listing } from "../types/index.js"
+import {
+  addTraitsOption,
+  parseIntOption,
+  parseTraitsOption,
+  readJsonBodyOption,
+} from "../parse.js"
+import type {
+  CreateListingActionsRequest,
+  CreateListingActionsResponse,
+  CrossChainFulfillmentResponse,
+  Listing,
+} from "../types/index.js"
 
 export function listingsCommand(
   getClient: () => OpenSeaClient,
@@ -187,6 +197,28 @@ export function listingsCommand(
         console.log(formatOutput(result, getFormat()))
       },
     )
+
+  cmd
+    .command("actions")
+    .description(
+      "Get ordered approval + sign actions needed to create one or more listings",
+    )
+    .requiredOption(
+      "--body <path>",
+      "Path to JSON file with the CreateListingActionsRequest body",
+    )
+    .action(async (options: { body: string }) => {
+      const client = getClient()
+      const request = readJsonBodyOption<CreateListingActionsRequest>(
+        options.body,
+        "--body",
+      )
+      const result = await client.post<CreateListingActionsResponse>(
+        "/api/v2/listings/actions",
+        request,
+      )
+      console.log(formatOutput(result, getFormat()))
+    })
 
   return cmd
 }

@@ -5,25 +5,45 @@ import type {
   AccountResolveResponse,
   AssetEvent,
   AssetMetadataResponse,
+  BatchCollectionsRequest,
+  BatchNftsRequest,
+  BatchTokensRequest,
   Chain,
   ChainListResponse,
   Collection,
+  CollectionBatchResponse,
   CollectionDetailedResponse,
+  CollectionHoldersPaginatedResponse,
+  CollectionOfferAggregatesPaginatedResponse,
   CollectionOrderBy,
   CollectionPaginatedResponse,
   CollectionStats,
   Contract,
+  CreateListingActionsRequest,
+  CreateListingActionsResponse,
   CrossChainFulfillmentResponse,
+  DropDeployReceiptResponse,
+  DropDeployRequest,
+  DropDeployResponse,
   DropDetailedResponse,
   DropMintResponse,
   DropPaginatedResponse,
   EventType,
+  FloorPriceHistoryResponse,
   GetTraitsResponse,
   HealthResult,
   Listing,
   NFT,
+  NftAnalyticsResponse,
+  NftBatchResponse,
   Offer,
+  OhlcvResponse,
   OpenSeaClientConfig,
+  OwnersPaginatedResponse,
+  PortfolioHistoryResponse,
+  PortfolioStatsResponse,
+  PriceHistoryResponse,
+  ProfileCollectionsResponse,
   SearchAssetType,
   SearchResponse,
   SwapExecuteRequest,
@@ -34,10 +54,14 @@ import type {
   Token,
   TokenBalancePaginatedResponse,
   TokenBalanceSortBy,
+  TokenBatchResponse,
   TokenDetails,
+  TokenSwapActivityPaginatedResponse,
   TraitFilter,
   TransactionReceiptRequest,
   TransactionReceiptResponse,
+  TransferRequest,
+  TransferResponse,
   ValidateMetadataResponse,
 } from "./types/index.js"
 import type { TransactionResult, WalletAdapter } from "./wallet/index.js"
@@ -100,6 +124,7 @@ export class OpenSeaCLI {
   readonly search: SearchAPI
   readonly swaps: SwapsAPI
   readonly transactions: TransactionsAPI
+  readonly assets: AssetsAPI
   readonly health: HealthAPI
 
   constructor(config: OpenSeaClientConfig) {
@@ -116,6 +141,7 @@ export class OpenSeaCLI {
     this.search = new SearchAPI(this.client)
     this.swaps = new SwapsAPI(this.client)
     this.transactions = new TransactionsAPI(this.client)
+    this.assets = new AssetsAPI(this.client)
     this.health = new HealthAPI(this.client)
   }
 }
@@ -192,6 +218,50 @@ class CollectionsAPI {
       cursor: options?.next,
     })
   }
+
+  async batch(
+    request: BatchCollectionsRequest,
+  ): Promise<CollectionBatchResponse> {
+    return this.client.post("/api/v2/collections/batch", request)
+  }
+
+  async offerAggregates(
+    slug: string,
+    options?: { limit?: number; next?: string; sortDirection?: "asc" | "desc" },
+  ): Promise<CollectionOfferAggregatesPaginatedResponse> {
+    return this.client.get(`/api/v2/collections/${slug}/offer_aggregates`, {
+      limit: options?.limit,
+      cursor: options?.next,
+      sort_direction: options?.sortDirection,
+    })
+  }
+
+  async holders(
+    slug: string,
+    options?: {
+      limit?: number
+      next?: string
+      sortDirection?: "asc" | "desc"
+      ownedBy?: string
+    },
+  ): Promise<CollectionHoldersPaginatedResponse> {
+    return this.client.get(`/api/v2/collections/${slug}/holders`, {
+      limit: options?.limit,
+      cursor: options?.next,
+      sort_direction: options?.sortDirection,
+      owned_by: options?.ownedBy,
+    })
+  }
+
+  async floorPrices(
+    slug: string,
+    options?: { timeframe?: string; resolution?: number },
+  ): Promise<FloorPriceHistoryResponse> {
+    return this.client.get(`/api/v2/collections/${slug}/floor_prices`, {
+      timeframe: options?.timeframe,
+      resolution: options?.resolution,
+    })
+  }
 }
 
 class DropsAPI {
@@ -223,6 +293,17 @@ class DropsAPI {
       minter: options.minter,
       quantity: options.quantity ?? 1,
     })
+  }
+
+  async deploy(request: DropDeployRequest): Promise<DropDeployResponse> {
+    return this.client.post("/api/v2/drops/deploy", request)
+  }
+
+  async deployReceipt(
+    chain: Chain,
+    txHash: string,
+  ): Promise<DropDeployReceiptResponse> {
+    return this.client.get(`/api/v2/drops/deploy/${chain}/${txHash}/receipt`)
   }
 }
 
@@ -320,6 +401,32 @@ class NFTsAPI {
   ): Promise<AssetMetadataResponse> {
     return this.client.get(`/api/v2/metadata/${chain}/${address}/${tokenId}`)
   }
+
+  async batch(request: BatchNftsRequest): Promise<NftBatchResponse> {
+    return this.client.post("/api/v2/nfts/batch", request)
+  }
+
+  async owners(
+    chain: Chain,
+    address: string,
+    identifier: string,
+    options?: { limit?: number; next?: string },
+  ): Promise<OwnersPaginatedResponse> {
+    return this.client.get(
+      `/api/v2/chain/${chain}/contract/${address}/nfts/${identifier}/owners`,
+      { limit: options?.limit, next: options?.next },
+    )
+  }
+
+  async analytics(
+    chain: Chain,
+    address: string,
+    identifier: string,
+  ): Promise<NftAnalyticsResponse> {
+    return this.client.get(
+      `/api/v2/chain/${chain}/contract/${address}/nfts/${identifier}/analytics`,
+    )
+  }
 }
 
 class ListingsAPI {
@@ -395,6 +502,12 @@ class ListingsAPI {
       "/api/v2/listings/cross_chain_fulfillment_data",
       body,
     )
+  }
+
+  async actions(
+    request: CreateListingActionsRequest,
+  ): Promise<CreateListingActionsResponse> {
+    return this.client.post("/api/v2/listings/actions", request)
   }
 }
 
@@ -567,6 +680,121 @@ class AccountsAPI {
   async resolve(identifier: string): Promise<AccountResolveResponse> {
     return this.client.get(`/api/v2/accounts/resolve/${identifier}`)
   }
+
+  async portfolio(
+    address: string,
+    options?: { timeframe?: "HOUR" | "DAY" | "WEEK" | "MONTH" },
+  ): Promise<PortfolioStatsResponse> {
+    return this.client.get(`/api/v2/account/${address}/portfolio`, {
+      timeframe: options?.timeframe,
+    })
+  }
+
+  async portfolioHistory(
+    address: string,
+    options?: { timeframe?: "HOUR" | "DAY" | "WEEK" | "MONTH" },
+  ): Promise<PortfolioHistoryResponse> {
+    return this.client.get(`/api/v2/account/${address}/portfolio/history`, {
+      timeframe: options?.timeframe,
+    })
+  }
+
+  async profileOffers(
+    address: string,
+    options?: {
+      after?: string
+      limit?: number
+      collectionSlugs?: string[]
+      chains?: string[]
+      sortBy?: string
+      sortDirection?: "asc" | "desc"
+    },
+  ): Promise<{ offers: Offer[]; next?: string }> {
+    return this.client.get(`/api/v2/account/${address}/offers`, {
+      after: options?.after,
+      limit: options?.limit,
+      collection_slugs: options?.collectionSlugs?.join(","),
+      chains: options?.chains?.join(","),
+      sort_by: options?.sortBy,
+      sort_direction: options?.sortDirection,
+    })
+  }
+
+  async profileOffersReceived(
+    address: string,
+    options?: {
+      after?: string
+      limit?: number
+      collectionSlugs?: string[]
+      chains?: string[]
+      sortBy?: string
+      sortDirection?: "asc" | "desc"
+    },
+  ): Promise<{ offers: Offer[]; next?: string }> {
+    return this.client.get(`/api/v2/account/${address}/offers_received`, {
+      after: options?.after,
+      limit: options?.limit,
+      collection_slugs: options?.collectionSlugs?.join(","),
+      chains: options?.chains?.join(","),
+      sort_by: options?.sortBy,
+      sort_direction: options?.sortDirection,
+    })
+  }
+
+  async profileListings(
+    address: string,
+    options?: {
+      after?: string
+      limit?: number
+      collectionSlugs?: string[]
+      chains?: string[]
+      sortBy?: string
+      sortDirection?: "asc" | "desc"
+    },
+  ): Promise<{ listings: Listing[]; next?: string }> {
+    return this.client.get(`/api/v2/account/${address}/listings`, {
+      after: options?.after,
+      limit: options?.limit,
+      collection_slugs: options?.collectionSlugs?.join(","),
+      chains: options?.chains?.join(","),
+      sort_by: options?.sortBy,
+      sort_direction: options?.sortDirection,
+    })
+  }
+
+  async profileFavorites(
+    address: string,
+    options?: {
+      after?: string
+      limit?: number
+      sortBy?: string
+      sortDirection?: "asc" | "desc"
+      chains?: string[]
+    },
+  ): Promise<{ nfts: NFT[]; next?: string }> {
+    return this.client.get(`/api/v2/account/${address}/favorites`, {
+      after: options?.after,
+      limit: options?.limit,
+      sort_by: options?.sortBy,
+      sort_direction: options?.sortDirection,
+      chains: options?.chains?.join(","),
+    })
+  }
+
+  async profileCollections(
+    address: string,
+    options?: {
+      after?: string
+      limit?: number
+      chains?: string[]
+    },
+  ): Promise<ProfileCollectionsResponse> {
+    return this.client.get(`/api/v2/account/${address}/collections`, {
+      after: options?.after,
+      limit: options?.limit,
+      chains: options?.chains?.join(","),
+    })
+  }
 }
 
 class TokensAPI {
@@ -602,6 +830,58 @@ class TokensAPI {
 
   async get(chain: Chain, address: string): Promise<TokenDetails> {
     return this.client.get(`/api/v2/chain/${chain}/token/${address}`)
+  }
+
+  async batch(request: BatchTokensRequest): Promise<TokenBatchResponse> {
+    return this.client.post("/api/v2/tokens/batch", request)
+  }
+
+  async priceHistory(
+    chain: Chain,
+    address: string,
+    options: {
+      startTime: string
+      endTime?: string
+      bucketSize?: string
+    },
+  ): Promise<PriceHistoryResponse> {
+    return this.client.get(
+      `/api/v2/chain/${chain}/token/${address}/price_history`,
+      {
+        start_time: options.startTime,
+        end_time: options.endTime,
+        bucket_size: options.bucketSize,
+      },
+    )
+  }
+
+  async ohlcv(
+    chain: Chain,
+    address: string,
+    options: {
+      startTime: string
+      bucketSize: string
+      endTime?: string
+      fillTimeWindow?: boolean
+    },
+  ): Promise<OhlcvResponse> {
+    return this.client.get(`/api/v2/chain/${chain}/token/${address}/ohlcv`, {
+      start_time: options.startTime,
+      bucket_size: options.bucketSize,
+      end_time: options.endTime,
+      fill_time_window: options.fillTimeWindow,
+    })
+  }
+
+  async activity(
+    chain: Chain,
+    address: string,
+    options?: { limit?: number; next?: string },
+  ): Promise<TokenSwapActivityPaginatedResponse> {
+    return this.client.get(`/api/v2/chain/${chain}/token/${address}/activity`, {
+      limit: options?.limit,
+      cursor: options?.next,
+    })
   }
 }
 
@@ -741,6 +1021,18 @@ export class TransactionsAPI {
     request: TransactionReceiptRequest,
   ): Promise<TransactionReceiptResponse> {
     return this.client.post("/api/v2/transactions/receipt", request)
+  }
+}
+
+export class AssetsAPI {
+  constructor(private client: OpenSeaClient) {}
+
+  /**
+   * Build transactions to transfer NFTs or fungible tokens between wallets.
+   * Returns an ordered list of transactions to submit onchain.
+   */
+  async transfer(request: TransferRequest): Promise<TransferResponse> {
+    return this.client.post("/api/v2/assets/transfer", request)
   }
 }
 

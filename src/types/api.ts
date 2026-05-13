@@ -63,8 +63,39 @@ export type DropStageResponse = Schemas["DropStageResponse"]
 export type DropPaginatedResponse = Schemas["DropPaginatedResponse"]
 export type DropMintRequest = Schemas["DropMintRequest"]
 export type DropMintResponse = Schemas["DropMintResponse"]
+export type DropDeployRequest = Schemas["DropDeployRequest"]
+export type DropDeployResponse = Schemas["DropDeployResponse"]
+export type DropDeployReceiptResponse = Schemas["DropDeployReceiptResponse"]
 export type AccountResolveResponse = Schemas["AccountResolveResponse"]
 export type AssetMetadataResponse = Schemas["AssetMetadataResponse"]
+
+// ── New endpoint types (api-types 0.4.0) ────────────────────────────
+
+export type BatchTokensRequest = Schemas["BatchTokensRequest"]
+export type TokenBatchResponse = Schemas["TokenBatchResponse"]
+export type BatchNftsRequest = Schemas["BatchNftsRequest"]
+export type NftBatchResponse = Schemas["NftBatchResponse"]
+export type BatchCollectionsRequest = Schemas["BatchCollectionsRequest"]
+export type CollectionBatchResponse = Schemas["CollectionBatchResponse"]
+export type CreateListingActionsRequest = Schemas["CreateListingActionsRequest"]
+export type CreateListingActionsResponse =
+  Schemas["CreateListingActionsResponse"]
+export type TransferRequest = Schemas["TransferRequest"]
+export type TransferResponse = Schemas["TransferResponse"]
+export type CollectionOfferAggregatesPaginatedResponse =
+  Schemas["CollectionOfferAggregatesPaginatedResponse"]
+export type CollectionHoldersPaginatedResponse =
+  Schemas["CollectionHoldersPaginatedResponse"]
+export type FloorPriceHistoryResponse = Schemas["FloorPriceHistoryResponse"]
+export type PriceHistoryResponse = Schemas["PriceHistoryResponse"]
+export type OhlcvResponse = Schemas["OhlcvResponse"]
+export type TokenSwapActivityPaginatedResponse =
+  Schemas["TokenSwapActivityPaginatedResponse"]
+export type OwnersPaginatedResponse = Schemas["OwnersPaginatedResponse"]
+export type NftAnalyticsResponse = Schemas["NftAnalyticsResponse"]
+export type PortfolioStatsResponse = Schemas["PortfolioStatsResponse"]
+export type PortfolioHistoryResponse = Schemas["PortfolioHistoryResponse"]
+export type ProfileCollectionsResponse = Schemas["ProfileCollectionsResponse"]
 
 // ── Query helpers ───────────────────────────────────────────────────
 

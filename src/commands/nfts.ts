@@ -2,8 +2,22 @@ import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
-import { addTraitsOption, parseIntOption, parseTraitsOption } from "../parse.js"
-import type { Contract, NFT, ValidateMetadataResponse } from "../types/index.js"
+import {
+  addTraitsOption,
+  parseIntOption,
+  parseTraitsOption,
+  readJsonBodyOption,
+} from "../parse.js"
+import type {
+  BatchNftsRequest,
+  Chain,
+  Contract,
+  NFT,
+  NftAnalyticsResponse,
+  NftBatchResponse,
+  OwnersPaginatedResponse,
+  ValidateMetadataResponse,
+} from "../types/index.js"
 
 export function nftsCommand(
   getClient: () => OpenSeaClient,
@@ -164,6 +178,67 @@ export function nftsCommand(
         console.log(formatOutput(result, getFormat()))
       },
     )
+
+  cmd
+    .command("batch")
+    .description("Get multiple NFTs in one request by chain/contract/token id")
+    .requiredOption(
+      "--body <path>",
+      "Path to JSON file with the batch request body",
+    )
+    .action(async (options: { body: string }) => {
+      const client = getClient()
+      const request = readJsonBodyOption<BatchNftsRequest>(
+        options.body,
+        "--body",
+      )
+      const result = await client.post<NftBatchResponse>(
+        "/api/v2/nfts/batch",
+        request,
+      )
+      console.log(formatOutput(result, getFormat()))
+    })
+
+  cmd
+    .command("owners")
+    .description("Get owners of an NFT (paginated for ERC-1155s)")
+    .argument("<chain>", "Chain")
+    .argument("<contract>", "Contract address")
+    .argument("<token-id>", "Token ID")
+    .option("--limit <limit>", "Number of results (max 100)", "20")
+    .option("--next <cursor>", "Pagination cursor")
+    .action(
+      async (
+        chain: string,
+        contract: string,
+        tokenId: string,
+        options: { limit: string; next?: string },
+      ) => {
+        const client = getClient()
+        const result = await client.get<OwnersPaginatedResponse>(
+          `/api/v2/chain/${chain as Chain}/contract/${contract}/nfts/${tokenId}/owners`,
+          {
+            limit: parseIntOption(options.limit, "--limit"),
+            next: options.next,
+          },
+        )
+        console.log(formatOutput(result, getFormat()))
+      },
+    )
+
+  cmd
+    .command("analytics")
+    .description("Get analytics (historical sale points) for an NFT")
+    .argument("<chain>", "Chain")
+    .argument("<contract>", "Contract address")
+    .argument("<token-id>", "Token ID")
+    .action(async (chain: string, contract: string, tokenId: string) => {
+      const client = getClient()
+      const result = await client.get<NftAnalyticsResponse>(
+        `/api/v2/chain/${chain as Chain}/contract/${contract}/nfts/${tokenId}/analytics`,
+      )
+      console.log(formatOutput(result, getFormat()))
+    })
 
   return cmd
 }

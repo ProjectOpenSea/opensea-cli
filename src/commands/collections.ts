@@ -2,13 +2,18 @@ import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
-import { parseIntOption } from "../parse.js"
+import { parseIntOption, readJsonBodyOption } from "../parse.js"
 import type {
+  BatchCollectionsRequest,
   Chain,
   Collection,
+  CollectionBatchResponse,
+  CollectionHoldersPaginatedResponse,
+  CollectionOfferAggregatesPaginatedResponse,
   CollectionOrderBy,
   CollectionPaginatedResponse,
   CollectionStats,
+  FloorPriceHistoryResponse,
   GetTraitsResponse,
 } from "../types/index.js"
 
@@ -161,6 +166,123 @@ export function collectionsCommand(
             category: options.category,
             limit: parseIntOption(options.limit, "--limit"),
             cursor: options.next,
+          },
+        )
+        console.log(formatOutput(result, getFormat()))
+      },
+    )
+
+  cmd
+    .command("batch")
+    .description("Get multiple collections in one request by slug")
+    .option(
+      "--slugs <slugs>",
+      "Comma-separated collection slugs (or use --body for JSON)",
+    )
+    .option(
+      "--body <path>",
+      "Path to JSON file with the batch request body (overrides --slugs)",
+    )
+    .action(async (options: { slugs?: string; body?: string }) => {
+      const client = getClient()
+      let request: BatchCollectionsRequest
+      if (options.body) {
+        request = readJsonBodyOption<BatchCollectionsRequest>(
+          options.body,
+          "--body",
+        )
+      } else if (options.slugs) {
+        request = { slugs: options.slugs.split(",") }
+      } else {
+        throw new Error("Pass --slugs or --body")
+      }
+      const result = await client.post<CollectionBatchResponse>(
+        "/api/v2/collections/batch",
+        request,
+      )
+      console.log(formatOutput(result, getFormat()))
+    })
+
+  cmd
+    .command("offer-aggregates")
+    .description("Get top offers for a collection grouped by price level")
+    .argument("<slug>", "Collection slug")
+    .option("--limit <limit>", "Number of results (max 100)", "20")
+    .option("--next <cursor>", "Pagination cursor")
+    .option("--sort-direction <dir>", "Sort direction (asc, desc)")
+    .action(
+      async (
+        slug: string,
+        options: { limit: string; next?: string; sortDirection?: string },
+      ) => {
+        const client = getClient()
+        const result =
+          await client.get<CollectionOfferAggregatesPaginatedResponse>(
+            `/api/v2/collections/${slug}/offer_aggregates`,
+            {
+              limit: parseIntOption(options.limit, "--limit"),
+              cursor: options.next,
+              sort_direction: options.sortDirection,
+            },
+          )
+        console.log(formatOutput(result, getFormat()))
+      },
+    )
+
+  cmd
+    .command("holders")
+    .description("Get holders of a collection")
+    .argument("<slug>", "Collection slug")
+    .option("--limit <limit>", "Number of results (max 100)", "20")
+    .option("--next <cursor>", "Pagination cursor")
+    .option("--sort-direction <dir>", "Sort direction (asc, desc)")
+    .option("--owned-by <address>", "Filter to a single owner address")
+    .action(
+      async (
+        slug: string,
+        options: {
+          limit: string
+          next?: string
+          sortDirection?: string
+          ownedBy?: string
+        },
+      ) => {
+        const client = getClient()
+        const result = await client.get<CollectionHoldersPaginatedResponse>(
+          `/api/v2/collections/${slug}/holders`,
+          {
+            limit: parseIntOption(options.limit, "--limit"),
+            cursor: options.next,
+            sort_direction: options.sortDirection,
+            owned_by: options.ownedBy,
+          },
+        )
+        console.log(formatOutput(result, getFormat()))
+      },
+    )
+
+  cmd
+    .command("floor-prices")
+    .description("Get a collection's floor-price history")
+    .argument("<slug>", "Collection slug")
+    .option(
+      "--timeframe <window>",
+      "Time window (one_minute, five_minutes, fifteen_minutes, one_hour, one_day, seven_days, thirty_days, one_year, all_time)",
+    )
+    .option("--resolution <count>", "Number of data points to return")
+    .action(
+      async (
+        slug: string,
+        options: { timeframe?: string; resolution?: string },
+      ) => {
+        const client = getClient()
+        const result = await client.get<FloorPriceHistoryResponse>(
+          `/api/v2/collections/${slug}/floor_prices`,
+          {
+            timeframe: options.timeframe,
+            resolution: options.resolution
+              ? parseIntOption(options.resolution, "--resolution")
+              : undefined,
           },
         )
         console.log(formatOutput(result, getFormat()))
