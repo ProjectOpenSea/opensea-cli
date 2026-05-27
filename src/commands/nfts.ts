@@ -1,7 +1,7 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
-import { formatOutput } from "../output.js"
+import { formatOutput, outputGet } from "../output.js"
 import {
   addTraitsOption,
   parseIntOption,
@@ -11,11 +11,7 @@ import {
 import type {
   BatchNftsRequest,
   Chain,
-  Contract,
-  NFT,
-  NftAnalyticsResponse,
   NftBatchResponse,
-  OwnersPaginatedResponse,
   ValidateMetadataResponse,
 } from "../types/index.js"
 
@@ -33,10 +29,11 @@ export function nftsCommand(
     .argument("<token-id>", "Token ID")
     .action(async (chain: string, contract: string, tokenId: string) => {
       const client = getClient()
-      const result = await client.get<{ nft: NFT }>(
+      await outputGet(
+        client,
+        getFormat(),
         `/api/v2/chain/${chain}/contract/${contract}/nfts/${tokenId}`,
       )
-      console.log(formatOutput(result, getFormat()))
     })
 
   addTraitsOption(
@@ -52,17 +49,11 @@ export function nftsCommand(
       options: { limit: string; next?: string; traits?: string },
     ) => {
       const client = getClient()
-      const result = await client.get<{ nfts: NFT[]; next?: string }>(
-        `/api/v2/collection/${slug}/nfts`,
-        {
-          limit: parseIntOption(options.limit, "--limit"),
-          next: options.next,
-          traits: options.traits
-            ? parseTraitsOption(options.traits)
-            : undefined,
-        },
-      )
-      console.log(formatOutput(result, getFormat()))
+      await outputGet(client, getFormat(), `/api/v2/collection/${slug}/nfts`, {
+        limit: parseIntOption(options.limit, "--limit"),
+        next: options.next,
+        traits: options.traits ? parseTraitsOption(options.traits) : undefined,
+      })
     },
   )
 
@@ -80,14 +71,15 @@ export function nftsCommand(
         options: { limit: string; next?: string },
       ) => {
         const client = getClient()
-        const result = await client.get<{ nfts: NFT[]; next?: string }>(
+        await outputGet(
+          client,
+          getFormat(),
           `/api/v2/chain/${chain}/contract/${contract}/nfts`,
           {
             limit: parseIntOption(options.limit, "--limit"),
             next: options.next,
           },
         )
-        console.log(formatOutput(result, getFormat()))
       },
     )
 
@@ -105,14 +97,15 @@ export function nftsCommand(
         options: { limit: string; next?: string },
       ) => {
         const client = getClient()
-        const result = await client.get<{ nfts: NFT[]; next?: string }>(
+        await outputGet(
+          client,
+          getFormat(),
           `/api/v2/chain/${chain}/account/${address}/nfts`,
           {
             limit: parseIntOption(options.limit, "--limit"),
             next: options.next,
           },
         )
-        console.log(formatOutput(result, getFormat()))
       },
     )
 
@@ -142,10 +135,11 @@ export function nftsCommand(
     .argument("<address>", "Contract address")
     .action(async (chain: string, address: string) => {
       const client = getClient()
-      const result = await client.get<Contract>(
+      await outputGet(
+        client,
+        getFormat(),
         `/api/v2/chain/${chain}/contract/${address}`,
       )
-      console.log(formatOutput(result, getFormat()))
     })
 
   cmd
@@ -215,14 +209,15 @@ export function nftsCommand(
         options: { limit: string; next?: string },
       ) => {
         const client = getClient()
-        const result = await client.get<OwnersPaginatedResponse>(
+        await outputGet(
+          client,
+          getFormat(),
           `/api/v2/chain/${chain as Chain}/contract/${contract}/nfts/${tokenId}/owners`,
           {
             limit: parseIntOption(options.limit, "--limit"),
             next: options.next,
           },
         )
-        console.log(formatOutput(result, getFormat()))
       },
     )
 
@@ -234,10 +229,11 @@ export function nftsCommand(
     .argument("<token-id>", "Token ID")
     .action(async (chain: string, contract: string, tokenId: string) => {
       const client = getClient()
-      const result = await client.get<NftAnalyticsResponse>(
+      await outputGet(
+        client,
+        getFormat(),
         `/api/v2/chain/${chain as Chain}/contract/${contract}/nfts/${tokenId}/analytics`,
       )
-      console.log(formatOutput(result, getFormat()))
     })
 
   return cmd

@@ -1,7 +1,7 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
-import { formatOutput } from "../output.js"
+import { formatOutput, outputGet } from "../output.js"
 import {
   addTraitsOption,
   parseIntOption,
@@ -12,7 +12,6 @@ import type {
   CreateListingActionsRequest,
   CreateListingActionsResponse,
   CrossChainFulfillmentResponse,
-  Listing,
 } from "../types/index.js"
 
 export function listingsCommand(
@@ -34,15 +33,16 @@ export function listingsCommand(
         options: { limit: string; next?: string; maker?: string },
       ) => {
         const client = getClient()
-        const result = await client.get<{
-          listings: Listing[]
-          next?: string
-        }>(`/api/v2/listings/collection/${collection}/all`, {
-          limit: parseIntOption(options.limit, "--limit"),
-          next: options.next,
-          maker: options.maker,
-        })
-        console.log(formatOutput(result, getFormat()))
+        await outputGet(
+          client,
+          getFormat(),
+          `/api/v2/listings/collection/${collection}/all`,
+          {
+            limit: parseIntOption(options.limit, "--limit"),
+            next: options.next,
+            maker: options.maker,
+          },
+        )
       },
     )
 
@@ -109,15 +109,18 @@ export function listingsCommand(
       options: { limit: string; next?: string; traits?: string },
     ) => {
       const client = getClient()
-      const result = await client.get<{
-        listings: Listing[]
-        next?: string
-      }>(`/api/v2/listings/collection/${collection}/best`, {
-        limit: parseIntOption(options.limit, "--limit"),
-        next: options.next,
-        traits: options.traits ? parseTraitsOption(options.traits) : undefined,
-      })
-      console.log(formatOutput(result, getFormat()))
+      await outputGet(
+        client,
+        getFormat(),
+        `/api/v2/listings/collection/${collection}/best`,
+        {
+          limit: parseIntOption(options.limit, "--limit"),
+          next: options.next,
+          traits: options.traits
+            ? parseTraitsOption(options.traits)
+            : undefined,
+        },
+      )
     },
   )
 
@@ -128,10 +131,11 @@ export function listingsCommand(
     .argument("<token-id>", "Token ID")
     .action(async (collection: string, tokenId: string) => {
       const client = getClient()
-      const result = await client.get<Listing>(
+      await outputGet(
+        client,
+        getFormat(),
         `/api/v2/listings/collection/${collection}/nfts/${tokenId}/best`,
       )
-      console.log(formatOutput(result, getFormat()))
     })
 
   cmd

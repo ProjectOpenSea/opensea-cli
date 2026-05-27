@@ -1,4 +1,4 @@
-import { formatToon } from "./toon.js"
+import type { OpenSeaClient } from "./client.js"
 
 export type OutputFormat = "json" | "table" | "toon"
 
@@ -21,8 +21,6 @@ export function formatOutput(data: unknown, format: OutputFormat): string {
   let result: string
   if (format === "table") {
     result = formatTable(processed)
-  } else if (format === "toon") {
-    result = formatToon(processed)
   } else {
     result = JSON.stringify(processed, null, 2)
   }
@@ -111,4 +109,27 @@ function truncateOutput(text: string, maxLines: number): string {
     lines.slice(0, maxLines).join("\n") +
     `\n... (${omitted} more line${omitted === 1 ? "" : "s"})`
   )
+}
+
+export async function outputGet(
+  client: OpenSeaClient,
+  format: OutputFormat,
+  path: string,
+  params?: Record<string, unknown>,
+): Promise<void> {
+  if (format === "toon" && !_outputOptions.fields) {
+    const { text } =
+      params != null
+        ? await client.getAsMarkdown(path, params)
+        : await client.getAsMarkdown(path)
+    console.log(
+      _outputOptions.maxLines != null
+        ? truncateOutput(text, _outputOptions.maxLines)
+        : text,
+    )
+    return
+  }
+  const result =
+    params != null ? await client.get(path, params) : await client.get(path)
+  console.log(formatOutput(result, format))
 }

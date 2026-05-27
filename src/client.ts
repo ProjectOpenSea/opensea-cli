@@ -80,6 +80,41 @@ export class OpenSeaClient {
     return response.json() as Promise<T>
   }
 
+  async getAsMarkdown(
+    path: string,
+    params?: Record<string, unknown>,
+  ): Promise<{ text: string; isMarkdown: boolean }> {
+    const url = new URL(`${this.baseUrl}${path}`)
+
+    if (params) {
+      for (const [key, value] of Object.entries(params)) {
+        if (value !== undefined && value !== null) {
+          url.searchParams.set(key, String(value))
+        }
+      }
+    }
+
+    if (this.verbose) {
+      console.error(`[verbose] GET ${url.toString()} (Accept: text/markdown)`)
+    }
+
+    const response = await this.fetchWithRetry(
+      url.toString(),
+      {
+        method: "GET",
+        headers: { ...this.defaultHeaders, Accept: "text/markdown" },
+      },
+      path,
+    )
+
+    const contentType = response.headers.get("content-type") ?? ""
+    const text = await response.text()
+    return {
+      text,
+      isMarkdown: contentType.includes("text/markdown"),
+    }
+  }
+
   async post<T>(
     path: string,
     body?: Record<string, unknown>,

@@ -1,20 +1,14 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
-import { formatOutput } from "../output.js"
+import { formatOutput, outputGet } from "../output.js"
 import { parseIntOption, readJsonBodyOption } from "../parse.js"
 import type {
   BatchCollectionsRequest,
   Chain,
-  Collection,
   CollectionBatchResponse,
-  CollectionHoldersPaginatedResponse,
   CollectionOfferAggregatesPaginatedResponse,
   CollectionOrderBy,
-  CollectionPaginatedResponse,
-  CollectionStats,
-  FloorPriceHistoryResponse,
-  GetTraitsResponse,
 } from "../types/index.js"
 
 export function collectionsCommand(
@@ -31,8 +25,7 @@ export function collectionsCommand(
     .argument("<slug>", "Collection slug")
     .action(async (slug: string) => {
       const client = getClient()
-      const result = await client.get<Collection>(`/api/v2/collections/${slug}`)
-      console.log(formatOutput(result, getFormat()))
+      await outputGet(client, getFormat(), `/api/v2/collections/${slug}`)
     })
 
   cmd
@@ -57,10 +50,7 @@ export function collectionsCommand(
         next?: string
       }) => {
         const client = getClient()
-        const result = await client.get<{
-          collections: Collection[]
-          next?: string
-        }>("/api/v2/collections", {
+        await outputGet(client, getFormat(), "/api/v2/collections", {
           chain: options.chain as Chain | undefined,
           order_by: options.orderBy as CollectionOrderBy | undefined,
           creator_username: options.creator,
@@ -68,7 +58,6 @@ export function collectionsCommand(
           limit: parseIntOption(options.limit, "--limit"),
           next: options.next,
         })
-        console.log(formatOutput(result, getFormat()))
       },
     )
 
@@ -78,10 +67,7 @@ export function collectionsCommand(
     .argument("<slug>", "Collection slug")
     .action(async (slug: string) => {
       const client = getClient()
-      const result = await client.get<CollectionStats>(
-        `/api/v2/collections/${slug}/stats`,
-      )
-      console.log(formatOutput(result, getFormat()))
+      await outputGet(client, getFormat(), `/api/v2/collections/${slug}/stats`)
     })
 
   cmd
@@ -90,10 +76,7 @@ export function collectionsCommand(
     .argument("<slug>", "Collection slug")
     .action(async (slug: string) => {
       const client = getClient()
-      const result = await client.get<GetTraitsResponse>(
-        `/api/v2/traits/${slug}`,
-      )
-      console.log(formatOutput(result, getFormat()))
+      await outputGet(client, getFormat(), `/api/v2/traits/${slug}`)
     })
 
   cmd
@@ -120,17 +103,13 @@ export function collectionsCommand(
         next?: string
       }) => {
         const client = getClient()
-        const result = await client.get<CollectionPaginatedResponse>(
-          "/api/v2/collections/trending",
-          {
-            timeframe: options.timeframe,
-            chains: options.chains,
-            category: options.category,
-            limit: parseIntOption(options.limit, "--limit"),
-            cursor: options.next,
-          },
-        )
-        console.log(formatOutput(result, getFormat()))
+        await outputGet(client, getFormat(), "/api/v2/collections/trending", {
+          timeframe: options.timeframe,
+          chains: options.chains,
+          category: options.category,
+          limit: parseIntOption(options.limit, "--limit"),
+          cursor: options.next,
+        })
       },
     )
 
@@ -158,17 +137,13 @@ export function collectionsCommand(
         next?: string
       }) => {
         const client = getClient()
-        const result = await client.get<CollectionPaginatedResponse>(
-          "/api/v2/collections/top",
-          {
-            sort_by: options.sortBy,
-            chains: options.chains,
-            category: options.category,
-            limit: parseIntOption(options.limit, "--limit"),
-            cursor: options.next,
-          },
-        )
-        console.log(formatOutput(result, getFormat()))
+        await outputGet(client, getFormat(), "/api/v2/collections/top", {
+          sort_by: options.sortBy,
+          chains: options.chains,
+          category: options.category,
+          limit: parseIntOption(options.limit, "--limit"),
+          cursor: options.next,
+        })
       },
     )
 
@@ -248,7 +223,9 @@ export function collectionsCommand(
         },
       ) => {
         const client = getClient()
-        const result = await client.get<CollectionHoldersPaginatedResponse>(
+        await outputGet(
+          client,
+          getFormat(),
           `/api/v2/collections/${slug}/holders`,
           {
             limit: parseIntOption(options.limit, "--limit"),
@@ -257,7 +234,6 @@ export function collectionsCommand(
             owned_by: options.ownedBy,
           },
         )
-        console.log(formatOutput(result, getFormat()))
       },
     )
 
@@ -276,7 +252,9 @@ export function collectionsCommand(
         options: { timeframe?: string; resolution?: string },
       ) => {
         const client = getClient()
-        const result = await client.get<FloorPriceHistoryResponse>(
+        await outputGet(
+          client,
+          getFormat(),
           `/api/v2/collections/${slug}/floor_prices`,
           {
             timeframe: options.timeframe,
@@ -285,7 +263,6 @@ export function collectionsCommand(
               : undefined,
           },
         )
-        console.log(formatOutput(result, getFormat()))
       },
     )
 

@@ -1,9 +1,8 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
-import { formatOutput } from "../output.js"
+import { outputGet } from "../output.js"
 import { parseIntOption } from "../parse.js"
-import type { Offer } from "../types/index.js"
 
 export function offersCommand(
   getClient: () => OpenSeaClient,
@@ -24,15 +23,16 @@ export function offersCommand(
         options: { limit: string; next?: string; maker?: string },
       ) => {
         const client = getClient()
-        const result = await client.get<{
-          offers: Offer[]
-          next?: string
-        }>(`/api/v2/offers/collection/${collection}/all`, {
-          limit: parseIntOption(options.limit, "--limit"),
-          next: options.next,
-          maker: options.maker,
-        })
-        console.log(formatOutput(result, getFormat()))
+        await outputGet(
+          client,
+          getFormat(),
+          `/api/v2/offers/collection/${collection}/all`,
+          {
+            limit: parseIntOption(options.limit, "--limit"),
+            next: options.next,
+            maker: options.maker,
+          },
+        )
       },
     )
 
@@ -50,14 +50,15 @@ export function offersCommand(
         options: { limit: string; next?: string },
       ) => {
         const client = getClient()
-        const result = await client.get<{
-          offers: Offer[]
-          next?: string
-        }>(`/api/v2/offers/collection/${collection}/nfts/${tokenId}`, {
-          limit: parseIntOption(options.limit, "--limit"),
-          next: options.next,
-        })
-        console.log(formatOutput(result, getFormat()))
+        await outputGet(
+          client,
+          getFormat(),
+          `/api/v2/offers/collection/${collection}/nfts/${tokenId}`,
+          {
+            limit: parseIntOption(options.limit, "--limit"),
+            next: options.next,
+          },
+        )
       },
     )
 
@@ -70,14 +71,15 @@ export function offersCommand(
     .action(
       async (collection: string, options: { limit: string; next?: string }) => {
         const client = getClient()
-        const result = await client.get<{
-          offers: Offer[]
-          next?: string
-        }>(`/api/v2/offers/collection/${collection}`, {
-          limit: parseIntOption(options.limit, "--limit"),
-          next: options.next,
-        })
-        console.log(formatOutput(result, getFormat()))
+        await outputGet(
+          client,
+          getFormat(),
+          `/api/v2/offers/collection/${collection}`,
+          {
+            limit: parseIntOption(options.limit, "--limit"),
+            next: options.next,
+          },
+        )
       },
     )
 
@@ -88,10 +90,11 @@ export function offersCommand(
     .argument("<token-id>", "Token ID")
     .action(async (collection: string, tokenId: string) => {
       const client = getClient()
-      const result = await client.get<Offer>(
+      await outputGet(
+        client,
+        getFormat(),
         `/api/v2/offers/collection/${collection}/nfts/${tokenId}/best`,
       )
-      console.log(formatOutput(result, getFormat()))
     })
 
   cmd
@@ -113,16 +116,17 @@ export function offersCommand(
         },
       ) => {
         const client = getClient()
-        const result = await client.get<{
-          offers: Offer[]
-          next?: string
-        }>(`/api/v2/offers/collection/${collection}/traits`, {
-          type: options.type,
-          value: options.value,
-          limit: parseIntOption(options.limit, "--limit"),
-          next: options.next,
-        })
-        console.log(formatOutput(result, getFormat()))
+        await outputGet(
+          client,
+          getFormat(),
+          `/api/v2/offers/collection/${collection}/traits`,
+          {
+            type: options.type,
+            value: options.value,
+            limit: parseIntOption(options.limit, "--limit"),
+            next: options.next,
+          },
+        )
       },
     )
 

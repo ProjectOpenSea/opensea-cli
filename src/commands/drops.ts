@@ -1,16 +1,13 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
-import { formatOutput } from "../output.js"
+import { formatOutput, outputGet } from "../output.js"
 import { parseIntOption } from "../parse.js"
 import type {
   Chain,
-  DropDeployReceiptResponse,
   DropDeployRequest,
   DropDeployResponse,
-  DropDetailedResponse,
   DropMintResponse,
-  DropPaginatedResponse,
 } from "../types/index.js"
 
 export function dropsCommand(
@@ -38,16 +35,12 @@ export function dropsCommand(
         next?: string
       }) => {
         const client = getClient()
-        const result = await client.get<DropPaginatedResponse>(
-          "/api/v2/drops",
-          {
-            type: options.type,
-            chains: options.chains,
-            limit: parseIntOption(options.limit, "--limit"),
-            cursor: options.next,
-          },
-        )
-        console.log(formatOutput(result, getFormat()))
+        await outputGet(client, getFormat(), "/api/v2/drops", {
+          type: options.type,
+          chains: options.chains,
+          limit: parseIntOption(options.limit, "--limit"),
+          cursor: options.next,
+        })
       },
     )
 
@@ -57,10 +50,7 @@ export function dropsCommand(
     .argument("<slug>", "Collection slug")
     .action(async (slug: string) => {
       const client = getClient()
-      const result = await client.get<DropDetailedResponse>(
-        `/api/v2/drops/${slug}`,
-      )
-      console.log(formatOutput(result, getFormat()))
+      await outputGet(client, getFormat(), `/api/v2/drops/${slug}`)
     })
 
   cmd
@@ -133,10 +123,11 @@ export function dropsCommand(
     .argument("<tx-hash>", "Transaction hash")
     .action(async (chain: string, txHash: string) => {
       const client = getClient()
-      const result = await client.get<DropDeployReceiptResponse>(
+      await outputGet(
+        client,
+        getFormat(),
         `/api/v2/drops/deploy/${chain as Chain}/${txHash}/receipt`,
       )
-      console.log(formatOutput(result, getFormat()))
     })
 
   return cmd

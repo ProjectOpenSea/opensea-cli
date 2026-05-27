@@ -154,16 +154,7 @@ tokens[3]{name,symbol,chain,market_cap,price_usd}:
 next: abc123
 ```
 
-TOON collapses uniform arrays of objects into CSV-like tables with a single header row, while nested objects use YAML-like indentation. The encoder follows the [TOON v3.0 spec](https://github.com/toon-format/spec/blob/main/SPEC.md) and is implemented without external dependencies.
-
-TOON is also available programmatically via the SDK:
-
-```typescript
-import { formatToon } from "@opensea/cli"
-
-const data = await client.tokens.trending({ limit: 5 })
-console.log(formatToon(data))
-```
+TOON collapses uniform arrays of objects into CSV-like tables with a single header row, while nested objects use YAML-like indentation. The encoding is performed server-side via the `Accept: text/markdown` header — no client-side encoder is needed.
 
 ## Exit Codes
 

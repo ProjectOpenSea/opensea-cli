@@ -1,17 +1,12 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
-import { formatOutput } from "../output.js"
+import { formatOutput, outputGet } from "../output.js"
 import { parseIntOption, readJsonBodyOption } from "../parse.js"
 import type {
   BatchTokensRequest,
   Chain,
-  OhlcvResponse,
-  PriceHistoryResponse,
-  Token,
   TokenBatchResponse,
-  TokenDetails,
-  TokenSwapActivityPaginatedResponse,
 } from "../types/index.js"
 
 export function tokensCommand(
@@ -31,16 +26,12 @@ export function tokensCommand(
     .action(
       async (options: { chains?: string; limit: string; next?: string }) => {
         const client = getClient()
-        const result = await client.get<{ tokens: Token[]; next?: string }>(
-          "/api/v2/tokens/trending",
-          {
-            chains: options.chains,
-            limit: parseIntOption(options.limit, "--limit"),
-            // Tokens API uses "cursor" instead of "next" as the query param
-            cursor: options.next,
-          },
-        )
-        console.log(formatOutput(result, getFormat()))
+        await outputGet(client, getFormat(), "/api/v2/tokens/trending", {
+          chains: options.chains,
+          limit: parseIntOption(options.limit, "--limit"),
+          // Tokens API uses "cursor" instead of "next" as the query param
+          cursor: options.next,
+        })
       },
     )
 
@@ -53,16 +44,12 @@ export function tokensCommand(
     .action(
       async (options: { chains?: string; limit: string; next?: string }) => {
         const client = getClient()
-        const result = await client.get<{ tokens: Token[]; next?: string }>(
-          "/api/v2/tokens/top",
-          {
-            chains: options.chains,
-            limit: parseIntOption(options.limit, "--limit"),
-            // Tokens API uses "cursor" instead of "next" as the query param
-            cursor: options.next,
-          },
-        )
-        console.log(formatOutput(result, getFormat()))
+        await outputGet(client, getFormat(), "/api/v2/tokens/top", {
+          chains: options.chains,
+          limit: parseIntOption(options.limit, "--limit"),
+          // Tokens API uses "cursor" instead of "next" as the query param
+          cursor: options.next,
+        })
       },
     )
 
@@ -73,10 +60,11 @@ export function tokensCommand(
     .argument("<address>", "Token contract address")
     .action(async (chain: string, address: string) => {
       const client = getClient()
-      const result = await client.get<TokenDetails>(
+      await outputGet(
+        client,
+        getFormat(),
         `/api/v2/chain/${chain as Chain}/token/${address}`,
       )
-      console.log(formatOutput(result, getFormat()))
     })
 
   cmd
@@ -119,7 +107,9 @@ export function tokensCommand(
         options: { startTime: string; endTime?: string; bucketSize?: string },
       ) => {
         const client = getClient()
-        const result = await client.get<PriceHistoryResponse>(
+        await outputGet(
+          client,
+          getFormat(),
           `/api/v2/chain/${chain as Chain}/token/${address}/price_history`,
           {
             start_time: options.startTime,
@@ -127,7 +117,6 @@ export function tokensCommand(
             bucket_size: options.bucketSize,
           },
         )
-        console.log(formatOutput(result, getFormat()))
       },
     )
 
@@ -158,7 +147,9 @@ export function tokensCommand(
         },
       ) => {
         const client = getClient()
-        const result = await client.get<OhlcvResponse>(
+        await outputGet(
+          client,
+          getFormat(),
           `/api/v2/chain/${chain as Chain}/token/${address}/ohlcv`,
           {
             start_time: options.startTime,
@@ -167,7 +158,6 @@ export function tokensCommand(
             fill_time_window: options.fillTimeWindow,
           },
         )
-        console.log(formatOutput(result, getFormat()))
       },
     )
 
@@ -185,14 +175,15 @@ export function tokensCommand(
         options: { limit: string; next?: string },
       ) => {
         const client = getClient()
-        const result = await client.get<TokenSwapActivityPaginatedResponse>(
+        await outputGet(
+          client,
+          getFormat(),
           `/api/v2/chain/${chain as Chain}/token/${address}/activity`,
           {
             limit: parseIntOption(options.limit, "--limit"),
             cursor: options.next,
           },
         )
-        console.log(formatOutput(result, getFormat()))
       },
     )
 

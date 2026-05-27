@@ -1,5 +1,44 @@
 # @opensea/cli
 
+## 1.8.0
+
+### Minor Changes
+
+- 0bc1053: Source `EventAsset`, `AssetEvent`, `Token`, `TokenDetails`, `TokenStats`, and `TokenSocials` from `@opensea/api-types` instead of hand-rolling them.
+
+  ## What changed
+
+  - `EventAsset` is now an alias for the api-types `Nft` schema. It gains `display_image_url`, `display_animation_url`, `original_image_url`, `original_animation_url`, and `traits` fields, and relaxes `name`, `description`, `image_url`, and `metadata_url` from required to optional (matching the OpenAPI spec — these are still present in every live response we probed).
+  - `AssetEvent` is now `AssetEventsResponse["asset_events"][number]`, i.e. the `OrderEvent | SaleEvent | TransferEvent` union from the spec. Consumers can now narrow on `event_type` to access variant-specific fields (`seller`, `buyer`, `nft` on sales; `transfer_type`, `from_address`, `to_address` on transfers; `order_type`, `asset`, `maker`, `taker` on orders). The previous `[key: string]: unknown` index signature is gone; code that read arbitrary fields off an `AssetEvent` will need to narrow first or cast.
+  - `Token`, `TokenDetails`, `TokenStats`, `TokenSocials` are now aliases for `TokenResponse`, `TokenDetailedResponse`, `TokenStatsResponse`, `TokenSocialsResponse`. Field shapes are identical except `TokenDetails` gains an optional `status` field (`"OK" | "WARNING" | "SPAM" | "LOW_LIQUIDITY"`) that the live API has been returning.
+  - `ChainInfo` / `ChainListResponse` are now aliases for the api-types `ChainResponse` / `ChainListResponse`. Identical shape.
+  - `TokenBalance` / `TokenBalancePaginatedResponse` are now aliases for the api-types `TokenBalanceResponse` / `TokenBalancePaginatedResponse`. `TokenBalance` gains optional `status`, `base_token_liquidity_usd`, and `quote_token_liquidity_usd` fields that the live API returns.
+  - `SearchResultCollection` / `SearchResultToken` / `SearchResultNFT` / `SearchResultAccount` / `SearchResult` / `SearchResponse` are now aliases for api-types `CollectionSearchResponse` / `TokenSearchResponse` / `NftSearchResponse` / `AccountSearchResponse` / `SearchResultResponse` / `SearchResponse`. Field shapes match.
+  - `SwapQuote` / `SwapTransaction` / `SwapQuoteResponse` are now aliases for api-types `SwapQuoteDetails` / `SwapTransactionResponse` / `SwapQuoteResponse`. `SwapQuote` gains optional `price_impact`, `swap_provider`, and required `costs` / `route_errors` fields.
+
+  ## Migration
+
+  Most consumers won't need any changes — the same snake_case fields are still there. Code that did `event.someArbitraryField` will need to narrow on `event_type` first:
+
+  ```ts
+  // Before
+  const seller = event.seller as string;
+
+  // After
+  if (event.event_type === "sale") {
+    const seller = event.seller; // typed as string
+  }
+  ```
+
+- a10c5c0: Switch `--format toon` to server-side TOON encoding via `Accept: text/markdown` content negotiation. The client-side encoder (`src/toon.ts` and `formatToon`) is gone now that os2-core supports TOON encoding server-side. `--format toon` still works — it just triggers a `getAsMarkdown` call instead of running a 338-line encoder client-side.
+
+  **Note:** `formatToon` is no longer exported from `@opensea/cli`. The CLI doesn't depend on `@opensea/sdk` directly (responses pass through `outputGet`'s generic JSON formatter), so the SDK 11.0 shape changes don't affect CLI output.
+
+### Patch Changes
+
+- Updated dependencies [fb03c09]
+  - @opensea/api-types@0.4.2
+
 ## 1.7.0
 
 ### Minor Changes

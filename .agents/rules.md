@@ -49,7 +49,10 @@ CLI (src/cli.ts)              SDK (src/sdk.ts)
 | `src/sdk.ts` | High-level SDK with domain-specific API classes (`OpenSeaCLI`). |
 | `src/cli.ts` | CLI entrypoint. Configures Commander program and global options. |
 | `src/commands/*.ts` | One file per API domain. Each exports a factory function. |
-| `src/output.ts` | Output formatting (JSON or table). |
+| `src/output.ts` | Output formatting (JSON, table, or server-side TOON via `Accept: text/markdown`). |
+| `src/parse.ts` | Shared `--body <path>` JSON file reading utility. |
+| `src/health.ts` | Health-check logic used by the `health` command. |
+| `src/wallet/` | Wallet adapter re-exports from `@opensea/wallet-adapters` and chain ID resolution. |
 | `src/types/api.ts` | TypeScript interfaces matching OpenSea API v2 response shapes. |
 | `src/types/index.ts` | Re-exports API types plus internal config types. |
 
@@ -68,6 +71,7 @@ CI runs `pnpm check-api-paths` on every PR; it fails if `src/sdk.ts` or `src/com
 Each domain has both a CLI command file (`src/commands/<domain>.ts`) and an SDK class (`src/sdk.ts`):
 
 - **accounts** - Account profile lookup
+- **assets** - Asset movement transactions (transfers)
 - **auth** - API key request and management
 - **chains** - Chain information and supported networks
 - **collections** - Collection metadata, stats, traits
@@ -218,7 +222,14 @@ npm run test -- --coverage  # Run with coverage report
 | `test/client.test.ts` | `OpenSeaClient` (get, post, graphql, error handling) |
 | `test/output.test.ts` | `formatOutput` (JSON and table formatting) |
 | `test/sdk.test.ts` | All SDK API classes and their methods |
+| `test/sdk-swaps.test.ts` | SDK swap-specific tests |
 | `test/commands/*.test.ts` | Each CLI command module (option parsing, subcommand routing, output) |
+| `test/cli-api-error.test.ts` | CLI API error handling and exit codes |
+| `test/cli-network-error.test.ts` | CLI network error handling |
+| `test/cli-rate-limit.test.ts` | CLI rate-limit (HTTP 429) handling |
+| `test/parse.test.ts` | `--body` JSON file parsing utility |
+| `test/toon.test.ts` | Toon output formatter |
+| `test/resolve-quantity.test.ts` | Quantity resolution logic |
 | `test/integration.test.ts` | End-to-end SDK flows with mocked `fetch` |
 | `test/mocks.ts` | Shared mock factories (`createCommandTestContext`, `mockFetchResponse`, `mockFetchTextResponse`) |
 

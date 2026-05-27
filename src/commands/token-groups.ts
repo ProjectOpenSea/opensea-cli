@@ -1,10 +1,8 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
-import { formatOutput } from "../output.js"
+import { outputGet } from "../output.js"
 import { parseIntOption } from "../parse.js"
-
-type TokenGroup = Record<string, unknown>
 
 export function tokenGroupsCommand(
   getClient: () => OpenSeaClient,
@@ -21,15 +19,11 @@ export function tokenGroupsCommand(
     .option("--next <cursor>", "Pagination cursor")
     .action(async (options: { limit: string; next?: string }) => {
       const client = getClient()
-      const result = await client.get<{
-        token_groups: TokenGroup[]
-        next?: string
-      }>("/api/v2/token-groups", {
+      await outputGet(client, getFormat(), "/api/v2/token-groups", {
         limit: parseIntOption(options.limit, "--limit"),
         // Token Groups API uses "cursor" instead of "next" as the query param
         cursor: options.next,
       })
-      console.log(formatOutput(result, getFormat()))
     })
 
   cmd
@@ -38,10 +32,7 @@ export function tokenGroupsCommand(
     .argument("<slug>", "Token group slug (e.g. 'eth')")
     .action(async (slug: string) => {
       const client = getClient()
-      const result = await client.get<TokenGroup>(
-        `/api/v2/token-groups/${slug}`,
-      )
-      console.log(formatOutput(result, getFormat()))
+      await outputGet(client, getFormat(), `/api/v2/token-groups/${slug}`)
     })
 
   return cmd

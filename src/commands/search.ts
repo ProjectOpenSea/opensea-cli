@@ -1,9 +1,8 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
-import { formatOutput } from "../output.js"
+import { outputGet } from "../output.js"
 import { parseIntOption } from "../parse.js"
-import type { SearchResponse } from "../types/index.js"
 
 export function searchCommand(
   getClient: () => OpenSeaClient,
@@ -38,11 +37,7 @@ export function searchCommand(
         if (options.chains) {
           params.chains = options.chains
         }
-        const result = await client.get<SearchResponse>(
-          "/api/v2/search",
-          params,
-        )
-        console.log(formatOutput(result, getFormat()))
+        await outputGet(client, getFormat(), "/api/v2/search", params)
       },
     )
 

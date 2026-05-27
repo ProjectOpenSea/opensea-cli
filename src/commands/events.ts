@@ -1,9 +1,8 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
-import { formatOutput } from "../output.js"
+import { outputGet } from "../output.js"
 import { addTraitsOption, parseIntOption, parseTraitsOption } from "../parse.js"
-import type { AssetEvent } from "../types/index.js"
 
 export function eventsCommand(
   getClient: () => OpenSeaClient,
@@ -33,10 +32,7 @@ export function eventsCommand(
         next?: string
       }) => {
         const client = getClient()
-        const result = await client.get<{
-          asset_events: AssetEvent[]
-          next?: string
-        }>("/api/v2/events", {
+        await outputGet(client, getFormat(), "/api/v2/events", {
           event_type: options.eventType,
           after: options.after
             ? parseIntOption(options.after, "--after")
@@ -48,7 +44,6 @@ export function eventsCommand(
           limit: parseIntOption(options.limit, "--limit"),
           next: options.next,
         })
-        console.log(formatOutput(result, getFormat()))
       },
     )
 
@@ -71,16 +66,17 @@ export function eventsCommand(
         },
       ) => {
         const client = getClient()
-        const result = await client.get<{
-          asset_events: AssetEvent[]
-          next?: string
-        }>(`/api/v2/events/accounts/${address}`, {
-          event_type: options.eventType,
-          chain: options.chain,
-          limit: parseIntOption(options.limit, "--limit"),
-          next: options.next,
-        })
-        console.log(formatOutput(result, getFormat()))
+        await outputGet(
+          client,
+          getFormat(),
+          `/api/v2/events/accounts/${address}`,
+          {
+            event_type: options.eventType,
+            chain: options.chain,
+            limit: parseIntOption(options.limit, "--limit"),
+            next: options.next,
+          },
+        )
       },
     )
 
@@ -103,16 +99,19 @@ export function eventsCommand(
       },
     ) => {
       const client = getClient()
-      const result = await client.get<{
-        asset_events: AssetEvent[]
-        next?: string
-      }>(`/api/v2/events/collection/${slug}`, {
-        event_type: options.eventType,
-        limit: parseIntOption(options.limit, "--limit"),
-        next: options.next,
-        traits: options.traits ? parseTraitsOption(options.traits) : undefined,
-      })
-      console.log(formatOutput(result, getFormat()))
+      await outputGet(
+        client,
+        getFormat(),
+        `/api/v2/events/collection/${slug}`,
+        {
+          event_type: options.eventType,
+          limit: parseIntOption(options.limit, "--limit"),
+          next: options.next,
+          traits: options.traits
+            ? parseTraitsOption(options.traits)
+            : undefined,
+        },
+      )
     },
   )
 
@@ -137,10 +136,9 @@ export function eventsCommand(
         },
       ) => {
         const client = getClient()
-        const result = await client.get<{
-          asset_events: AssetEvent[]
-          next?: string
-        }>(
+        await outputGet(
+          client,
+          getFormat(),
           `/api/v2/events/chain/${chain}/contract/${contract}/nfts/${tokenId}`,
           {
             event_type: options.eventType,
@@ -148,7 +146,6 @@ export function eventsCommand(
             next: options.next,
           },
         )
-        console.log(formatOutput(result, getFormat()))
       },
     )
 

@@ -1,10 +1,9 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
-import { formatOutput } from "../output.js"
+import { formatOutput, outputGet } from "../output.js"
 import { parseFloatOption } from "../parse.js"
 import { resolveQuantity, SwapsAPI } from "../sdk.js"
-import type { SwapQuoteResponse } from "../types/index.js"
 import type { WalletProvider } from "../wallet/index.js"
 import {
   createWalletForProvider,
@@ -66,22 +65,18 @@ export function swapsCommand(
           options.fromAddress,
           options.quantity,
         )
-        const result = await client.get<SwapQuoteResponse>(
-          "/api/v2/swap/quote",
-          {
-            from_chain: options.fromChain,
-            from_address: options.fromAddress,
-            to_chain: options.toChain,
-            to_address: options.toAddress,
-            quantity,
-            address: options.address,
-            slippage: options.slippage
-              ? parseFloatOption(options.slippage, "--slippage")
-              : undefined,
-            recipient: options.recipient,
-          },
-        )
-        console.log(formatOutput(result, getFormat()))
+        await outputGet(client, getFormat(), "/api/v2/swap/quote", {
+          from_chain: options.fromChain,
+          from_address: options.fromAddress,
+          to_chain: options.toChain,
+          to_address: options.toAddress,
+          quantity,
+          address: options.address,
+          slippage: options.slippage
+            ? parseFloatOption(options.slippage, "--slippage")
+            : undefined,
+          recipient: options.recipient,
+        })
       },
     )
 

@@ -30,6 +30,7 @@ export type Listing = Schemas["Listing"]
 export type ListingPrice = Schemas["ListingPrice"]
 export type Payment = Schemas["Payment"]
 export type Event = Schemas["Event"]
+export type EventBase = Schemas["EventBase"]
 export type SaleEvent = Schemas["SaleEvent"]
 export type TransferEvent = Schemas["TransferEvent"]
 export type OrderEvent = Schemas["OrderEvent"]
@@ -148,28 +149,21 @@ export type {
   Payment as EventPayment,
 }
 
-export interface EventAsset {
-  identifier: string
-  collection: string
-  contract: string
-  token_standard: string
-  name: string
-  description: string
-  image_url: string
-  metadata_url: string
-  opensea_url: string
-  updated_at: string
-  is_disabled: boolean
-  is_nsfw: boolean
-}
+/**
+ * The NFT shape returned inside event payloads (as `asset` on OrderEvent and
+ * `nft` on SaleEvent/TransferEvent). Identical to the canonical `Nft` schema
+ * from @opensea/api-types — re-exported under the legacy name for SDK
+ * consumers.
+ */
+export type EventAsset = Nft
 
-export interface AssetEvent {
-  event_type: string
-  event_timestamp: number
-  chain: string
-  quantity: number
-  [key: string]: unknown
-}
+/**
+ * A single entry from `AssetEventsResponse.asset_events`. The OpenSea events
+ * endpoint returns a `oneOf` discriminated union of OrderEvent, SaleEvent, and
+ * TransferEvent. We source the type from the response schema so that adding a
+ * new event variant upstream automatically propagates here.
+ */
+export type AssetEvent = AssetEventsResponse["asset_events"][number]
 
 export interface TraitCategories {
   [traitType: string]: "string" | "number" | "date"
@@ -184,153 +178,32 @@ export interface GetTraitsResponse {
   counts: { [traitType: string]: TraitCounts }
 }
 
-export interface Token {
-  address: string
-  chain: string
-  name: string
-  symbol: string
-  image_url?: string
-  usd_price: string
-  decimals: number
-  market_cap_usd?: number
-  volume_24h?: number
-  price_change_24h?: number
-  opensea_url: string
-}
+// Token shapes sourced from the canonical schemas in @opensea/api-types so the
+// SDK surface stays in lockstep with the API spec.
+export type Token = Schemas["TokenResponse"]
+export type TokenDetails = Schemas["TokenDetailedResponse"]
+export type TokenStats = Schemas["TokenStatsResponse"]
+export type TokenSocials = Schemas["TokenSocialsResponse"]
 
-export interface TokenDetails {
-  address: string
-  chain: string
-  name: string
-  symbol: string
-  image_url?: string
-  description?: string
-  usd_price: string
-  decimals: number
-  stats?: TokenStats
-  socials?: TokenSocials
-  opensea_url: string
-}
-
-export interface TokenStats {
-  market_cap_usd?: number
-  fdv_usd?: number
-  circulating_supply?: number
-  max_supply?: number
-  total_supply?: number
-  volume_24h?: number
-  price_change_1h?: number
-  price_change_24h?: number
-  price_change_7d?: number
-  price_change_30d?: number
-}
-
-export interface TokenSocials {
-  website?: string
-  twitter_handle?: string
-  telegram_identifier?: string
-}
-
-export interface SwapQuote {
-  total_price_usd: number
-  total_cost_usd: number
-  slippage_tolerance: number
-  estimated_duration_ms: number
-  marketplace_fee_bps: number
-}
-
-export interface SwapTransaction {
-  chain: string
-  to?: string
-  data: string
-  value?: string
-}
-
-export interface SwapQuoteResponse {
-  quote: SwapQuote
-  transactions: SwapTransaction[]
-}
+export type SwapQuote = Schemas["SwapQuoteDetails"]
+export type SwapTransaction = Schemas["SwapTransactionResponse"]
+export type SwapQuoteResponse = Schemas["SwapQuoteResponse"]
 
 export type SearchAssetType = "collection" | "nft" | "token" | "account"
 
-export interface SearchResultCollection {
-  collection: string
-  name: string
-  image_url: string | null
-  is_disabled: boolean
-  is_nsfw: boolean
-  opensea_url: string
-}
+export type SearchResultCollection = Schemas["CollectionSearchResponse"]
+export type SearchResultToken = Schemas["TokenSearchResponse"]
+export type SearchResultNFT = Schemas["NftSearchResponse"]
+export type SearchResultAccount = Schemas["AccountSearchResponse"]
+export type SearchResult = Schemas["SearchResultResponse"]
+export type SearchResponse = Schemas["SearchResponse"]
 
-export interface SearchResultToken {
-  address: string
-  chain: string
-  name: string
-  symbol: string
-  image_url: string | null
-  usd_price: string
-  decimals: number
-  opensea_url: string
-}
+export type ChainInfo = Schemas["ChainResponse"]
+export type ChainListResponse = Schemas["ChainListResponse"]
 
-export interface SearchResultNFT {
-  identifier: string
-  collection: string
-  contract: string
-  name: string | null
-  image_url: string | null
-  opensea_url: string
-}
-
-export interface SearchResultAccount {
-  address: string
-  username: string | null
-  profile_image_url: string | null
-  opensea_url: string
-}
-
-export interface SearchResult {
-  type: SearchAssetType
-  collection?: SearchResultCollection
-  token?: SearchResultToken
-  nft?: SearchResultNFT
-  account?: SearchResultAccount
-}
-
-export interface SearchResponse {
-  results: SearchResult[]
-}
-
-export interface ChainInfo {
-  chain: string
-  name: string
-  symbol: string
-  supports_swaps: boolean
-  block_explorer: string
-  block_explorer_url: string
-}
-
-export interface ChainListResponse {
-  chains: ChainInfo[]
-}
-
-export interface TokenBalance {
-  address: string
-  chain: string
-  name: string
-  symbol: string
-  image_url?: string
-  usd_price: string
-  decimals: number
-  quantity: string
-  usd_value: string
-  opensea_url: string
-}
-
-export interface TokenBalancePaginatedResponse {
-  token_balances: TokenBalance[]
-  next?: string
-}
+export type TokenBalance = Schemas["TokenBalanceResponse"]
+export type TokenBalancePaginatedResponse =
+  Schemas["TokenBalancePaginatedResponse"]
 
 export type TokenBalanceSortBy =
   | "USD_VALUE"

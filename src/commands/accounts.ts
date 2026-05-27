@@ -1,20 +1,9 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
-import { formatOutput } from "../output.js"
+import { outputGet } from "../output.js"
 import { parseIntOption } from "../parse.js"
-import type {
-  Account,
-  AccountResolveResponse,
-  Listing,
-  NFT,
-  Offer,
-  PortfolioHistoryResponse,
-  PortfolioStatsResponse,
-  ProfileCollectionsResponse,
-  TokenBalancePaginatedResponse,
-  TokenBalanceSortBy,
-} from "../types/index.js"
+import type { TokenBalanceSortBy } from "../types/index.js"
 
 export function accountsCommand(
   getClient: () => OpenSeaClient,
@@ -28,8 +17,7 @@ export function accountsCommand(
     .argument("<address>", "Wallet address")
     .action(async (address: string) => {
       const client = getClient()
-      const result = await client.get<Account>(`/api/v2/accounts/${address}`)
-      console.log(formatOutput(result, getFormat()))
+      await outputGet(client, getFormat(), `/api/v2/accounts/${address}`)
     })
 
   cmd
@@ -58,7 +46,9 @@ export function accountsCommand(
         },
       ) => {
         const client = getClient()
-        const result = await client.get<TokenBalancePaginatedResponse>(
+        await outputGet(
+          client,
+          getFormat(),
           `/api/v2/account/${address}/tokens`,
           {
             chains: options.chains,
@@ -69,7 +59,6 @@ export function accountsCommand(
             disable_spam_filtering: options.spamFilter ? undefined : true,
           },
         )
-        console.log(formatOutput(result, getFormat()))
       },
     )
 
@@ -84,10 +73,11 @@ export function accountsCommand(
     )
     .action(async (identifier: string) => {
       const client = getClient()
-      const result = await client.get<AccountResolveResponse>(
+      await outputGet(
+        client,
+        getFormat(),
         `/api/v2/accounts/resolve/${identifier}`,
       )
-      console.log(formatOutput(result, getFormat()))
     })
 
   cmd
@@ -97,11 +87,12 @@ export function accountsCommand(
     .option("--timeframe <window>", "P&L window (HOUR, DAY, WEEK, MONTH)")
     .action(async (address: string, options: { timeframe?: string }) => {
       const client = getClient()
-      const result = await client.get<PortfolioStatsResponse>(
+      await outputGet(
+        client,
+        getFormat(),
         `/api/v2/account/${address}/portfolio`,
         { timeframe: options.timeframe },
       )
-      console.log(formatOutput(result, getFormat()))
     })
 
   cmd
@@ -111,11 +102,12 @@ export function accountsCommand(
     .option("--timeframe <window>", "History window (HOUR, DAY, WEEK, MONTH)")
     .action(async (address: string, options: { timeframe?: string }) => {
       const client = getClient()
-      const result = await client.get<PortfolioHistoryResponse>(
+      await outputGet(
+        client,
+        getFormat(),
         `/api/v2/account/${address}/portfolio/history`,
         { timeframe: options.timeframe },
       )
-      console.log(formatOutput(result, getFormat()))
     })
 
   cmd
@@ -144,7 +136,9 @@ export function accountsCommand(
         },
       ) => {
         const client = getClient()
-        const result = await client.get<{ offers: Offer[]; next?: string }>(
+        await outputGet(
+          client,
+          getFormat(),
           `/api/v2/account/${address}/offers`,
           {
             after: options.after,
@@ -155,7 +149,6 @@ export function accountsCommand(
             sort_direction: options.sortDirection,
           },
         )
-        console.log(formatOutput(result, getFormat()))
       },
     )
 
@@ -185,7 +178,9 @@ export function accountsCommand(
         },
       ) => {
         const client = getClient()
-        const result = await client.get<{ offers: Offer[]; next?: string }>(
+        await outputGet(
+          client,
+          getFormat(),
           `/api/v2/account/${address}/offers_received`,
           {
             after: options.after,
@@ -196,7 +191,6 @@ export function accountsCommand(
             sort_direction: options.sortDirection,
           },
         )
-        console.log(formatOutput(result, getFormat()))
       },
     )
 
@@ -226,18 +220,19 @@ export function accountsCommand(
         },
       ) => {
         const client = getClient()
-        const result = await client.get<{
-          listings: Listing[]
-          next?: string
-        }>(`/api/v2/account/${address}/listings`, {
-          after: options.after,
-          limit: parseIntOption(options.limit, "--limit"),
-          collection_slugs: options.collectionSlugs,
-          chains: options.chains,
-          sort_by: options.sortBy,
-          sort_direction: options.sortDirection,
-        })
-        console.log(formatOutput(result, getFormat()))
+        await outputGet(
+          client,
+          getFormat(),
+          `/api/v2/account/${address}/listings`,
+          {
+            after: options.after,
+            limit: parseIntOption(options.limit, "--limit"),
+            collection_slugs: options.collectionSlugs,
+            chains: options.chains,
+            sort_by: options.sortBy,
+            sort_direction: options.sortDirection,
+          },
+        )
       },
     )
 
@@ -262,7 +257,9 @@ export function accountsCommand(
         },
       ) => {
         const client = getClient()
-        const result = await client.get<{ nfts: NFT[]; next?: string }>(
+        await outputGet(
+          client,
+          getFormat(),
           `/api/v2/account/${address}/favorites`,
           {
             after: options.after,
@@ -272,7 +269,6 @@ export function accountsCommand(
             chains: options.chains,
           },
         )
-        console.log(formatOutput(result, getFormat()))
       },
     )
 
@@ -293,7 +289,9 @@ export function accountsCommand(
         },
       ) => {
         const client = getClient()
-        const result = await client.get<ProfileCollectionsResponse>(
+        await outputGet(
+          client,
+          getFormat(),
           `/api/v2/account/${address}/collections`,
           {
             after: options.after,
@@ -301,7 +299,6 @@ export function accountsCommand(
             chains: options.chains,
           },
         )
-        console.log(formatOutput(result, getFormat()))
       },
     )
 
