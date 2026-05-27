@@ -92,6 +92,8 @@ export type PriceHistoryResponse = Schemas["PriceHistoryResponse"]
 export type OhlcvResponse = Schemas["OhlcvResponse"]
 export type TokenSwapActivityPaginatedResponse =
   Schemas["TokenSwapActivityPaginatedResponse"]
+export type TokenHoldersResponse = Schemas["TokenHoldersResponse"]
+export type TokenLiquidityPoolsResponse = Schemas["TokenLiquidityPoolsResponse"]
 export type OwnersPaginatedResponse = Schemas["OwnersPaginatedResponse"]
 export type NftAnalyticsResponse = Schemas["NftAnalyticsResponse"]
 export type PortfolioStatsResponse = Schemas["PortfolioStatsResponse"]

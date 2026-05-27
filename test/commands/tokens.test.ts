@@ -20,6 +20,8 @@ describe("tokensCommand", () => {
     expect(subcommands).toContain("trending")
     expect(subcommands).toContain("top")
     expect(subcommands).toContain("get")
+    expect(subcommands).toContain("holders")
+    expect(subcommands).toContain("liquidity-pools")
   })
 
   it("trending subcommand passes options", async () => {
@@ -71,6 +73,53 @@ describe("tokensCommand", () => {
 
     expect(ctx.mockClient.get).toHaveBeenCalledWith(
       "/api/v2/chain/ethereum/token/0xabc",
+    )
+  })
+
+  it("holders subcommand passes pagination + sort options", async () => {
+    ctx.mockClient.get.mockResolvedValue({ holders: [] })
+
+    const cmd = tokensCommand(ctx.getClient, ctx.getFormat)
+    await cmd.parseAsync(
+      [
+        "holders",
+        "ethereum",
+        "0xabc",
+        "--limit",
+        "50",
+        "--next",
+        "page-2",
+        "--sort-by",
+        "QUANTITY",
+        "--sort-direction",
+        "desc",
+      ],
+      { from: "user" },
+    )
+
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
+      "/api/v2/chain/ethereum/token/0xabc/holders",
+      expect.objectContaining({
+        limit: 50,
+        cursor: "page-2",
+        sort_by: "QUANTITY",
+        sort_direction: "desc",
+      }),
+    )
+  })
+
+  it("liquidity-pools subcommand passes limit", async () => {
+    ctx.mockClient.get.mockResolvedValue({ pools: [] })
+
+    const cmd = tokensCommand(ctx.getClient, ctx.getFormat)
+    await cmd.parseAsync(
+      ["liquidity-pools", "ethereum", "0xabc", "--limit", "30"],
+      { from: "user" },
+    )
+
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
+      "/api/v2/chain/ethereum/token/0xabc/liquidity-pools",
+      expect.objectContaining({ limit: 30 }),
     )
   })
 })

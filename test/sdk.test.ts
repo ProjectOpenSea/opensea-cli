@@ -436,6 +436,34 @@ describe("OpenSeaCLI", () => {
       await sdk.tokens.get("ethereum", "0xabc")
       expect(mockGet).toHaveBeenCalledWith("/api/v2/chain/ethereum/token/0xabc")
     })
+
+    it("holders calls correct endpoint with pagination + sort", async () => {
+      mockGet.mockResolvedValue({ holders: [] })
+      await sdk.tokens.holders("ethereum", "0xabc", {
+        limit: 50,
+        next: "page-2",
+        sortBy: "QUANTITY",
+        sortDirection: "desc",
+      })
+      expect(mockGet).toHaveBeenCalledWith(
+        "/api/v2/chain/ethereum/token/0xabc/holders",
+        {
+          limit: 50,
+          cursor: "page-2",
+          sort_by: "QUANTITY",
+          sort_direction: "desc",
+        },
+      )
+    })
+
+    it("liquidityPools calls correct endpoint", async () => {
+      mockGet.mockResolvedValue({ pools: [] })
+      await sdk.tokens.liquidityPools("ethereum", "0xabc", { limit: 30 })
+      expect(mockGet).toHaveBeenCalledWith(
+        "/api/v2/chain/ethereum/token/0xabc/liquidity-pools",
+        { limit: 30 },
+      )
+    })
   })
 
   describe("search", () => {

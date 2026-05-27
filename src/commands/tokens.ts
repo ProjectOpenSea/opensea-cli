@@ -187,5 +187,62 @@ export function tokensCommand(
       },
     )
 
+  cmd
+    .command("holders")
+    .description(
+      "Get paginated holders for a token (with aggregate distribution health)",
+    )
+    .argument("<chain>", "Chain")
+    .argument("<address>", "Token contract address")
+    .option("--limit <limit>", "Number of results (max 100)", "20")
+    .option("--next <cursor>", "Pagination cursor")
+    .option("--sort-by <field>", "Sort field (QUANTITY)")
+    .option("--sort-direction <direction>", "Sort direction (asc|desc)")
+    .action(
+      async (
+        chain: string,
+        address: string,
+        options: {
+          limit: string
+          next?: string
+          sortBy?: string
+          sortDirection?: string
+        },
+      ) => {
+        const client = getClient()
+        await outputGet(
+          client,
+          getFormat(),
+          `/api/v2/chain/${chain as Chain}/token/${address}/holders`,
+          {
+            limit: parseIntOption(options.limit, "--limit"),
+            cursor: options.next,
+            sort_by: options.sortBy,
+            sort_direction: options.sortDirection,
+          },
+        )
+      },
+    )
+
+  cmd
+    .command("liquidity-pools")
+    .description("Get liquidity pools for a token")
+    .argument("<chain>", "Chain")
+    .argument("<address>", "Token contract address")
+    .option("--limit <limit>", "Number of results (max 50)", "20")
+    .action(
+      async (chain: string, address: string, options: { limit: string }) => {
+        const client = getClient()
+        await outputGet(
+          client,
+          getFormat(),
+          `/api/v2/chain/${chain as Chain}/token/${address}/liquidity-pools`,
+          {
+            limit: parseIntOption(options.limit, "--limit"),
+          },
+        )
+      },
+    )
+
   return cmd
 }

@@ -56,6 +56,8 @@ import type {
   TokenBalanceSortBy,
   TokenBatchResponse,
   TokenDetails,
+  TokenHoldersResponse,
+  TokenLiquidityPoolsResponse,
   TokenSwapActivityPaginatedResponse,
   TraitFilter,
   TransactionReceiptRequest,
@@ -882,6 +884,37 @@ class TokensAPI {
       limit: options?.limit,
       cursor: options?.next,
     })
+  }
+
+  async holders(
+    chain: Chain,
+    address: string,
+    options?: {
+      limit?: number
+      next?: string
+      sortBy?: "QUANTITY"
+      sortDirection?: "asc" | "desc"
+    },
+  ): Promise<TokenHoldersResponse> {
+    return this.client.get(`/api/v2/chain/${chain}/token/${address}/holders`, {
+      limit: options?.limit,
+      cursor: options?.next,
+      sort_by: options?.sortBy,
+      sort_direction: options?.sortDirection,
+    })
+  }
+
+  async liquidityPools(
+    chain: Chain,
+    address: string,
+    options?: { limit?: number },
+  ): Promise<TokenLiquidityPoolsResponse> {
+    return this.client.get(
+      `/api/v2/chain/${chain}/token/${address}/liquidity-pools`,
+      {
+        limit: options?.limit,
+      },
+    )
   }
 }
 
