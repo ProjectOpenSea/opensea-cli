@@ -44,6 +44,7 @@ import type {
   PortfolioStatsResponse,
   PriceHistoryResponse,
   ProfileCollectionsResponse,
+  RegisteredToolResponse,
   SearchAssetType,
   SearchResponse,
   SwapExecuteRequest,
@@ -59,6 +60,8 @@ import type {
   TokenHoldersResponse,
   TokenLiquidityPoolsResponse,
   TokenSwapActivityPaginatedResponse,
+  ToolListPaginatedResponse,
+  ToolSearchPaginatedResponse,
   TraitFilter,
   TransactionReceiptRequest,
   TransactionReceiptResponse,
@@ -127,6 +130,7 @@ export class OpenSeaCLI {
   readonly swaps: SwapsAPI
   readonly transactions: TransactionsAPI
   readonly assets: AssetsAPI
+  readonly tools: ToolsAPI
   readonly health: HealthAPI
 
   constructor(config: OpenSeaClientConfig) {
@@ -144,6 +148,7 @@ export class OpenSeaCLI {
     this.swaps = new SwapsAPI(this.client)
     this.transactions = new TransactionsAPI(this.client)
     this.assets = new AssetsAPI(this.client)
+    this.tools = new ToolsAPI(this.client)
     this.health = new HealthAPI(this.client)
   }
 }
@@ -1066,6 +1071,59 @@ export class AssetsAPI {
    */
   async transfer(request: TransferRequest): Promise<TransferResponse> {
     return this.client.post("/api/v2/assets/transfer", request)
+  }
+}
+
+class ToolsAPI {
+  constructor(private client: OpenSeaClient) {}
+
+  async search(options?: {
+    query?: string
+    registryChain?: string
+    tags?: string[]
+    accessType?: string
+    creator?: string
+    sortBy?: string
+    limit?: number
+    next?: string
+  }): Promise<ToolSearchPaginatedResponse> {
+    return this.client.get<ToolSearchPaginatedResponse>(
+      "/api/v2/tools/search",
+      {
+        query: options?.query,
+        registry_chain: options?.registryChain,
+        tags: options?.tags?.join(","),
+        access_type: options?.accessType,
+        creator: options?.creator,
+        sort_by: options?.sortBy,
+        limit: options?.limit,
+        "cursor.value": options?.next,
+      },
+    )
+  }
+
+  async get(
+    registryChain: string,
+    registryAddr: string,
+    toolId: string,
+  ): Promise<RegisteredToolResponse> {
+    return this.client.get<RegisteredToolResponse>(
+      `/api/v2/tools/${registryChain}/${registryAddr}/${toolId}`,
+    )
+  }
+
+  async list(options?: {
+    sortBy?: string
+    type?: string
+    limit?: number
+    next?: string
+  }): Promise<ToolListPaginatedResponse> {
+    return this.client.get<ToolListPaginatedResponse>("/api/v2/tools", {
+      sort_by: options?.sortBy,
+      type: options?.type,
+      limit: options?.limit,
+      "cursor.value": options?.next,
+    })
   }
 }
 

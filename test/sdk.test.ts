@@ -43,6 +43,7 @@ describe("OpenSeaCLI", () => {
       expect(sdk.search).toBeDefined()
       expect(sdk.swaps).toBeDefined()
       expect(sdk.health).toBeDefined()
+      expect(sdk.tools).toBeDefined()
     })
   })
 
@@ -532,6 +533,83 @@ describe("OpenSeaCLI", () => {
         address: "0xccc",
         slippage: 0.02,
         recipient: undefined,
+      })
+    })
+  })
+
+  describe("tools", () => {
+    it("search calls correct endpoint with all options", async () => {
+      const mockResponse = { results: [], next: null }
+      mockGet.mockResolvedValue(mockResponse)
+      const result = await sdk.tools.search({
+        query: "nft appraiser",
+        registryChain: "8453",
+        tags: ["nft", "defi"],
+        accessType: "open",
+        creator: "0x1234",
+        sortBy: "newest",
+        limit: 10,
+        next: "cursor1",
+      })
+      expect(mockGet).toHaveBeenCalledWith("/api/v2/tools/search", {
+        query: "nft appraiser",
+        registry_chain: "8453",
+        tags: "nft,defi",
+        access_type: "open",
+        creator: "0x1234",
+        sort_by: "newest",
+        limit: 10,
+        "cursor.value": "cursor1",
+      })
+      expect(result).toEqual(mockResponse)
+    })
+
+    it("search calls with no options", async () => {
+      mockGet.mockResolvedValue({ results: [] })
+      await sdk.tools.search()
+      expect(mockGet).toHaveBeenCalledWith("/api/v2/tools/search", {
+        query: undefined,
+        registry_chain: undefined,
+        tags: undefined,
+        access_type: undefined,
+        creator: undefined,
+        sort_by: undefined,
+        limit: undefined,
+        "cursor.value": undefined,
+      })
+    })
+
+    it("get calls correct endpoint", async () => {
+      mockGet.mockResolvedValue({ tool_id: "42" })
+      const result = await sdk.tools.get("8453", "0xabc", "42")
+      expect(mockGet).toHaveBeenCalledWith("/api/v2/tools/8453/0xabc/42")
+      expect(result).toEqual({ tool_id: "42" })
+    })
+
+    it("list calls correct endpoint with options", async () => {
+      mockGet.mockResolvedValue({ tools: [], next: null })
+      await sdk.tools.list({
+        sortBy: "oldest",
+        type: "nft_gated",
+        limit: 50,
+        next: "page2",
+      })
+      expect(mockGet).toHaveBeenCalledWith("/api/v2/tools", {
+        sort_by: "oldest",
+        type: "nft_gated",
+        limit: 50,
+        "cursor.value": "page2",
+      })
+    })
+
+    it("list calls with no options", async () => {
+      mockGet.mockResolvedValue({ tools: [] })
+      await sdk.tools.list()
+      expect(mockGet).toHaveBeenCalledWith("/api/v2/tools", {
+        sort_by: undefined,
+        type: undefined,
+        limit: undefined,
+        "cursor.value": undefined,
       })
     })
   })

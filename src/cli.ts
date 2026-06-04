@@ -16,6 +16,7 @@ import {
   swapsCommand,
   tokenGroupsCommand,
   tokensCommand,
+  toolsCommand,
   transactionsCommand,
   walletCommand,
 } from "./commands/index.js"
@@ -135,6 +136,7 @@ program.addCommand(
 )
 program.addCommand(searchCommand(getClient, getFormat))
 program.addCommand(swapsCommand(getClient, getFormat))
+program.addCommand(toolsCommand(getClient, getFormat))
 program.addCommand(transactionsCommand(getClient, getFormat))
 program.addCommand(healthCommand(getClient, getFormat))
 program.addCommand(walletCommand(getFormat))

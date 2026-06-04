@@ -17,6 +17,7 @@ vi.mock("../src/commands/index.js", () => ({
   swapsCommand: () => new Command("swaps"),
   tokenGroupsCommand: () => new Command("token-groups"),
   tokensCommand: () => new Command("tokens"),
+  toolsCommand: () => new Command("tools"),
   transactionsCommand: () => new Command("transactions"),
   healthCommand: () => new Command("health"),
   walletCommand: () => new Command("wallet"),

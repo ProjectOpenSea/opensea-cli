@@ -1,5 +1,16 @@
 # @opensea/cli
 
+## 1.10.0
+
+### Minor Changes
+
+- Add the `opensea tools` command for searching, listing, and inspecting registered AI agent tools (ERC-8257). New `search`, `get`, and `list` subcommands wrap the `[Beta]` tool registry API, with matching `OpenSeaCLI` SDK methods and `RegisteredToolResponse` / `ToolSearchPaginatedResponse` / `ToolListPaginatedResponse` type re-exports sourced from `@opensea/api-types`.
+
+### Patch Changes
+
+- Updated dependencies
+  - @opensea/api-types@0.4.4
+
 ## 1.9.0
 
 ### Minor Changes

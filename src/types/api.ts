@@ -222,6 +222,7 @@ export type CrossChainFulfillmentResponse =
 export type SwapTransactionResponse = Schemas["SwapTransactionResponse"]
 export type SwapExecuteRequest = Schemas["SwapExecuteRequest"]
 export type SwapExecuteResponse = Schemas["SwapExecuteResponse"]
+
 export type SwapQuoteInput = Schemas["SwapQuoteInput"]
 export type TransactionReceiptRequest = Schemas["TransactionReceiptRequest"]
 export type TransactionReceiptResponse = Schemas["TransactionReceiptResponse"]
@@ -257,3 +258,9 @@ export interface ValidateMetadataResponse {
     statusCode?: number
   }
 }
+
+// ── Tool Registry types ─────────────────────────────────────────────
+
+export type RegisteredToolResponse = Schemas["RegisteredToolResponse"]
+export type ToolSearchPaginatedResponse = Schemas["ToolSearchPaginatedResponse"]
+export type ToolListPaginatedResponse = Schemas["ToolListPaginatedResponse"]

@@ -228,7 +228,6 @@ npm run test -- --coverage  # Run with coverage report
 | `test/cli-network-error.test.ts` | CLI network error handling |
 | `test/cli-rate-limit.test.ts` | CLI rate-limit (HTTP 429) handling |
 | `test/parse.test.ts` | `--body` JSON file parsing utility |
-| `test/toon.test.ts` | Toon output formatter |
 | `test/resolve-quantity.test.ts` | Quantity resolution logic |
 | `test/integration.test.ts` | End-to-end SDK flows with mocked `fetch` |
 | `test/mocks.ts` | Shared mock factories (`createCommandTestContext`, `mockFetchResponse`, `mockFetchTextResponse`) |
