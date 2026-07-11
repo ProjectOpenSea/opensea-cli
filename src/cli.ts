@@ -1,7 +1,9 @@
 import { Command } from "commander"
+import { loadCurrentToken } from "./auth/store.js"
 import { OpenSeaAPIError, OpenSeaClient } from "./client.js"
 import {
   accountsCommand,
+  apiCommand,
   assetsCommand,
   authCommand,
   chainsCommand,
@@ -10,6 +12,7 @@ import {
   eventsCommand,
   healthCommand,
   listingsCommand,
+  loginCommand,
   nftsCommand,
   offersCommand,
   searchCommand,
@@ -60,6 +63,11 @@ program
   .option("--max-lines <lines>", "Truncate output after N lines")
   .option("--max-retries <n>", "Max retries on 429/5xx (0 to disable)", "3")
   .option("--no-retry", "Disable request retries")
+  .option(
+    "--auth-token <token>",
+    "Auth bearer token for wallet-authenticated endpoints (or set OPENSEA_AUTH_TOKEN env var)",
+  )
+  .option("--auth-base-url <url>", "Auth server base URL")
 
 function getClient(): OpenSeaClient {
   const opts = program.opts<{
@@ -70,6 +78,7 @@ function getClient(): OpenSeaClient {
     verbose?: boolean
     maxRetries: string
     retry: boolean
+    authToken?: string
   }>()
 
   const apiKey = opts.apiKey ?? process.env.OPENSEA_API_KEY
@@ -84,8 +93,14 @@ function getClient(): OpenSeaClient {
     ? parseIntOption(opts.maxRetries, "--max-retries")
     : 0
 
+  const authToken =
+    opts.authToken ??
+    process.env.OPENSEA_AUTH_TOKEN ??
+    loadCurrentToken()?.accessToken
+
   return new OpenSeaClient({
     apiKey,
+    authToken,
     chain: opts.chain,
     baseUrl: opts.baseUrl,
     timeout: parseIntOption(opts.timeout, "--timeout"),
@@ -121,6 +136,7 @@ program.hook("preAction", () => {
 })
 
 program.addCommand(assetsCommand(getClient, getFormat))
+program.addCommand(apiCommand(getClient, getFormat))
 program.addCommand(chainsCommand(getClient, getFormat))
 program.addCommand(collectionsCommand(getClient, getFormat))
 program.addCommand(dropsCommand(getClient, getFormat))
@@ -132,7 +148,17 @@ program.addCommand(accountsCommand(getClient, getFormat))
 program.addCommand(tokensCommand(getClient, getFormat))
 program.addCommand(tokenGroupsCommand(getClient, getFormat))
 program.addCommand(
-  authCommand(() => program.opts<{ baseUrl?: string }>().baseUrl, getFormat),
+  authCommand(
+    () => program.opts<{ baseUrl?: string }>().baseUrl,
+    getFormat,
+    () => program.opts<{ authBaseUrl?: string }>().authBaseUrl,
+  ),
+)
+program.addCommand(
+  loginCommand(
+    getFormat,
+    () => program.opts<{ authBaseUrl?: string }>().authBaseUrl,
+  ),
 )
 program.addCommand(searchCommand(getClient, getFormat))
 program.addCommand(swapsCommand(getClient, getFormat))

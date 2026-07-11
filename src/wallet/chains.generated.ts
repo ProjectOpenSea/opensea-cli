@@ -20,6 +20,7 @@ export const CHAIN_IDS: Record<string, number> = {
   ronin: 2020,
   abstract: 2741,
   megaeth: 4326,
+  robinhood: 4663,
   somnia: 5031,
   b3: 8333,
   base: 8453,

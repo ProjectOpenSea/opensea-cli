@@ -3,6 +3,7 @@ import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
 import { formatOutput, outputGet } from "../output.js"
 import {
+  addPaginationOptions,
   addTraitsOption,
   parseIntOption,
   parseTraitsOption,
@@ -20,12 +21,12 @@ export function listingsCommand(
 ): Command {
   const cmd = new Command("listings").description("Query NFT listings")
 
-  cmd
-    .command("all")
-    .description("Get all listings for a collection")
-    .argument("<collection>", "Collection slug")
-    .option("--limit <limit>", "Number of results", "20")
-    .option("--next <cursor>", "Pagination cursor")
+  addPaginationOptions(
+    cmd
+      .command("all")
+      .description("Get all listings for a collection")
+      .argument("<collection>", "Collection slug"),
+  )
     .option("--maker <address>", "Filter by order maker address")
     .action(
       async (
@@ -97,12 +98,12 @@ export function listingsCommand(
     )
 
   addTraitsOption(
-    cmd
-      .command("best")
-      .description("Get best listings for a collection")
-      .argument("<collection>", "Collection slug")
-      .option("--limit <limit>", "Number of results", "20")
-      .option("--next <cursor>", "Pagination cursor"),
+    addPaginationOptions(
+      cmd
+        .command("best")
+        .description("Get best listings for a collection")
+        .argument("<collection>", "Collection slug"),
+    ),
   ).action(
     async (
       collection: string,

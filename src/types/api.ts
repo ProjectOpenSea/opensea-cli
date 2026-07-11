@@ -99,6 +99,13 @@ export type NftAnalyticsResponse = Schemas["NftAnalyticsResponse"]
 export type PortfolioStatsResponse = Schemas["PortfolioStatsResponse"]
 export type PortfolioHistoryResponse = Schemas["PortfolioHistoryResponse"]
 export type ProfileCollectionsResponse = Schemas["ProfileCollectionsResponse"]
+export type WalletPnlResponse = Schemas["WalletPnlResponse"]
+export type ClosedPositionsResponse = Schemas["ClosedPositionsResponse"]
+export type ClosedPositionResponse = Schemas["ClosedPositionResponse"]
+export type PositionTokenTransfersResponse =
+  Schemas["PositionTokenTransfersResponse"]
+export type PositionTokenTransferResponse =
+  Schemas["PositionTokenTransferResponse"]
 
 // ── Query helpers ───────────────────────────────────────────────────
 

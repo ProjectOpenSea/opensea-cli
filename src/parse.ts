@@ -52,6 +52,46 @@ export function addTraitsOption(cmd: Command): Command {
   return cmd.option("--traits <json>", TRAITS_OPTION_DESCRIPTION)
 }
 
+/**
+ * Register the shared `--limit <limit>` option. `description` and
+ * `defaultValue` are overridable because per-command caps and defaults vary
+ * (e.g. "Number of results (max 100)", default "50").
+ */
+export function addLimitOption(
+  cmd: Command,
+  description = "Number of results",
+  defaultValue = "20",
+): Command {
+  return cmd.option("--limit <limit>", description, defaultValue)
+}
+
+/** Register the shared `--next <cursor>` pagination-cursor option. */
+export function addNextOption(cmd: Command): Command {
+  return cmd.option("--next <cursor>", "Pagination cursor")
+}
+
+/**
+ * Register the common `--limit` + `--next` pagination pair (in that order).
+ * Most paginated commands need exactly this; `--limit` remains customizable.
+ */
+export function addPaginationOptions(
+  cmd: Command,
+  limitDescription = "Number of results",
+  limitDefault = "20",
+): Command {
+  return addNextOption(addLimitOption(cmd, limitDescription, limitDefault))
+}
+
+/** Register the shared `--sort-direction <dir>` option. */
+export function addSortDirectionOption(cmd: Command): Command {
+  return cmd.option("--sort-direction <dir>", "Sort direction (asc, desc)")
+}
+
+/** Register the shared `--chain <chain>` filter option. */
+export function addChainOption(cmd: Command): Command {
+  return cmd.option("--chain <chain>", "Filter by chain")
+}
+
 // Re-stringify (rather than passing the raw input through) so whitespace and
 // key order are normalized before hitting the API.
 export function parseTraitsOption(value: string): string {

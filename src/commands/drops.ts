@@ -2,7 +2,7 @@ import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
 import { formatOutput, outputGet } from "../output.js"
-import { parseIntOption } from "../parse.js"
+import { addPaginationOptions, parseIntOption } from "../parse.js"
 import type {
   Chain,
   DropDeployRequest,
@@ -16,33 +16,36 @@ export function dropsCommand(
 ): Command {
   const cmd = new Command("drops").description("Query and mint NFT drops")
 
-  cmd
-    .command("list")
-    .description("List drops (featured, upcoming, or recently minted)")
-    .option(
-      "--type <type>",
-      "Drop type: featured, upcoming, or recently_minted",
-      "featured",
-    )
-    .option("--chains <chains>", "Comma-separated list of chains to filter by")
-    .option("--limit <limit>", "Number of results (max 100)", "20")
-    .option("--next <cursor>", "Pagination cursor")
-    .action(
-      async (options: {
-        type: string
-        chains?: string
-        limit: string
-        next?: string
-      }) => {
-        const client = getClient()
-        await outputGet(client, getFormat(), "/api/v2/drops", {
-          type: options.type,
-          chains: options.chains,
-          limit: parseIntOption(options.limit, "--limit"),
-          cursor: options.next,
-        })
-      },
-    )
+  addPaginationOptions(
+    cmd
+      .command("list")
+      .description("List drops (featured, upcoming, or recently minted)")
+      .option(
+        "--type <type>",
+        "Drop type: featured, upcoming, or recently_minted",
+        "featured",
+      )
+      .option(
+        "--chains <chains>",
+        "Comma-separated list of chains to filter by",
+      ),
+    "Number of results (max 100)",
+  ).action(
+    async (options: {
+      type: string
+      chains?: string
+      limit: string
+      next?: string
+    }) => {
+      const client = getClient()
+      await outputGet(client, getFormat(), "/api/v2/drops", {
+        type: options.type,
+        chains: options.chains,
+        limit: parseIntOption(options.limit, "--limit"),
+        cursor: options.next,
+      })
+    },
+  )
 
   cmd
     .command("get")

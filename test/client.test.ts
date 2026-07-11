@@ -143,6 +143,40 @@ describe("OpenSeaClient", () => {
     })
   })
 
+  describe("write methods", () => {
+    it.each([
+      "PUT",
+      "PATCH",
+      "DELETE",
+    ] as const)("sends a %s request with a JSON body", async method => {
+      mockFetchResponse({ ok: true })
+      const fn =
+        method === "PUT"
+          ? client.put.bind(client)
+          : method === "PATCH"
+            ? client.patch.bind(client)
+            : client.delete.bind(client)
+
+      await fn("/api/v2/scoped", { value: true })
+
+      expect(fetch).toHaveBeenCalledWith(
+        "https://api.opensea.io/api/v2/scoped",
+        expect.objectContaining({
+          method,
+          body: JSON.stringify({ value: true }),
+        }),
+      )
+    })
+
+    it("returns undefined for an empty successful response", async () => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(null, { status: 204 }),
+      )
+
+      await expect(client.delete("/api/v2/scoped")).resolves.toBeUndefined()
+    })
+  })
+
   describe("retry", () => {
     beforeEach(() => {
       vi.useFakeTimers()

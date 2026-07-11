@@ -2,7 +2,7 @@ import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
 import { outputGet } from "../output.js"
-import { parseIntOption } from "../parse.js"
+import { addPaginationOptions, parseIntOption } from "../parse.js"
 import type { TokenBalanceSortBy } from "../types/index.js"
 
 export function accountsCommand(
@@ -301,6 +301,77 @@ export function accountsCommand(
         )
       },
     )
+
+  cmd
+    .command("pnl")
+    .description("Get aggregated trading P&L (realized + unrealized)")
+    .argument("<address>", "Wallet address")
+    .action(async (address: string) => {
+      const client = getClient()
+      await outputGet(client, getFormat(), `/api/v2/account/${address}/pnl`)
+    })
+
+  addPaginationOptions(
+    cmd
+      .command("closed-positions")
+      .description("Get closed (realized) trading positions for an account")
+      .argument("<address>", "Wallet address")
+      .option("--sort-by <field>", "Sort by field"),
+  ).action(
+    async (
+      address: string,
+      options: { sortBy?: string; limit: string; next?: string },
+    ) => {
+      const client = getClient()
+      await outputGet(
+        client,
+        getFormat(),
+        `/api/v2/account/${address}/pnl/closed-positions`,
+        {
+          sort_by: options.sortBy,
+          limit: parseIntOption(options.limit, "--limit"),
+          next: options.next,
+        },
+      )
+    },
+  )
+
+  addPaginationOptions(
+    cmd
+      .command("token-transfers")
+      .description(
+        "Get the token transfers contributing to a wallet's position in a currency",
+      )
+      .argument("<address>", "Wallet address")
+      .requiredOption(
+        "--contract-address <address>",
+        "Contract address of the currency",
+      )
+      .requiredOption("--chain <chain>", "Chain the currency lives on"),
+  ).action(
+    async (
+      address: string,
+      options: {
+        contractAddress: string
+        chain: string
+        limit: string
+        next?: string
+      },
+    ) => {
+      const client = getClient()
+      await outputGet(
+        client,
+        getFormat(),
+        `/api/v2/account/${address}/pnl/token-transfers`,
+        {
+          contract_address: options.contractAddress,
+          chain: options.chain,
+          limit: parseIntOption(options.limit, "--limit"),
+          next: options.next,
+        },
+      )
+    },
+  )
 
   return cmd
 }

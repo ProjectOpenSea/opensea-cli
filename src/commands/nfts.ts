@@ -3,6 +3,7 @@ import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
 import { formatOutput, outputGet } from "../output.js"
 import {
+  addPaginationOptions,
   addTraitsOption,
   parseIntOption,
   parseTraitsOption,
@@ -37,12 +38,12 @@ export function nftsCommand(
     })
 
   addTraitsOption(
-    cmd
-      .command("list-by-collection")
-      .description("List NFTs in a collection")
-      .argument("<slug>", "Collection slug")
-      .option("--limit <limit>", "Number of results", "20")
-      .option("--next <cursor>", "Pagination cursor"),
+    addPaginationOptions(
+      cmd
+        .command("list-by-collection")
+        .description("List NFTs in a collection")
+        .argument("<slug>", "Collection slug"),
+    ),
   ).action(
     async (
       slug: string,
@@ -57,57 +58,55 @@ export function nftsCommand(
     },
   )
 
-  cmd
-    .command("list-by-contract")
-    .description("List NFTs by contract address")
-    .argument("<chain>", "Chain")
-    .argument("<contract>", "Contract address")
-    .option("--limit <limit>", "Number of results", "20")
-    .option("--next <cursor>", "Pagination cursor")
-    .action(
-      async (
-        chain: string,
-        contract: string,
-        options: { limit: string; next?: string },
-      ) => {
-        const client = getClient()
-        await outputGet(
-          client,
-          getFormat(),
-          `/api/v2/chain/${chain}/contract/${contract}/nfts`,
-          {
-            limit: parseIntOption(options.limit, "--limit"),
-            next: options.next,
-          },
-        )
-      },
-    )
+  addPaginationOptions(
+    cmd
+      .command("list-by-contract")
+      .description("List NFTs by contract address")
+      .argument("<chain>", "Chain")
+      .argument("<contract>", "Contract address"),
+  ).action(
+    async (
+      chain: string,
+      contract: string,
+      options: { limit: string; next?: string },
+    ) => {
+      const client = getClient()
+      await outputGet(
+        client,
+        getFormat(),
+        `/api/v2/chain/${chain}/contract/${contract}/nfts`,
+        {
+          limit: parseIntOption(options.limit, "--limit"),
+          next: options.next,
+        },
+      )
+    },
+  )
 
-  cmd
-    .command("list-by-account")
-    .description("List NFTs owned by an account")
-    .argument("<chain>", "Chain")
-    .argument("<address>", "Account address")
-    .option("--limit <limit>", "Number of results", "20")
-    .option("--next <cursor>", "Pagination cursor")
-    .action(
-      async (
-        chain: string,
-        address: string,
-        options: { limit: string; next?: string },
-      ) => {
-        const client = getClient()
-        await outputGet(
-          client,
-          getFormat(),
-          `/api/v2/chain/${chain}/account/${address}/nfts`,
-          {
-            limit: parseIntOption(options.limit, "--limit"),
-            next: options.next,
-          },
-        )
-      },
-    )
+  addPaginationOptions(
+    cmd
+      .command("list-by-account")
+      .description("List NFTs owned by an account")
+      .argument("<chain>", "Chain")
+      .argument("<address>", "Account address"),
+  ).action(
+    async (
+      chain: string,
+      address: string,
+      options: { limit: string; next?: string },
+    ) => {
+      const client = getClient()
+      await outputGet(
+        client,
+        getFormat(),
+        `/api/v2/chain/${chain}/account/${address}/nfts`,
+        {
+          limit: parseIntOption(options.limit, "--limit"),
+          next: options.next,
+        },
+      )
+    },
+  )
 
   cmd
     .command("refresh")
@@ -193,33 +192,33 @@ export function nftsCommand(
       console.log(formatOutput(result, getFormat()))
     })
 
-  cmd
-    .command("owners")
-    .description("Get owners of an NFT (paginated for ERC-1155s)")
-    .argument("<chain>", "Chain")
-    .argument("<contract>", "Contract address")
-    .argument("<token-id>", "Token ID")
-    .option("--limit <limit>", "Number of results (max 100)", "20")
-    .option("--next <cursor>", "Pagination cursor")
-    .action(
-      async (
-        chain: string,
-        contract: string,
-        tokenId: string,
-        options: { limit: string; next?: string },
-      ) => {
-        const client = getClient()
-        await outputGet(
-          client,
-          getFormat(),
-          `/api/v2/chain/${chain as Chain}/contract/${contract}/nfts/${tokenId}/owners`,
-          {
-            limit: parseIntOption(options.limit, "--limit"),
-            next: options.next,
-          },
-        )
-      },
-    )
+  addPaginationOptions(
+    cmd
+      .command("owners")
+      .description("Get owners of an NFT (paginated for ERC-1155s)")
+      .argument("<chain>", "Chain")
+      .argument("<contract>", "Contract address")
+      .argument("<token-id>", "Token ID"),
+    "Number of results (max 100)",
+  ).action(
+    async (
+      chain: string,
+      contract: string,
+      tokenId: string,
+      options: { limit: string; next?: string },
+    ) => {
+      const client = getClient()
+      await outputGet(
+        client,
+        getFormat(),
+        `/api/v2/chain/${chain as Chain}/contract/${contract}/nfts/${tokenId}/owners`,
+        {
+          limit: parseIntOption(options.limit, "--limit"),
+          next: options.next,
+        },
+      )
+    },
+  )
 
   cmd
     .command("analytics")

@@ -28,6 +28,7 @@ function sleep(ms: number): Promise<void> {
 
 export class OpenSeaClient {
   private apiKey: string
+  private authToken: string | undefined
   private baseUrl: string
   private defaultChain: string
   private timeoutMs: number
@@ -37,6 +38,7 @@ export class OpenSeaClient {
 
   constructor(config: OpenSeaClientConfig) {
     this.apiKey = config.apiKey
+    this.authToken = config.authToken
     this.baseUrl = config.baseUrl ?? DEFAULT_BASE_URL
     this.defaultChain = config.chain ?? "ethereum"
     this.timeoutMs = config.timeout ?? DEFAULT_TIMEOUT_MS
@@ -50,6 +52,7 @@ export class OpenSeaClient {
       Accept: "application/json",
       "User-Agent": USER_AGENT,
       "x-api-key": this.apiKey,
+      ...(this.authToken ? { Authorization: `Bearer ${this.authToken}` } : {}),
     }
   }
 
@@ -120,6 +123,39 @@ export class OpenSeaClient {
     body?: Record<string, unknown>,
     params?: Record<string, unknown>,
   ): Promise<T> {
+    return this.write("POST", path, body, params)
+  }
+
+  async put<T>(
+    path: string,
+    body?: Record<string, unknown>,
+    params?: Record<string, unknown>,
+  ): Promise<T> {
+    return this.write("PUT", path, body, params)
+  }
+
+  async patch<T>(
+    path: string,
+    body?: Record<string, unknown>,
+    params?: Record<string, unknown>,
+  ): Promise<T> {
+    return this.write("PATCH", path, body, params)
+  }
+
+  async delete<T>(
+    path: string,
+    body?: Record<string, unknown>,
+    params?: Record<string, unknown>,
+  ): Promise<T> {
+    return this.write("DELETE", path, body, params)
+  }
+
+  private async write<T>(
+    method: "POST" | "PUT" | "PATCH" | "DELETE",
+    path: string,
+    body?: Record<string, unknown>,
+    params?: Record<string, unknown>,
+  ): Promise<T> {
     const url = new URL(`${this.baseUrl}${path}`)
 
     if (params) {
@@ -137,20 +173,27 @@ export class OpenSeaClient {
     }
 
     if (this.verbose) {
-      console.error(`[verbose] POST ${url.toString()}`)
+      console.error(`[verbose] ${method} ${url.toString()}`)
     }
 
     const response = await this.fetchWithRetry(
       url.toString(),
       {
-        method: "POST",
+        method,
         headers,
         body: body ? JSON.stringify(body) : undefined,
       },
       path,
     )
 
-    return response.json() as Promise<T>
+    if (
+      response.status === 204 ||
+      response.headers.get("content-length") === "0"
+    ) {
+      return undefined as T
+    }
+    const text = await response.text()
+    return (text.length > 0 ? JSON.parse(text) : undefined) as T
   }
 
   getDefaultChain(): string {

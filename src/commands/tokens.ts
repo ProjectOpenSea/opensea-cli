@@ -2,7 +2,12 @@ import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
 import { formatOutput, outputGet } from "../output.js"
-import { parseIntOption, readJsonBodyOption } from "../parse.js"
+import {
+  addLimitOption,
+  addPaginationOptions,
+  parseIntOption,
+  readJsonBodyOption,
+} from "../parse.js"
 import type {
   BatchTokensRequest,
   Chain,
@@ -17,41 +22,47 @@ export function tokensCommand(
     "Query trending tokens, top tokens, and token details",
   )
 
-  cmd
-    .command("trending")
-    .description("Get trending tokens based on OpenSea's trending score")
-    .option("--chains <chains>", "Comma-separated list of chains to filter by")
-    .option("--limit <limit>", "Number of results (max 100)", "20")
-    .option("--next <cursor>", "Pagination cursor")
-    .action(
-      async (options: { chains?: string; limit: string; next?: string }) => {
-        const client = getClient()
-        await outputGet(client, getFormat(), "/api/v2/tokens/trending", {
-          chains: options.chains,
-          limit: parseIntOption(options.limit, "--limit"),
-          // Tokens API uses "cursor" instead of "next" as the query param
-          cursor: options.next,
-        })
-      },
-    )
+  addPaginationOptions(
+    cmd
+      .command("trending")
+      .description("Get trending tokens based on OpenSea's trending score")
+      .option(
+        "--chains <chains>",
+        "Comma-separated list of chains to filter by",
+      ),
+    "Number of results (max 100)",
+  ).action(
+    async (options: { chains?: string; limit: string; next?: string }) => {
+      const client = getClient()
+      await outputGet(client, getFormat(), "/api/v2/tokens/trending", {
+        chains: options.chains,
+        limit: parseIntOption(options.limit, "--limit"),
+        // Tokens API uses "cursor" instead of "next" as the query param
+        cursor: options.next,
+      })
+    },
+  )
 
-  cmd
-    .command("top")
-    .description("Get top tokens ranked by 24-hour trading volume")
-    .option("--chains <chains>", "Comma-separated list of chains to filter by")
-    .option("--limit <limit>", "Number of results (max 100)", "20")
-    .option("--next <cursor>", "Pagination cursor")
-    .action(
-      async (options: { chains?: string; limit: string; next?: string }) => {
-        const client = getClient()
-        await outputGet(client, getFormat(), "/api/v2/tokens/top", {
-          chains: options.chains,
-          limit: parseIntOption(options.limit, "--limit"),
-          // Tokens API uses "cursor" instead of "next" as the query param
-          cursor: options.next,
-        })
-      },
-    )
+  addPaginationOptions(
+    cmd
+      .command("top")
+      .description("Get top tokens ranked by 24-hour trading volume")
+      .option(
+        "--chains <chains>",
+        "Comma-separated list of chains to filter by",
+      ),
+    "Number of results (max 100)",
+  ).action(
+    async (options: { chains?: string; limit: string; next?: string }) => {
+      const client = getClient()
+      await outputGet(client, getFormat(), "/api/v2/tokens/top", {
+        chains: options.chains,
+        limit: parseIntOption(options.limit, "--limit"),
+        // Tokens API uses "cursor" instead of "next" as the query param
+        cursor: options.next,
+      })
+    },
+  )
 
   cmd
     .command("get")
@@ -161,41 +172,42 @@ export function tokensCommand(
       },
     )
 
-  cmd
-    .command("activity")
-    .description("Get recent swap activity for a token")
-    .argument("<chain>", "Chain")
-    .argument("<address>", "Token contract address")
-    .option("--limit <limit>", "Number of results (max 50)", "20")
-    .option("--next <cursor>", "Pagination cursor")
-    .action(
-      async (
-        chain: string,
-        address: string,
-        options: { limit: string; next?: string },
-      ) => {
-        const client = getClient()
-        await outputGet(
-          client,
-          getFormat(),
-          `/api/v2/chain/${chain as Chain}/token/${address}/activity`,
-          {
-            limit: parseIntOption(options.limit, "--limit"),
-            cursor: options.next,
-          },
-        )
-      },
-    )
+  addPaginationOptions(
+    cmd
+      .command("activity")
+      .description("Get recent swap activity for a token")
+      .argument("<chain>", "Chain")
+      .argument("<address>", "Token contract address"),
+    "Number of results (max 50)",
+  ).action(
+    async (
+      chain: string,
+      address: string,
+      options: { limit: string; next?: string },
+    ) => {
+      const client = getClient()
+      await outputGet(
+        client,
+        getFormat(),
+        `/api/v2/chain/${chain as Chain}/token/${address}/activity`,
+        {
+          limit: parseIntOption(options.limit, "--limit"),
+          cursor: options.next,
+        },
+      )
+    },
+  )
 
-  cmd
-    .command("holders")
-    .description(
-      "Get paginated holders for a token (with aggregate distribution health)",
-    )
-    .argument("<chain>", "Chain")
-    .argument("<address>", "Token contract address")
-    .option("--limit <limit>", "Number of results (max 100)", "20")
-    .option("--next <cursor>", "Pagination cursor")
+  addPaginationOptions(
+    cmd
+      .command("holders")
+      .description(
+        "Get paginated holders for a token (with aggregate distribution health)",
+      )
+      .argument("<chain>", "Chain")
+      .argument("<address>", "Token contract address"),
+    "Number of results (max 100)",
+  )
     .option("--sort-by <field>", "Sort field (QUANTITY)")
     .option("--sort-direction <direction>", "Sort direction (asc|desc)")
     .action(
@@ -224,25 +236,26 @@ export function tokensCommand(
       },
     )
 
-  cmd
-    .command("liquidity-pools")
-    .description("Get liquidity pools for a token")
-    .argument("<chain>", "Chain")
-    .argument("<address>", "Token contract address")
-    .option("--limit <limit>", "Number of results (max 50)", "20")
-    .action(
-      async (chain: string, address: string, options: { limit: string }) => {
-        const client = getClient()
-        await outputGet(
-          client,
-          getFormat(),
-          `/api/v2/chain/${chain as Chain}/token/${address}/liquidity-pools`,
-          {
-            limit: parseIntOption(options.limit, "--limit"),
-          },
-        )
-      },
-    )
+  addLimitOption(
+    cmd
+      .command("liquidity-pools")
+      .description("Get liquidity pools for a token")
+      .argument("<chain>", "Chain")
+      .argument("<address>", "Token contract address"),
+    "Number of results (max 50)",
+  ).action(
+    async (chain: string, address: string, options: { limit: string }) => {
+      const client = getClient()
+      await outputGet(
+        client,
+        getFormat(),
+        `/api/v2/chain/${chain as Chain}/token/${address}/liquidity-pools`,
+        {
+          limit: parseIntOption(options.limit, "--limit"),
+        },
+      )
+    },
+  )
 
   return cmd
 }

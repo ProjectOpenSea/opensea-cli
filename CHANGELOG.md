@@ -1,5 +1,55 @@
 # @opensea/cli
 
+## 1.12.0
+
+### Minor Changes
+
+- df2b152: Add `opensea auth link-wallet` for public SIWX wallet-link flows.
+- 4bef9a5: Add `opensea api request` for authenticated API v2 GET, POST, PUT, PATCH, and DELETE requests.
+
+### Patch Changes
+
+- 6096c0d: Deduplicate Commander option definitions with shared builders while preserving command behavior.
+- a917e48: Request the generated public API scope set during OAuth login so stale or deferred project roles cannot break the default flow.
+- 2459068: Align wallet-auth scope metadata with the production OpenAPI specification.
+- Updated dependencies [df2b152]
+- Updated dependencies [2459068]
+- Updated dependencies [0df96eb]
+- Updated dependencies [4bef9a5]
+  - @opensea/api-types@0.8.0
+  - @opensea/sdk@11.4.0
+
+## 1.11.0
+
+### Minor Changes
+
+- ef89be8: Add auth commands (login, status, refresh, revoke, tokens, scopes, clear) with token persistence in `~/.opensea/auth.json`. Support `--auth-token` and `--auth-base-url` global options.
+- e61a57c: Add keyless `opensea login` command using OAuth 2.1 (authorization-code + PKCE via a loopback redirect, with a device authorization fallback for headless environments). No private key or SIWE signing required. The resulting scoped token is written to the shared `~/.opensea/auth.json` store so every other command picks it up transparently. Configure the public client via `--client-id` or `OPENSEA_OAUTH_CLIENT_ID`.
+- c460fc1: Add wallet trading P&L commands: `accounts pnl`, `accounts closed-positions`,
+  and `accounts token-transfers` (the last requires `--contract-address` and
+  `--chain`).
+
+### Patch Changes
+
+- Updated dependencies [ef89be8]
+- Updated dependencies [b816727]
+- Updated dependencies [e61a57c]
+- Updated dependencies [c9d8cb1]
+- Updated dependencies [ef89be8]
+- Updated dependencies [e59df7f]
+- Updated dependencies [c460fc1]
+- Updated dependencies [c460fc1]
+- Updated dependencies [ef89be8]
+  - @opensea/sdk@11.2.0
+  - @opensea/api-types@0.6.0
+
+## 1.10.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @opensea/api-types@0.5.0
+
 ## 1.10.0
 
 ### Minor Changes

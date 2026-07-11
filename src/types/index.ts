@@ -8,6 +8,8 @@ export interface OpenSeaClientConfig {
   verbose?: boolean
   maxRetries?: number
   retryBaseDelay?: number
+  /** Scoped JWT token for wallet-authenticated endpoints. */
+  authToken?: string
 }
 
 export interface CommandOptions {

@@ -10,6 +10,7 @@ import type {
   BatchTokensRequest,
   Chain,
   ChainListResponse,
+  ClosedPositionsResponse,
   Collection,
   CollectionBatchResponse,
   CollectionDetailedResponse,
@@ -42,6 +43,7 @@ import type {
   OwnersPaginatedResponse,
   PortfolioHistoryResponse,
   PortfolioStatsResponse,
+  PositionTokenTransfersResponse,
   PriceHistoryResponse,
   ProfileCollectionsResponse,
   RegisteredToolResponse,
@@ -68,6 +70,7 @@ import type {
   TransferRequest,
   TransferResponse,
   ValidateMetadataResponse,
+  WalletPnlResponse,
 } from "./types/index.js"
 import type { TransactionResult, WalletAdapter } from "./wallet/index.js"
 import { resolveChainId } from "./wallet/index.js"
@@ -703,6 +706,38 @@ class AccountsAPI {
   ): Promise<PortfolioHistoryResponse> {
     return this.client.get(`/api/v2/account/${address}/portfolio/history`, {
       timeframe: options?.timeframe,
+    })
+  }
+
+  async pnl(address: string): Promise<WalletPnlResponse> {
+    return this.client.get(`/api/v2/account/${address}/pnl`)
+  }
+
+  async closedPositions(
+    address: string,
+    options?: { sortBy?: string; limit?: number; next?: string },
+  ): Promise<ClosedPositionsResponse> {
+    return this.client.get(`/api/v2/account/${address}/pnl/closed-positions`, {
+      sort_by: options?.sortBy,
+      limit: options?.limit,
+      next: options?.next,
+    })
+  }
+
+  async tokenTransfers(
+    address: string,
+    options: {
+      contractAddress: string
+      chain: string
+      limit?: number
+      next?: string
+    },
+  ): Promise<PositionTokenTransfersResponse> {
+    return this.client.get(`/api/v2/account/${address}/pnl/token-transfers`, {
+      contract_address: options.contractAddress,
+      chain: options.chain,
+      limit: options.limit,
+      next: options.next,
     })
   }
 

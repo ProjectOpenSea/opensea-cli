@@ -2,7 +2,7 @@ import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
 import { outputGet } from "../output.js"
-import { parseIntOption } from "../parse.js"
+import { addPaginationOptions, parseIntOption } from "../parse.js"
 
 export function tokenGroupsCommand(
   getClient: () => OpenSeaClient,
@@ -12,19 +12,20 @@ export function tokenGroupsCommand(
     "Query token groups (equivalent currencies across chains, e.g. 'eth')",
   )
 
-  cmd
-    .command("list")
-    .description("List token groups sorted by market cap descending")
-    .option("--limit <limit>", "Number of results (max 100, default 50)", "50")
-    .option("--next <cursor>", "Pagination cursor")
-    .action(async (options: { limit: string; next?: string }) => {
-      const client = getClient()
-      await outputGet(client, getFormat(), "/api/v2/token-groups", {
-        limit: parseIntOption(options.limit, "--limit"),
-        // Token Groups API uses "cursor" instead of "next" as the query param
-        cursor: options.next,
-      })
+  addPaginationOptions(
+    cmd
+      .command("list")
+      .description("List token groups sorted by market cap descending"),
+    "Number of results (max 100, default 50)",
+    "50",
+  ).action(async (options: { limit: string; next?: string }) => {
+    const client = getClient()
+    await outputGet(client, getFormat(), "/api/v2/token-groups", {
+      limit: parseIntOption(options.limit, "--limit"),
+      // Token Groups API uses "cursor" instead of "next" as the query param
+      cursor: options.next,
     })
+  })
 
   cmd
     .command("get")

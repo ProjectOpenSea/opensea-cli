@@ -51,6 +51,19 @@ opensea --api-key your-api-key collections get mfers
 
 Get an API key instantly via the command above, or get a full key at [opensea.io/settings/developer](https://opensea.io/settings/developer) for higher rate limits. See [API key docs](https://docs.opensea.io/reference/api-keys) for details.
 
+Wallet-authenticated endpoints also require a scoped token:
+
+```bash
+opensea login
+opensea auth status
+opensea api request GET /api/v2/account/0xYOUR_WALLET/favorites --params '{"limit":1}'
+```
+
+Use `--scopes` with `opensea login` to request a narrower scope set. The `api
+request` command supports GET, POST, PUT, PATCH, and DELETE plus JSON body files,
+so newly published scoped endpoints are available without waiting for a dedicated
+command.
+
 ## Quick Start
 
 ```bash
@@ -89,6 +102,7 @@ opensea --format table collections stats mfers
 | `tokens` | Get trending tokens, top tokens, and token details |
 | `swaps` | Get swap quotes for token trading |
 | `accounts` | Get account details |
+| `api request` | Call any API v2 endpoint with the active API key and scoped token |
 
 Global options: `--api-key`, `--chain` (default: ethereum), `--format` (json/table/toon), `--base-url`
 

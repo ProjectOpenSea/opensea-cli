@@ -53,6 +53,8 @@ CLI (src/cli.ts)              SDK (src/sdk.ts)
 | `src/parse.ts` | Shared `--body <path>` JSON file reading utility. |
 | `src/health.ts` | Health-check logic used by the `health` command. |
 | `src/wallet/` | Wallet adapter re-exports from `@opensea/wallet-adapters` and chain ID resolution. |
+| `src/auth/store.ts` | Persists auth tokens to `~/.opensea/auth.json` (used by both `auth` and `login` commands). |
+| `src/auth/oauth-login.ts` | OAuth 2.1 authorization-code + PKCE loopback helper (used by the `login` command). |
 | `src/types/api.ts` | TypeScript interfaces matching OpenSea API v2 response shapes. |
 | `src/types/index.ts` | Re-exports API types plus internal config types. |
 
@@ -72,7 +74,7 @@ Each domain has both a CLI command file (`src/commands/<domain>.ts`) and an SDK 
 
 - **accounts** - Account profile lookup
 - **assets** - Asset movement transactions (transfers)
-- **auth** - API key request and management
+- **auth** - SIWE login and scoped token management (`login`, `status`, `refresh`, `revoke`, `tokens`, `scopes`, `clear`) plus API key requests (`request-key`)
 - **chains** - Chain information and supported networks
 - **collections** - Collection metadata, stats, traits
 - **drops** - NFT drop details, listing, and minting
@@ -85,7 +87,9 @@ Each domain has both a CLI command file (`src/commands/<domain>.ts`) and an SDK 
 - **swaps** - Token swap quotes
 - **token-groups** - Token group details and listings
 - **tokens** - Fungible token trending/top/details
+- **tools** - Search, list, and inspect registered AI agent tools (ERC-8257)
 - **transactions** - Transaction status and receipts
+- **login** - Keyless OAuth 2.1 (authorization-code + PKCE) login against the OpenSea authorization server; falls back to device flow for headless environments
 - **wallet** - Inspect the active wallet adapter's security posture
 
 ## Conventions
@@ -121,7 +125,7 @@ import type { SomeType } from "../types/index.js"
 
 export function domainCommand(
   getClient: () => OpenSeaClient,
-  getFormat: () => "json" | "table",
+  getFormat: () => "json" | "table" | "toon",
 ): Command {
   const cmd = new Command("domain").description("Description")
 
@@ -246,10 +250,7 @@ All new code must include tests with coverage:
 
 ### CI (GitHub Actions)
 
-The CI workflow (`.github/workflows/ci.yml`) runs on all PRs and pushes to `main` with two parallel jobs:
-
-- **lint** job: `format:check`, `lint`, `type-check`
-- **test** job: `vitest run --coverage`
+The CI workflow (`.github/workflows/ci.yml`) runs on all PRs and pushes to `main` in a single `build-and-test` job that runs, in order: `format:check`, `lint`, `type-check`, `test`, `build`.
 
 All CI checks must pass before merging.
 

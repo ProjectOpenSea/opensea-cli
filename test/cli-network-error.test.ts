@@ -3,6 +3,7 @@ import { afterAll, expect, it, vi } from "vitest"
 
 vi.mock("../src/commands/index.js", () => ({
   accountsCommand: () => new Command("accounts"),
+  apiCommand: () => new Command("api"),
   assetsCommand: () => new Command("assets"),
   authCommand: () => new Command("auth"),
   chainsCommand: () => new Command("chains"),
@@ -20,6 +21,7 @@ vi.mock("../src/commands/index.js", () => ({
   transactionsCommand: () => new Command("transactions"),
   healthCommand: () => new Command("health"),
   walletCommand: () => new Command("wallet"),
+  loginCommand: () => new Command("login"),
 }))
 
 const exitSpy = vi

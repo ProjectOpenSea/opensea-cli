@@ -5,6 +5,9 @@ import type { OutputFormat } from "../src/output.js"
 export type MockClient = {
   get: Mock
   post: Mock
+  put: Mock
+  patch: Mock
+  delete: Mock
   getApiKeyPrefix: Mock
 }
 
@@ -19,6 +22,9 @@ export function createCommandTestContext(): CommandTestContext {
   const mockClient: MockClient = {
     get: vi.fn(),
     post: vi.fn(),
+    put: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
     getApiKeyPrefix: vi.fn().mockReturnValue("test..."),
   }
   const getClient = () => mockClient as unknown as OpenSeaClient
