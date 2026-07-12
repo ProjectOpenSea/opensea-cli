@@ -3,12 +3,17 @@ import {
   generateSiweMessage,
   linkWalletWithSiwx,
   OPENSEA_SCOPES,
+  OpenSeaOAuth,
 } from "@opensea/sdk"
 import {
   createWalletFromEnv,
   PrivateKeyAdapter,
 } from "@opensea/wallet-adapters"
 import { Command } from "commander"
+import {
+  DEFAULT_AUTH_BASE_URL,
+  resolveOAuthClientId,
+} from "../auth/oauth-config.js"
 import {
   clearTokens,
   listTokens,
@@ -20,7 +25,6 @@ import type { OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
 
 const DEFAULT_BASE_URL = "https://api.opensea.io"
-const DEFAULT_AUTH_BASE_URL = "https://auth.opensea.io"
 
 /** Available scopes for OpenSea auth tokens, derived from the OpenAPI spec. */
 const SCOPES = AUTH_SCOPES.map(({ name, description }) => ({
@@ -153,6 +157,7 @@ export function authCommand(
         expiresAt: expiresAt.toISOString(),
         scopes: tokenData.scopes,
         address,
+        authMethod: "siwe",
       })
 
       console.log(
@@ -308,13 +313,55 @@ export function authCommand(
   cmd
     .command("refresh")
     .description("Force refresh the current auth token")
-    .action(async () => {
+    .option(
+      "--client-id <id>",
+      "Public OAuth client id (or set OPENSEA_OAUTH_CLIENT_ID)",
+    )
+    .action(async (opts: { clientId?: string }) => {
       const token = loadCurrentToken()
       if (!token) {
         console.error("No stored token to refresh")
         process.exit(1)
       }
+      if (!token.refreshToken) {
+        throw new Error("Stored auth token has no refresh token")
+      }
+      if (!token.authMethod) {
+        throw new Error(
+          "Stored auth token has no auth method. Run `opensea login` again.",
+        )
+      }
       const authBase = getAuthBaseUrl?.() ?? DEFAULT_AUTH_BASE_URL
+
+      if (token.authMethod === "oauth") {
+        const oauth = new OpenSeaOAuth({
+          clientId: resolveOAuthClientId(opts.clientId),
+          issuer: authBase,
+        })
+        const refreshed = await oauth.refresh(token.refreshToken)
+        const refreshToken = refreshed.refreshToken || token.refreshToken
+        saveToken({
+          accessToken: refreshed.accessToken,
+          refreshToken,
+          expiresAt: refreshed.expiresAt.toISOString(),
+          scopes: refreshed.scopes,
+          address: token.address,
+          authMethod: "oauth",
+        })
+        console.log(
+          formatOutput(
+            {
+              status: "refreshed",
+              address: token.address,
+              scopes: refreshed.scopes,
+              expires_at: refreshed.expiresAt.toISOString(),
+            },
+            getFormat(),
+          ),
+        )
+        return
+      }
+
       const res = await fetch(`${authBase}/api/refresh`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -346,6 +393,7 @@ export function authCommand(
         expiresAt: expiresAt.toISOString(),
         scopes: data.scopes,
         address: token.address,
+        authMethod: "siwe",
       })
       console.log(
         formatOutput(

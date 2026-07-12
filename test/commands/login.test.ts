@@ -93,6 +93,7 @@ describe("loginCommand", () => {
       expiresAt: "2030-01-01T00:00:00.000Z",
       scopes: ["read:eligibility"],
       address: "0xabc",
+      authMethod: "oauth",
     })
 
     const output = JSON.parse(logSpy.mock.calls[0][0] as string) as {

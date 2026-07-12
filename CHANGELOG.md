@@ -1,5 +1,13 @@
 # @opensea/cli
 
+## 1.12.2
+
+### Patch Changes
+
+- 755d8ab: Refresh browser OAuth sessions through OIDC discovery. New sessions record whether they use OAuth or private-key SIWE so refresh selects the correct endpoint without token-shape heuristics.
+
+  BREAKING CHANGE: Pre-release CLI stores created before `authMethod` was added are rejected. Run `opensea login` again to create a current session.
+
 ## 1.12.1
 
 ### Patch Changes

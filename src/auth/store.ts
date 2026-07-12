@@ -12,6 +12,7 @@ export interface StoredToken {
   expiresAt: string
   scopes: string[]
   address: string
+  authMethod: "oauth" | "siwe"
 }
 
 /**

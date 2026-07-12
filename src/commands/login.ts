@@ -6,19 +6,14 @@ import {
   OpenSeaOAuth,
 } from "@opensea/sdk"
 import { Command } from "commander"
+import {
+  DEFAULT_AUTH_BASE_URL,
+  resolveOAuthClientId,
+} from "../auth/oauth-config.js"
 import { loginWithLoopback } from "../auth/oauth-login.js"
 import { saveToken } from "../auth/store.js"
 import type { OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
-
-const DEFAULT_AUTH_BASE_URL = "https://auth.opensea.io"
-
-/**
- * The pre-registered OpenSea public OAuth client (PKCE, no secret) — the
- * `opensea-mcp-public` app in Zitadel. Overridable via `--client-id` or
- * `OPENSEA_OAUTH_CLIENT_ID` for other environments.
- */
-const DEFAULT_PUBLIC_CLIENT_ID = "379893200225068569"
 
 /**
  * Request the canonical public API scope set when the user does not choose a
@@ -67,10 +62,7 @@ export function loginCommand(
         device?: boolean
         browser: boolean
       }) => {
-        const clientId =
-          opts.clientId ??
-          process.env.OPENSEA_OAUTH_CLIENT_ID ??
-          DEFAULT_PUBLIC_CLIENT_ID
+        const clientId = resolveOAuthClientId(opts.clientId)
 
         const issuer = getAuthBaseUrl?.() ?? DEFAULT_AUTH_BASE_URL
         const scopes = opts.scopes
@@ -100,6 +92,7 @@ export function loginCommand(
           expiresAt: token.expiresAt.toISOString(),
           scopes: token.scopes,
           address,
+          authMethod: "oauth",
         })
 
         console.log(
