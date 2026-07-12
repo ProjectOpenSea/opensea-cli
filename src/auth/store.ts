@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { homedir } from "node:os"
 import { join } from "node:path"
+import { extractOpenSeaScopes } from "@opensea/sdk"
 
 /**
  * Shape of a persisted auth token entry.
@@ -58,6 +59,12 @@ function writeStore(store: AuthStore): void {
   }
 }
 
+function withDerivedScopes(token: StoredToken): StoredToken {
+  if (token.scopes.length > 0) return token
+  const scopes = extractOpenSeaScopes(token.accessToken)
+  return scopes.length > 0 ? { ...token, scopes } : token
+}
+
 /**
  * Save a token to the persistent store, keyed by wallet address.
  */
@@ -74,7 +81,8 @@ export function saveToken(token: StoredToken): void {
 export function loadCurrentToken(): StoredToken | undefined {
   const store = readStore()
   if (!store.currentAddress) return undefined
-  return store.tokens[store.currentAddress]
+  const token = store.tokens[store.currentAddress]
+  return token ? withDerivedScopes(token) : undefined
 }
 
 /**
@@ -82,7 +90,8 @@ export function loadCurrentToken(): StoredToken | undefined {
  */
 export function loadToken(address: string): StoredToken | undefined {
   const store = readStore()
-  return store.tokens[address.toLowerCase()]
+  const token = store.tokens[address.toLowerCase()]
+  return token ? withDerivedScopes(token) : undefined
 }
 
 /**
@@ -90,7 +99,7 @@ export function loadToken(address: string): StoredToken | undefined {
  */
 export function listTokens(): StoredToken[] {
   const store = readStore()
-  return Object.values(store.tokens)
+  return Object.values(store.tokens).map(withDerivedScopes)
 }
 
 /**
