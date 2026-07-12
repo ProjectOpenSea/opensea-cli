@@ -323,14 +323,6 @@ export function authCommand(
         console.error("No stored token to refresh")
         process.exit(1)
       }
-      if (!token.refreshToken) {
-        throw new Error("Stored auth token has no refresh token")
-      }
-      if (!token.authMethod) {
-        throw new Error(
-          "Stored auth token has no auth method. Run `opensea login` again.",
-        )
-      }
       const authBase = getAuthBaseUrl?.() ?? DEFAULT_AUTH_BASE_URL
 
       if (token.authMethod === "oauth") {
@@ -339,10 +331,9 @@ export function authCommand(
           issuer: authBase,
         })
         const refreshed = await oauth.refresh(token.refreshToken)
-        const refreshToken = refreshed.refreshToken || token.refreshToken
         saveToken({
           accessToken: refreshed.accessToken,
-          refreshToken,
+          refreshToken: refreshed.refreshToken,
           expiresAt: refreshed.expiresAt.toISOString(),
           scopes: refreshed.scopes,
           address: token.address,

@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { homedir } from "node:os"
 import { join } from "node:path"
-import { extractOpenSeaScopes } from "@opensea/sdk"
+import { z } from "zod"
 
 /**
  * Shape of a persisted auth token entry.
@@ -23,6 +23,24 @@ interface AuthStore {
   tokens: Record<string, StoredToken>
 }
 
+const storedTokenSchema = z
+  .object({
+    accessToken: z.string().min(1),
+    refreshToken: z.string().min(1),
+    expiresAt: z.iso.datetime(),
+    scopes: z.array(z.string().min(1)),
+    address: z.string().min(1),
+    authMethod: z.enum(["oauth", "siwe"]),
+  })
+  .strict()
+
+const authStoreSchema = z
+  .object({
+    currentAddress: z.string().min(1).optional(),
+    tokens: z.record(z.string(), storedTokenSchema),
+  })
+  .strict()
+
 const AUTH_DIR = join(homedir(), ".opensea")
 const AUTH_FILE = join(AUTH_DIR, "auth.json")
 
@@ -41,10 +59,21 @@ function readStore(): AuthStore {
   if (!existsSync(AUTH_FILE)) return { tokens: {} }
   try {
     const data = readFileSync(AUTH_FILE, "utf-8")
-    return JSON.parse(data) as AuthStore
+    const store = authStoreSchema.parse(JSON.parse(data))
+    for (const [key, token] of Object.entries(store.tokens)) {
+      if (key !== normalizeAddress(token.address)) {
+        throw new Error(
+          "Auth store token key does not match its wallet address",
+        )
+      }
+    }
+    if (store.currentAddress && !store.tokens[store.currentAddress]) {
+      throw new Error("Auth store current address has no matching token")
+    }
+    return store
   } catch {
     console.warn(
-      `Warning: ${AUTH_FILE} is corrupted. Starting with empty store.`,
+      `Warning: ${AUTH_FILE} is corrupted or incompatible. Run \`opensea login\` to authenticate again.`,
     )
     return { tokens: {} }
   }
@@ -60,10 +89,10 @@ function writeStore(store: AuthStore): void {
   }
 }
 
-function withDerivedScopes(token: StoredToken): StoredToken {
-  if (token.scopes.length > 0) return token
-  const scopes = extractOpenSeaScopes(token.accessToken)
-  return scopes.length > 0 ? { ...token, scopes } : token
+function normalizeAddress(address: string): string {
+  return address.slice(0, 2).toLowerCase() === "0x"
+    ? address.toLowerCase()
+    : address
 }
 
 /**
@@ -71,8 +100,9 @@ function withDerivedScopes(token: StoredToken): StoredToken {
  */
 export function saveToken(token: StoredToken): void {
   const store = readStore()
-  store.tokens[token.address.toLowerCase()] = token
-  store.currentAddress = token.address.toLowerCase()
+  const key = normalizeAddress(token.address)
+  store.tokens[key] = storedTokenSchema.parse(token)
+  store.currentAddress = key
   writeStore(store)
 }
 
@@ -82,8 +112,7 @@ export function saveToken(token: StoredToken): void {
 export function loadCurrentToken(): StoredToken | undefined {
   const store = readStore()
   if (!store.currentAddress) return undefined
-  const token = store.tokens[store.currentAddress]
-  return token ? withDerivedScopes(token) : undefined
+  return store.tokens[store.currentAddress]
 }
 
 /**
@@ -91,8 +120,7 @@ export function loadCurrentToken(): StoredToken | undefined {
  */
 export function loadToken(address: string): StoredToken | undefined {
   const store = readStore()
-  const token = store.tokens[address.toLowerCase()]
-  return token ? withDerivedScopes(token) : undefined
+  return store.tokens[normalizeAddress(address)]
 }
 
 /**
@@ -100,7 +128,7 @@ export function loadToken(address: string): StoredToken | undefined {
  */
 export function listTokens(): StoredToken[] {
   const store = readStore()
-  return Object.values(store.tokens).map(withDerivedScopes)
+  return Object.values(store.tokens)
 }
 
 /**
@@ -109,7 +137,7 @@ export function listTokens(): StoredToken[] {
  */
 export function removeToken(address: string): boolean {
   const store = readStore()
-  const key = address.toLowerCase()
+  const key = normalizeAddress(address)
   if (!store.tokens[key]) return false
   delete store.tokens[key]
   if (store.currentAddress === key) {

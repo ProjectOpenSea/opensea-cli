@@ -19,6 +19,7 @@ describe("dropsCommand", () => {
     const subcommands = cmd.commands.map(c => c.name())
     expect(subcommands).toContain("list")
     expect(subcommands).toContain("get")
+    expect(subcommands).toContain("eligibility")
     expect(subcommands).toContain("mint")
   })
 
@@ -59,6 +60,39 @@ describe("dropsCommand", () => {
     await cmd.parseAsync(["get", "cool-cats"], { from: "user" })
 
     expect(ctx.mockClient.get).toHaveBeenCalledWith("/api/v2/drops/cool-cats")
+  })
+
+  it("eligibility subcommand fetches eligibility by slug", async () => {
+    const response = {
+      stages: [
+        {
+          stage_uuid: "12345678-1234-1234-1234-123456789abc",
+          is_eligible: true,
+        },
+      ],
+    }
+    ctx.mockClient.get.mockResolvedValue(response)
+
+    const cmd = dropsCommand(ctx.getClient, ctx.getFormat)
+    await cmd.parseAsync(["eligibility", "cool-cats"], { from: "user" })
+
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
+      "/api/v2/drops/cool-cats/eligibility",
+    )
+    expect(ctx.consoleSpy).toHaveBeenCalledWith(
+      JSON.stringify(response, null, 2),
+    )
+  })
+
+  it("eligibility subcommand propagates API errors", async () => {
+    const error = new Error("Wallet is not eligible")
+    ctx.mockClient.get.mockRejectedValue(error)
+
+    const cmd = dropsCommand(ctx.getClient, ctx.getFormat)
+
+    await expect(
+      cmd.parseAsync(["eligibility", "cool-cats"], { from: "user" }),
+    ).rejects.toBe(error)
   })
 
   it("mint subcommand posts mint request", async () => {

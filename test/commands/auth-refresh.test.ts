@@ -79,58 +79,6 @@ describe("auth refresh", () => {
     })
   })
 
-  it("keeps the previous refresh token when rotation omits one", async () => {
-    oauthRefresh.mockResolvedValue({
-      accessToken: "new-access",
-      expiresAt: new Date("2031-01-01T00:00:00.000Z"),
-      scopes: ["read:eligibility"],
-    })
-    const ctx = createCommandTestContext()
-
-    await authCommand(() => undefined, ctx.getFormat).parseAsync(["refresh"], {
-      from: "user",
-    })
-
-    expect(saveToken).toHaveBeenCalledWith(
-      expect.objectContaining({ refreshToken: "old-refresh" }),
-    )
-  })
-
-  it("keeps the previous refresh token when rotation returns an empty one", async () => {
-    oauthRefresh.mockResolvedValue({
-      accessToken: "new-access",
-      refreshToken: "",
-      expiresAt: new Date("2031-01-01T00:00:00.000Z"),
-      scopes: ["read:eligibility"],
-    })
-    const ctx = createCommandTestContext()
-
-    await authCommand(() => undefined, ctx.getFormat).parseAsync(["refresh"], {
-      from: "user",
-    })
-
-    expect(saveToken).toHaveBeenCalledWith(
-      expect.objectContaining({ refreshToken: "old-refresh" }),
-    )
-  })
-
-  it("rejects pre-release sessions without an auth method", async () => {
-    loadCurrentToken.mockReturnValue({
-      ...storedToken,
-      authMethod: undefined,
-    })
-    const ctx = createCommandTestContext()
-
-    await expect(
-      authCommand(() => undefined, ctx.getFormat).parseAsync(["refresh"], {
-        from: "user",
-      }),
-    ).rejects.toThrow(
-      "Stored auth token has no auth method. Run `opensea login` again.",
-    )
-    expect(oauthRefresh).not.toHaveBeenCalled()
-  })
-
   it("refreshes SIWE sessions through the SIWE endpoint", async () => {
     loadCurrentToken.mockReturnValue({ ...storedToken, authMethod: "siwe" })
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
@@ -171,16 +119,5 @@ describe("auth refresh", () => {
         from: "user",
       }),
     ).rejects.toThrow("Token request failed (400)")
-  })
-
-  it("rejects stored sessions without a refresh token", async () => {
-    loadCurrentToken.mockReturnValue({ ...storedToken, refreshToken: "" })
-    const ctx = createCommandTestContext()
-
-    await expect(
-      authCommand(() => undefined, ctx.getFormat).parseAsync(["refresh"], {
-        from: "user",
-      }),
-    ).rejects.toThrow("Stored auth token has no refresh token")
   })
 })

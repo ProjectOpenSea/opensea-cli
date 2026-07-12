@@ -1,5 +1,21 @@
 # @opensea/cli
 
+## 1.12.4
+
+### Patch Changes
+
+- b64a4d5: Require complete OAuth wallet sessions, retain refresh tokens during rotation, validate the CLI auth store, and preserve case-sensitive wallet addresses.
+- Updated dependencies [b64a4d5]
+  - @opensea/sdk@11.4.3
+
+## 1.12.3
+
+### Patch Changes
+
+- 3fba2be: Add `opensea drops eligibility <slug>` for checking the authenticated wallet's drop eligibility.
+- Updated dependencies [5966017]
+  - @opensea/sdk@11.4.2
+
 ## 1.12.2
 
 ### Patch Changes

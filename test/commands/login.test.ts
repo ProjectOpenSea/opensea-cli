@@ -24,8 +24,8 @@ const {
   }
 })
 
-// Use the real `extractWalletAddress` (wallet -> sub) while mocking the rest
-// of the SDK, so the command's address extraction is exercised end-to-end.
+// Use the real wallet-claim extractor while mocking the rest of the SDK, so
+// the command's address requirement is exercised end-to-end.
 vi.mock("@opensea/sdk", async importOriginal => {
   const actual = await importOriginal<typeof import("@opensea/sdk")>()
   return {
@@ -163,33 +163,30 @@ describe("loginCommand", () => {
     ).toBe(true)
   })
 
-  it("falls back to sub when no wallet claim is present", async () => {
+  it("rejects tokens with an account subject but no wallet claim", async () => {
     decodeJwtPayload.mockReturnValue({ sub: "account-42" })
     loginWithLoopback.mockResolvedValue(token())
 
     const cmd = loginCommand(getFormat)
-    await cmd.parseAsync(["--client-id", "public-client"], { from: "user" })
+    await expect(
+      cmd.parseAsync(["--client-id", "public-client"], { from: "user" }),
+    ).rejects.toThrow("missing the required wallet claim")
 
-    expect(saveToken).toHaveBeenCalledWith(
-      expect.objectContaining({ address: "account-42" }),
-    )
+    expect(saveToken).not.toHaveBeenCalled()
   })
 
-  it("saves the token with an unknown address when the access token is opaque", async () => {
+  it("rejects opaque access tokens instead of saving an unknown wallet", async () => {
     decodeJwtPayload.mockImplementation(() => {
       throw new Error("Not a JWT")
     })
     loginWithLoopback.mockResolvedValue(token({ accessToken: "opaque-token" }))
 
     const cmd = loginCommand(getFormat)
-    await cmd.parseAsync(["--client-id", "public-client"], { from: "user" })
+    await expect(
+      cmd.parseAsync(["--client-id", "public-client"], { from: "user" }),
+    ).rejects.toThrow("Not a JWT")
 
-    expect(saveToken).toHaveBeenCalledWith(
-      expect.objectContaining({
-        accessToken: "opaque-token",
-        address: "unknown",
-      }),
-    )
+    expect(saveToken).not.toHaveBeenCalled()
   })
 
   it("falls back to the OpenSea public client id when none is provided", async () => {

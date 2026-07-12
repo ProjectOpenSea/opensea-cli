@@ -7,6 +7,7 @@ import type {
   Chain,
   DropDeployRequest,
   DropDeployResponse,
+  DropEligibilityResponse,
   DropMintResponse,
 } from "../types/index.js"
 
@@ -54,6 +55,18 @@ export function dropsCommand(
     .action(async (slug: string) => {
       const client = getClient()
       await outputGet(client, getFormat(), `/api/v2/drops/${slug}`)
+    })
+
+  cmd
+    .command("eligibility")
+    .description("Check drop eligibility for the authenticated wallet")
+    .argument("<slug>", "Collection slug")
+    .action(async (slug: string) => {
+      const client = getClient()
+      const result = await client.get<DropEligibilityResponse>(
+        `/api/v2/drops/${slug}/eligibility`,
+      )
+      console.log(formatOutput(result, getFormat()))
     })
 
   cmd

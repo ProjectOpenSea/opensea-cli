@@ -1,4 +1,4 @@
-import { rmSync } from "node:fs"
+import { mkdirSync, rmSync, writeFileSync } from "node:fs"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
 const { testHome } = vi.hoisted(() => ({
@@ -14,88 +14,93 @@ import {
   saveToken,
 } from "../../src/auth/store.js"
 
-function jwt(payload: Record<string, unknown>): string {
-  const encoded = Buffer.from(JSON.stringify(payload))
-    .toString("base64url")
-    .replace(/=+$/, "")
-  return `header.${encoded}.signature`
+const baseToken = {
+  accessToken: "access",
+  refreshToken: "refresh",
+  expiresAt: "2030-01-01T00:00:00.000Z",
+  scopes: ["read:eligibility"],
+  address: "0xAbC",
+  authMethod: "oauth" as const,
 }
 
 afterEach(() => {
   rmSync(testHome, { recursive: true, force: true })
+  vi.restoreAllMocks()
 })
 
 describe("auth store", () => {
-  test("derives missing stored scopes from the OpenSea JWT claim", () => {
-    const token = {
-      accessToken: jwt({
-        opensea_scopes:
-          "write:orders read:eligibility read:rewards unknown:scope",
-      }),
-      refreshToken: "refresh",
-      expiresAt: "2030-01-01T00:00:00.000Z",
-      scopes: [],
-      address: "0xAbC",
+  test("stores EVM addresses case-insensitively", () => {
+    saveToken(baseToken)
+
+    expect(loadCurrentToken()).toEqual(baseToken)
+    expect(loadToken("0xabc")).toEqual(baseToken)
+    expect(loadToken("0xABC")).toEqual(baseToken)
+    expect(loadToken("0XABC")).toEqual(baseToken)
+  })
+
+  test("preserves case-sensitive Solana addresses", () => {
+    const solanaToken = {
+      ...baseToken,
+      address: "SoLanaCaseSensitiveAddress123",
     }
-    saveToken(token)
+    saveToken(solanaToken)
 
-    expect(loadCurrentToken()?.scopes).toEqual([
-      "read:eligibility",
-      "write:orders",
-    ])
-    expect(loadToken("0xabc")?.scopes).toEqual([
-      "read:eligibility",
-      "write:orders",
-    ])
-    expect(listTokens()[0]?.scopes).toEqual([
-      "read:eligibility",
-      "write:orders",
-    ])
+    expect(loadCurrentToken()).toEqual(solanaToken)
+    expect(loadToken("SoLanaCaseSensitiveAddress123")).toEqual(solanaToken)
+    expect(loadToken("solanacasesensitiveaddress123")).toBeUndefined()
   })
 
-  test("preserves a non-empty stored scope list", () => {
+  test("lists tokens without deriving or rewriting persisted scopes", () => {
+    saveToken(baseToken)
     saveToken({
-      accessToken: jwt({ opensea_scopes: "write:orders" }),
-      refreshToken: "refresh",
-      expiresAt: "2030-01-01T00:00:00.000Z",
-      scopes: ["read:favorites"],
-      address: "0xabc",
-    })
-
-    expect(loadCurrentToken()?.scopes).toEqual(["read:favorites"])
-  })
-
-  test("lists mixed stored and derived scope states", () => {
-    saveToken({
-      accessToken: jwt({ opensea_scopes: "write:orders" }),
-      refreshToken: "refresh-1",
-      expiresAt: "2030-01-01T00:00:00.000Z",
-      scopes: [],
-      address: "0xabc",
-    })
-    saveToken({
-      accessToken: jwt({ opensea_scopes: "write:orders" }),
-      refreshToken: "refresh-2",
-      expiresAt: "2030-01-01T00:00:00.000Z",
-      scopes: ["read:favorites"],
+      ...baseToken,
       address: "0xdef",
+      scopes: ["write:orders"],
     })
 
     expect(listTokens().map(token => token.scopes)).toEqual([
+      ["read:eligibility"],
       ["write:orders"],
-      ["read:favorites"],
     ])
   })
 
-  test("leaves scopes empty for a malformed access token", () => {
-    saveToken({
-      accessToken: "not-a-jwt",
-      refreshToken: "refresh",
-      expiresAt: "2030-01-01T00:00:00.000Z",
-      scopes: [],
-      address: "0xabc",
-    })
+  test("rejects prerelease stores missing required token fields", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+    mkdirSync(`${testHome}/.opensea`, { recursive: true })
+    writeFileSync(
+      `${testHome}/.opensea/auth.json`,
+      JSON.stringify({
+        currentAddress: "0xabc",
+        tokens: {
+          "0xabc": {
+            accessToken: "access",
+            refreshToken: "refresh",
+            expiresAt: "2030-01-01T00:00:00.000Z",
+            scopes: ["read:eligibility"],
+            address: "0xabc",
+          },
+        },
+      }),
+    )
 
-    expect(loadCurrentToken()?.scopes).toEqual([])
+    expect(loadCurrentToken()).toBeUndefined()
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("corrupted or incompatible"),
+    )
+  })
+
+  test("rejects stores whose key does not match the token address", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+    mkdirSync(`${testHome}/.opensea`, { recursive: true })
+    writeFileSync(
+      `${testHome}/.opensea/auth.json`,
+      JSON.stringify({
+        currentAddress: "0xdef",
+        tokens: { "0xdef": baseToken },
+      }),
+    )
+
+    expect(loadCurrentToken()).toBeUndefined()
+    expect(warn).toHaveBeenCalledTimes(1)
   })
 })

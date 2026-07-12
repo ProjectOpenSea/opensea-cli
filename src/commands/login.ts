@@ -83,12 +83,17 @@ export function loginCommand(
               },
             })
 
-        const claims = safeDecodeClaims(token.accessToken)
-        const address = extractWalletAddress(claims) ?? "unknown"
+        const claims = decodeJwtPayload(token.accessToken)
+        const address = extractWalletAddress(claims)
+        if (!address) {
+          throw new Error(
+            "OAuth access token is missing the required wallet claim",
+          )
+        }
 
         saveToken({
           accessToken: token.accessToken,
-          refreshToken: token.refreshToken ?? "",
+          refreshToken: token.refreshToken,
           expiresAt: token.expiresAt.toISOString(),
           scopes: token.scopes,
           address,
@@ -108,21 +113,6 @@ export function loginCommand(
         )
       },
     )
-}
-
-/**
- * Decode token claims, tolerating opaque (non-JWT) access tokens. The
- * authorization server normally issues a JWT, but if it returns an opaque
- * token `decodeJwtPayload` throws — fall back to empty claims so
- * `extractWalletAddress` uses its `sub`/`unknown` path and the token is still
- * saved.
- */
-function safeDecodeClaims(accessToken: string): Record<string, unknown> {
-  try {
-    return decodeJwtPayload(accessToken)
-  } catch {
-    return {}
-  }
 }
 
 async function runDeviceFlow(

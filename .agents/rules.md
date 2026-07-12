@@ -58,6 +58,13 @@ CLI (src/cli.ts)              SDK (src/sdk.ts)
 | `src/types/api.ts` | TypeScript interfaces matching OpenSea API v2 response shapes. |
 | `src/types/index.ts` | Re-exports API types plus internal config types. |
 
+### Auth Session Invariants
+
+- Persisted tokens are a strict prerelease contract. Every entry requires a non-empty access token, refresh token, wallet address, ISO expiration, scopes array, and explicit `oauth` or `siwe` auth method. Do not add legacy-field fallbacks; incompatible stores should require a new login.
+- OAuth login requires a JWT access token with the top-level `wallet` claim. Never substitute the OIDC `sub` claim, which is an account identifier, or save a token under a placeholder address.
+- Normalize only `0x`-prefixed EVM addresses to lowercase. Preserve all other wallet addresses exactly because Solana base58 addresses are case-sensitive.
+- The SDK owns refresh-token rotation semantics. CLI callers should persist the required `OAuthToken.refreshToken` exactly as returned.
+
 ### API Types
 
 API request/response types live in `src/types/api.ts` and are mostly thin re-exports of `components["schemas"]["..."]` from `@opensea/api-types`. **Never hand-roll types for OpenSea API v2 endpoints.** When adding a new endpoint:
