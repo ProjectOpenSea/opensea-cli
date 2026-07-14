@@ -1,4 +1,12 @@
-import { mkdirSync, rmSync, writeFileSync } from "node:fs"
+import {
+  chmodSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
 const { testHome } = vi.hoisted(() => ({
@@ -50,6 +58,42 @@ describe("auth store", () => {
     expect(loadToken("solanacasesensitiveaddress123")).toBeUndefined()
   })
 
+  test.skipIf(process.platform === "win32")(
+    "repairs permissive auth directory and file modes",
+    () => {
+      mkdirSync(`${testHome}/.opensea`, { recursive: true, mode: 0o755 })
+      writeFileSync(
+        `${testHome}/.opensea/auth.json`,
+        JSON.stringify({ tokens: {} }),
+      )
+      chmodSync(`${testHome}/.opensea`, 0o755)
+      chmodSync(`${testHome}/.opensea/auth.json`, 0o644)
+
+      saveToken(baseToken)
+
+      expect(statSync(`${testHome}/.opensea`).mode & 0o777).toBe(0o700)
+      expect(statSync(`${testHome}/.opensea/auth.json`).mode & 0o777).toBe(
+        0o600,
+      )
+    },
+  )
+
+  test.skipIf(process.platform === "win32")(
+    "refuses to follow an auth file symlink",
+    () => {
+      const target = `${testHome}/target.json`
+      mkdirSync(`${testHome}/.opensea`, { recursive: true })
+      writeFileSync(target, "do not overwrite", { mode: 0o644 })
+      symlinkSync(target, `${testHome}/.opensea/auth.json`)
+
+      expect(() => saveToken(baseToken)).toThrow(
+        "auth store path is not a regular file",
+      )
+      expect(readFileSync(target, "utf8")).toBe("do not overwrite")
+      expect(statSync(target).mode & 0o777).toBe(0o644)
+    },
+  )
+
   test("lists tokens without deriving or rewriting persisted scopes", () => {
     saveToken(baseToken)
     saveToken({
@@ -62,6 +106,18 @@ describe("auth store", () => {
       ["read:eligibility"],
       ["write:orders"],
     ])
+  })
+
+  test("stores the scoped token id used by SIWE revocation", () => {
+    const siweToken = {
+      ...baseToken,
+      authMethod: "siwe" as const,
+      scopedTokenId: "381768924447939181",
+    }
+
+    saveToken(siweToken)
+
+    expect(loadCurrentToken()).toEqual(siweToken)
   })
 
   test("rejects prerelease stores missing required token fields", () => {

@@ -1,5 +1,14 @@
 # @opensea/cli
 
+## 1.12.5
+
+### Patch Changes
+
+- d846160: Use the current OpenSea API endpoints for SIWE login, scoped-token exchange, refresh, revocation, and wallet-link nonces.
+- da5181f: Repair the auth directory and auth file permissions whenever the CLI saves credentials. Existing files created with broader permissions are now restricted to the owning user instead of keeping their old mode.
+- Updated dependencies [d846160]
+  - @opensea/sdk@11.4.4
+
 ## 1.12.4
 
 ### Patch Changes

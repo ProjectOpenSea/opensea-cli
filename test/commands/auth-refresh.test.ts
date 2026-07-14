@@ -79,15 +79,18 @@ describe("auth refresh", () => {
     })
   })
 
-  it("refreshes SIWE sessions through the SIWE endpoint", async () => {
-    loadCurrentToken.mockReturnValue({ ...storedToken, authMethod: "siwe" })
+  it("refreshes SIWE sessions by exchanging the stored scoped token", async () => {
+    loadCurrentToken.mockReturnValue({
+      ...storedToken,
+      authMethod: "siwe",
+      scopedTokenId: "token-id",
+    })
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
-          access_token: "siwe-access",
-          refresh_token: "siwe-refresh",
-          expires_in: 3600,
-          scopes: ["read:eligibility"],
+          accessToken: "siwe-access",
+          expiresIn: 3600,
+          tokenScopes: ["read:eligibility"],
         }),
         { status: 200, headers: { "Content-Type": "application/json" } },
       ),
@@ -101,7 +104,7 @@ describe("auth refresh", () => {
     ).parseAsync(["refresh"], { from: "user" })
 
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://auth.example.com/api/refresh",
+      "https://api.opensea.io/api/v2/auth/tokens/exchange",
       expect.any(Object),
     )
     expect(OpenSeaOAuth).not.toHaveBeenCalled()

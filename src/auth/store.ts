@@ -1,4 +1,11 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import {
+  chmodSync,
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs"
 import { homedir } from "node:os"
 import { join } from "node:path"
 import { z } from "zod"
@@ -9,6 +16,7 @@ import { z } from "zod"
 export interface StoredToken {
   accessToken: string
   refreshToken: string
+  scopedTokenId?: string
   expiresAt: string
   scopes: string[]
   address: string
@@ -27,6 +35,7 @@ const storedTokenSchema = z
   .object({
     accessToken: z.string().min(1),
     refreshToken: z.string().min(1),
+    scopedTokenId: z.string().min(1).optional(),
     expiresAt: z.iso.datetime(),
     scopes: z.array(z.string().min(1)),
     address: z.string().min(1),
@@ -45,18 +54,25 @@ const AUTH_DIR = join(homedir(), ".opensea")
 const AUTH_FILE = join(AUTH_DIR, "auth.json")
 
 function ensureDir(): void {
-  if (!existsSync(AUTH_DIR)) {
-    try {
+  try {
+    if (!existsSync(AUTH_DIR)) {
       mkdirSync(AUTH_DIR, { recursive: true, mode: 0o700 })
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      throw new Error(`Failed to create auth directory ${AUTH_DIR}: ${msg}`)
     }
+    chmodSync(AUTH_DIR, 0o700)
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    throw new Error(`Failed to secure auth directory ${AUTH_DIR}: ${msg}`)
   }
 }
 
 function readStore(): AuthStore {
   if (!existsSync(AUTH_FILE)) return { tokens: {} }
+  if (!lstatSync(AUTH_FILE).isFile()) {
+    console.warn(
+      `Warning: ${AUTH_FILE} is not a regular file and was not read.`,
+    )
+    return { tokens: {} }
+  }
   try {
     const data = readFileSync(AUTH_FILE, "utf-8")
     const store = authStoreSchema.parse(JSON.parse(data))
@@ -82,7 +98,16 @@ function readStore(): AuthStore {
 function writeStore(store: AuthStore): void {
   ensureDir()
   try {
+    if (existsSync(AUTH_FILE)) {
+      if (!lstatSync(AUTH_FILE).isFile()) {
+        throw new Error("auth store path is not a regular file")
+      }
+      chmodSync(AUTH_FILE, 0o600)
+    }
     writeFileSync(AUTH_FILE, JSON.stringify(store, null, 2), { mode: 0o600 })
+    // The mode option only applies when writeFileSync creates a file. Repair
+    // permissions explicitly when an older or user-created auth file exists.
+    chmodSync(AUTH_FILE, 0o600)
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     throw new Error(`Failed to write auth store ${AUTH_FILE}: ${msg}`)

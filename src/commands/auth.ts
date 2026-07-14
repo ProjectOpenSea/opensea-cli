@@ -1,9 +1,10 @@
 import { AUTH_SCOPES } from "@opensea/api-types"
 import {
-  generateSiweMessage,
+  createSiwxMessage,
   linkWalletWithSiwx,
   OPENSEA_SCOPES,
   OpenSeaOAuth,
+  parseSiwxMessage,
 } from "@opensea/sdk"
 import {
   createWalletFromEnv,
@@ -25,6 +26,59 @@ import type { OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
 
 const DEFAULT_BASE_URL = "https://api.opensea.io"
+const DEFAULT_TOKEN_TTL_SECONDS = 3600
+const SIWE_STATEMENT =
+  "Click to sign in and accept the OpenSea Terms of Service (https://opensea.io/tos) and Privacy Policy (https://opensea.io/privacy)."
+
+interface ScopedTokenCreatedResponse {
+  id: string
+  token: string
+  scopes: string[]
+}
+
+interface ScopedTokenExchangeResponse {
+  accessToken: string
+  expiresIn?: number
+  tokenScopes?: string[]
+}
+
+function sessionCookie(headers: Headers): string {
+  const getSetCookie = (headers as Headers & { getSetCookie?: () => string[] })
+    .getSetCookie
+  const values = getSetCookie?.call(headers) ?? [
+    headers.get("set-cookie") ?? "",
+  ]
+  const cookies = new Map<string, string>()
+  for (const value of values) {
+    for (const name of ["access_token", "refresh_token"]) {
+      const match = value.match(new RegExp(`(?:^|,\\s*)${name}=([^;]+)`))
+      if (match?.[1]) cookies.set(name, match[1])
+    }
+  }
+  if (!cookies.has("access_token") || !cookies.has("refresh_token")) {
+    throw new Error("SIWE verification did not create a session")
+  }
+  return [...cookies].map(([name, value]) => `${name}=${value}`).join("; ")
+}
+
+async function exchangeScopedToken(
+  baseUrl: string,
+  scopedToken: string,
+): Promise<ScopedTokenExchangeResponse> {
+  const response = await fetch(`${baseUrl}/api/v2/auth/tokens/exchange`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      subjectToken: scopedToken,
+      subjectTokenType: "ACCESS_TOKEN",
+    }),
+  })
+  if (!response.ok) {
+    const body = await response.text().catch(() => "")
+    throw new Error(`Token exchange failed (${response.status}): ${body}`)
+  }
+  return response.json() as Promise<ScopedTokenExchangeResponse>
+}
 
 /** Available scopes for OpenSea auth tokens, derived from the OpenAPI spec. */
 const SCOPES = AUTH_SCOPES.map(({ name, description }) => ({
@@ -85,7 +139,7 @@ export function authCommand(
       OPENSEA_SCOPES.READ_ELIGIBILITY,
     )
     .action(async (opts: { privateKey?: string; scopes: string }) => {
-      const authBase = getAuthBaseUrl?.() ?? DEFAULT_AUTH_BASE_URL
+      const baseUrl = getBaseUrl() ?? DEFAULT_BASE_URL
       const scopes = opts.scopes.split(",").map(s => s.trim())
       const privateKey = opts.privateKey ?? process.env.OPENSEA_PRIVATE_KEY
       if (!privateKey) {
@@ -102,7 +156,8 @@ export function authCommand(
       const address = await adapter.getAddress()
 
       // 1. Request nonce
-      const nonceRes = await fetch(`${authBase}/api/nonce`, {
+      const nonceRes = await fetch(`${baseUrl}/api/v2/auth/siwe/nonce`, {
+        method: "POST",
         headers: { Accept: "application/json" },
       })
       if (!nonceRes.ok) {
@@ -118,44 +173,91 @@ export function authCommand(
       const { nonce } = (await nonceRes.json()) as { nonce: string }
 
       // 2. Build & sign SIWE message
-      const message = generateSiweMessage(address, scopes, nonce, authBase)
+      const message = createSiwxMessage({
+        address,
+        chainArch: "EVM",
+        chainId: 1,
+        nonce,
+        statement: SIWE_STATEMENT,
+      })
       if (!adapter.signMessage) {
         throw new Error("Wallet adapter does not support message signing")
       }
       const signature = await adapter.signMessage({ message })
 
-      // 3. Exchange for token
-      const tokenRes = await fetch(`${authBase}/api/token`, {
+      // 3. Verify wallet ownership and establish the short-lived session used to mint a PAT.
+      const verifyRes = await fetch(`${baseUrl}/api/v2/auth/siwe/verify`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, signature }),
+        body: JSON.stringify({
+          message: parseSiwxMessage(message),
+          signature,
+          chainArch: "EVM",
+        }),
       })
-      if (!tokenRes.ok) {
-        const body = await tokenRes.text().catch(() => "")
+      if (!verifyRes.ok) {
+        const body = await verifyRes.text().catch(() => "")
         console.error(
           JSON.stringify({
             error: "Auth Error",
-            status: tokenRes.status,
+            status: verifyRes.status,
             body,
           }),
         )
         process.exit(1)
       }
-      const tokenData = (await tokenRes.json()) as {
-        access_token: string
-        refresh_token: string
-        expires_in: number
-        scopes: string[]
+      const cookie = sessionCookie(verifyRes.headers)
+
+      // 4. Mint a one-day PAT with only the requested scopes.
+      const createRes = await fetch(`${baseUrl}/api/v2/auth/tokens`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: cookie,
+        },
+        body: JSON.stringify({
+          label: `opensea-cli-${Date.now()}`,
+          scopes,
+          expiresInDays: 1,
+        }),
+      })
+      if (!createRes.ok) {
+        const body = await createRes.text().catch(() => "")
+        console.error(
+          JSON.stringify({
+            error: "Auth Error",
+            status: createRes.status,
+            body,
+          }),
+        )
+        process.exit(1)
+      }
+      const scopedToken = (await createRes.json()) as ScopedTokenCreatedResponse
+
+      // 5. Exchange the PAT for the short-lived wallet identity JWT used by REST and MCP.
+      let tokenData: ScopedTokenExchangeResponse
+      try {
+        tokenData = await exchangeScopedToken(baseUrl, scopedToken.token)
+      } catch (error) {
+        await fetch(`${baseUrl}/api/v2/auth/tokens/${scopedToken.id}`, {
+          method: "DELETE",
+          headers: { Cookie: cookie },
+        }).catch(() => undefined)
+        throw error
       }
 
-      const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000)
+      const expiresAt = new Date(
+        Date.now() + (tokenData.expiresIn ?? DEFAULT_TOKEN_TTL_SECONDS) * 1000,
+      )
+      const grantedScopes = tokenData.tokenScopes ?? scopedToken.scopes
 
-      // 4. Save token
+      // The PAT acts as the refresh credential. The store is mode 0600.
       saveToken({
-        accessToken: tokenData.access_token,
-        refreshToken: tokenData.refresh_token,
+        accessToken: tokenData.accessToken,
+        refreshToken: scopedToken.token,
+        scopedTokenId: scopedToken.id,
         expiresAt: expiresAt.toISOString(),
-        scopes: tokenData.scopes,
+        scopes: grantedScopes,
         address,
         authMethod: "siwe",
       })
@@ -165,7 +267,7 @@ export function authCommand(
           {
             status: "authenticated",
             address,
-            scopes: tokenData.scopes,
+            scopes: grantedScopes,
             expires_at: expiresAt.toISOString(),
           },
           getFormat(),
@@ -203,7 +305,11 @@ export function authCommand(
     )
     .option(
       "--auth-base-url <url>",
-      "Auth server base URL (defaults to https://auth.opensea.io)",
+      "Deprecated; SIWX nonces now use --api-base-url",
+    )
+    .option(
+      "--api-key <key>",
+      "OpenSea API key (or set OPENSEA_API_KEY env var)",
     )
     .option(
       "--api-base-url <url>",
@@ -219,6 +325,7 @@ export function authCommand(
         statement?: string
         authBaseUrl?: string
         apiBaseUrl?: string
+        apiKey?: string
       }) => {
         const authToken = opts.authToken ?? process.env.OPENSEA_AUTH_TOKEN
         if (!authToken) {
@@ -243,6 +350,7 @@ export function authCommand(
             },
             {
               authToken,
+              apiKey: opts.apiKey ?? process.env.OPENSEA_API_KEY,
               chainArch: opts.chainArch,
               chainId: Number(opts.chainId),
               authBaseUrl: opts.authBaseUrl ?? DEFAULT_AUTH_BASE_URL,
@@ -353,45 +461,24 @@ export function authCommand(
         return
       }
 
-      const res = await fetch(`${authBase}/api/refresh`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          refresh_token: token.refreshToken,
-        }),
-      })
-      if (!res.ok) {
-        const body = await res.text().catch(() => "")
-        console.error(
-          JSON.stringify({
-            error: "Auth Error",
-            status: res.status,
-            body,
-          }),
-        )
-        process.exit(1)
-      }
-      const data = (await res.json()) as {
-        access_token: string
-        refresh_token: string
-        expires_in: number
-        scopes: string[]
-      }
-      const expiresAt = new Date(Date.now() + data.expires_in * 1000)
+      const baseUrl = getBaseUrl() ?? DEFAULT_BASE_URL
+      const data = await exchangeScopedToken(baseUrl, token.refreshToken)
+      const expiresAt = new Date(
+        Date.now() + (data.expiresIn ?? DEFAULT_TOKEN_TTL_SECONDS) * 1000,
+      )
+      const grantedScopes = data.tokenScopes ?? token.scopes
       saveToken({
-        accessToken: data.access_token,
-        refreshToken: data.refresh_token,
+        ...token,
+        accessToken: data.accessToken,
         expiresAt: expiresAt.toISOString(),
-        scopes: data.scopes,
-        address: token.address,
-        authMethod: "siwe",
+        scopes: grantedScopes,
       })
       console.log(
         formatOutput(
           {
             status: "refreshed",
             address: token.address,
-            scopes: data.scopes,
+            scopes: grantedScopes,
             expires_at: expiresAt.toISOString(),
           },
           getFormat(),
@@ -418,12 +505,24 @@ export function authCommand(
         console.error("No token found to revoke")
         process.exit(1)
       }
-      const authBase = getAuthBaseUrl?.() ?? DEFAULT_AUTH_BASE_URL
-      const res = await fetch(`${authBase}/api/revoke`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: token.accessToken }),
-      })
+      const baseUrl = getBaseUrl() ?? DEFAULT_BASE_URL
+      let res: Response
+      if (token.authMethod === "siwe" && token.scopedTokenId) {
+        res = await fetch(
+          `${baseUrl}/api/v2/auth/tokens/${token.scopedTokenId}`,
+          {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token.accessToken}` },
+          },
+        )
+      } else {
+        const authBase = getAuthBaseUrl?.() ?? DEFAULT_AUTH_BASE_URL
+        res = await fetch(`${authBase}/api/revoke`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: token.accessToken }),
+        })
+      }
       if (!res.ok) {
         const body = await res.text().catch(() => "")
         console.error(
