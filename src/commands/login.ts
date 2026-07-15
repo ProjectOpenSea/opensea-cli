@@ -22,6 +22,14 @@ import { formatOutput } from "../output.js"
  */
 const DEFAULT_SCOPES = AUTH_SCOPES.map(({ name }) => name)
 
+function scopesOutsideRequested(
+  requestedScopes: string[],
+  grantedScopes: string[],
+): string[] {
+  const requested = new Set(requestedScopes)
+  return grantedScopes.filter(scope => !requested.has(scope))
+}
+
 /**
  * Top-level `opensea login` — keyless OAuth 2.1 (authorization-code + PKCE)
  * login against the OpenSea authorization server. No private key, no SIWE
@@ -83,6 +91,13 @@ export function loginCommand(
               },
             })
 
+        const broaderScopes = scopesOutsideRequested(scopes, token.scopes)
+        if (broaderScopes.length > 0) {
+          console.error(
+            `Warning: the authorization server granted scopes outside the requested set: ${broaderScopes.join(", ")}`,
+          )
+        }
+
         const claims = decodeJwtPayload(token.accessToken)
         const address = extractWalletAddress(claims)
         if (!address) {
@@ -96,6 +111,7 @@ export function loginCommand(
           refreshToken: token.refreshToken,
           expiresAt: token.expiresAt.toISOString(),
           scopes: token.scopes,
+          ...(token.scopeSource ? { scopeSource: token.scopeSource } : {}),
           address,
           authMethod: "oauth",
         })
@@ -105,7 +121,17 @@ export function loginCommand(
             {
               status: "authenticated",
               address,
-              scopes: token.scopes,
+              requested_scopes: scopes,
+              granted_scopes: token.scopes,
+              scope_source: token.scopeSource,
+              ...(broaderScopes.length > 0
+                ? {
+                    scope_warning: {
+                      type: "broader_than_requested",
+                      scopes: broaderScopes,
+                    },
+                  }
+                : {}),
               expires_at: token.expiresAt.toISOString(),
             },
             getFormat(),

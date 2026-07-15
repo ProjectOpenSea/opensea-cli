@@ -22,6 +22,7 @@ vi.mock("../src/commands/index.js", () => ({
   transactionsCommand: () => new Command("transactions"),
   healthCommand: () => new Command("health"),
   walletCommand: () => new Command("wallet"),
+  whoamiCommand: () => new Command("whoami"),
   loginCommand: () => new Command("login"),
 }))
 

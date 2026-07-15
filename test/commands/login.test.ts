@@ -122,6 +122,48 @@ describe("loginCommand", () => {
     expect(loopbackArgs.scopes).not.toContain("read:rewards")
   })
 
+  it("distinguishes requested and broader granted scopes", async () => {
+    loginWithLoopback.mockResolvedValue(
+      token({
+        scopes: ["read:favorites", "write:favorites", "write:drops"],
+        scopeSource: "authorization_server",
+      }),
+    )
+
+    const cmd = loginCommand(getFormat)
+    await cmd.parseAsync(
+      [
+        "--client-id",
+        "public-client",
+        "--scopes",
+        "read:favorites,write:favorites",
+      ],
+      { from: "user" },
+    )
+
+    const output = JSON.parse(logSpy.mock.calls[0][0] as string) as {
+      requested_scopes: string[]
+      granted_scopes: string[]
+      scope_warning: { type: string; scopes: string[] }
+    }
+    expect(output.requested_scopes).toEqual([
+      "read:favorites",
+      "write:favorites",
+    ])
+    expect(output.granted_scopes).toEqual([
+      "read:favorites",
+      "write:favorites",
+      "write:drops",
+    ])
+    expect(output.scope_warning).toEqual({
+      type: "broader_than_requested",
+      scopes: ["write:drops"],
+    })
+    expect(errSpy).toHaveBeenCalledWith(
+      "Warning: the authorization server granted scopes outside the requested set: write:drops",
+    )
+  })
+
   it("uses the device flow when --device is passed", async () => {
     requestDeviceAuthorization.mockResolvedValue({
       device_code: "dc",

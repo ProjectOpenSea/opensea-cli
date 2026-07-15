@@ -250,6 +250,9 @@ export function authCommand(
         Date.now() + (tokenData.expiresIn ?? DEFAULT_TOKEN_TTL_SECONDS) * 1000,
       )
       const grantedScopes = tokenData.tokenScopes ?? scopedToken.scopes
+      const scopeSource = tokenData.tokenScopes
+        ? "token_exchange"
+        : "token_creation"
 
       // The PAT acts as the refresh credential. The store is mode 0600.
       saveToken({
@@ -258,6 +261,7 @@ export function authCommand(
         scopedTokenId: scopedToken.id,
         expiresAt: expiresAt.toISOString(),
         scopes: grantedScopes,
+        scopeSource,
         address,
         authMethod: "siwe",
       })
@@ -268,6 +272,7 @@ export function authCommand(
             status: "authenticated",
             address,
             scopes: grantedScopes,
+            scope_source: scopeSource,
             expires_at: expiresAt.toISOString(),
           },
           getFormat(),
@@ -444,6 +449,7 @@ export function authCommand(
           refreshToken: refreshed.refreshToken,
           expiresAt: refreshed.expiresAt.toISOString(),
           scopes: refreshed.scopes,
+          scopeSource: refreshed.scopeSource,
           address: token.address,
           authMethod: "oauth",
         })
@@ -453,6 +459,7 @@ export function authCommand(
               status: "refreshed",
               address: token.address,
               scopes: refreshed.scopes,
+              scope_source: refreshed.scopeSource,
               expires_at: refreshed.expiresAt.toISOString(),
             },
             getFormat(),
@@ -467,11 +474,15 @@ export function authCommand(
         Date.now() + (data.expiresIn ?? DEFAULT_TOKEN_TTL_SECONDS) * 1000,
       )
       const grantedScopes = data.tokenScopes ?? token.scopes
+      const scopeSource = data.tokenScopes
+        ? "token_exchange"
+        : (token.scopeSource ?? "unknown")
       saveToken({
         ...token,
         accessToken: data.accessToken,
         expiresAt: expiresAt.toISOString(),
         scopes: grantedScopes,
+        ...(scopeSource === "unknown" ? {} : { scopeSource }),
       })
       console.log(
         formatOutput(
@@ -479,6 +490,7 @@ export function authCommand(
             status: "refreshed",
             address: token.address,
             scopes: grantedScopes,
+            scope_source: scopeSource,
             expires_at: expiresAt.toISOString(),
           },
           getFormat(),
@@ -560,6 +572,7 @@ export function authCommand(
       const output = tokens.map(t => ({
         address: t.address,
         scopes: t.scopes,
+        scope_source: t.scopeSource ?? "unknown",
         expires_at: t.expiresAt,
         expired: new Date(t.expiresAt) < new Date(),
         current: t.address.toLowerCase() === current?.address.toLowerCase(),

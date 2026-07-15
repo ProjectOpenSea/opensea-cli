@@ -19,6 +19,11 @@ export interface StoredToken {
   scopedTokenId?: string
   expiresAt: string
   scopes: string[]
+  scopeSource?:
+    | "authorization_server"
+    | "token_exchange"
+    | "token_creation"
+    | "jwt_claim"
   address: string
   authMethod: "oauth" | "siwe"
 }
@@ -38,6 +43,14 @@ const storedTokenSchema = z
     scopedTokenId: z.string().min(1).optional(),
     expiresAt: z.iso.datetime(),
     scopes: z.array(z.string().min(1)),
+    scopeSource: z
+      .enum([
+        "authorization_server",
+        "token_exchange",
+        "token_creation",
+        "jwt_claim",
+      ])
+      .optional(),
     address: z.string().min(1),
     authMethod: z.enum(["oauth", "siwe"]),
   })

@@ -56,6 +56,7 @@ Wallet-authenticated endpoints also require a scoped token:
 ```bash
 opensea login
 opensea auth status
+opensea whoami
 opensea api request GET /api/v2/account/0xYOUR_WALLET/favorites --params '{"limit":1}'
 ```
 
@@ -102,6 +103,7 @@ opensea --format table collections stats mfers
 | `tokens` | Get trending tokens, top tokens, and token details |
 | `swaps` | Get swap quotes for token trading |
 | `accounts` | Get account details |
+| `whoami` | Show the current wallet, scopes, and scope source |
 | `api request` | Call any API v2 endpoint with the active API key and scoped token |
 
 Global options: `--api-key`, `--chain` (default: ethereum), `--format` (json/table/toon), `--base-url`

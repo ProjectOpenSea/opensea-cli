@@ -13,6 +13,17 @@ Full command reference for all `opensea` CLI commands.
 --verbose           Log request and response info to stderr
 ```
 
+## Authentication
+
+```bash
+opensea whoami
+```
+
+`whoami` reads the current local auth token and shows the wallet address,
+scopes, their source, and expiry. Use `opensea whoami --diagnostic` to inspect
+decoded JWT claims and scope differences. Those claims are unverified,
+provider-specific diagnostics only and never authorization data.
+
 ## Collections
 
 ```bash

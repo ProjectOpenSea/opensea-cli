@@ -22,6 +22,7 @@ import {
   toolsCommand,
   transactionsCommand,
   walletCommand,
+  whoamiCommand,
 } from "./commands/index.js"
 import { type OutputFormat, setOutputOptions } from "./output.js"
 import { parseIntOption } from "./parse.js"
@@ -166,6 +167,7 @@ program.addCommand(toolsCommand(getClient, getFormat))
 program.addCommand(transactionsCommand(getClient, getFormat))
 program.addCommand(healthCommand(getClient, getFormat))
 program.addCommand(walletCommand(getFormat))
+program.addCommand(whoamiCommand(getFormat))
 
 async function main() {
   try {
