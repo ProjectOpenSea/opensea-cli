@@ -1,5 +1,13 @@
 # @opensea/cli
 
+## 1.13.2
+
+### Patch Changes
+
+- a410930: Request Zitadel's role-specific scopes so OAuth tokens are limited to the OpenSea scopes the client asked for.
+- Updated dependencies [a410930]
+  - @opensea/sdk@11.4.6
+
 ## 1.13.1
 
 ### Patch Changes

@@ -49,7 +49,7 @@ export function loginCommand(
     )
     .option(
       "--scopes <scopes>",
-      "Comma-separated scopes to request (e.g. read:eligibility,write:orders). Requested scopes are advisory: the scopes actually granted are determined server-side by the account's project grants",
+      "Comma-separated OpenSea scopes to grant (e.g. read:eligibility,write:orders)",
     )
     .option(
       "--client-id <id>",
