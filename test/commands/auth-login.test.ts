@@ -6,7 +6,10 @@ const { getAddress, loadCurrentToken, removeToken, saveToken, signMessage } =
     loadCurrentToken: vi.fn(),
     removeToken: vi.fn(),
     saveToken: vi.fn(),
-    signMessage: vi.fn(async () => "0xsigned"),
+    signMessage: vi.fn(function (this: { getAddress?: unknown }) {
+      if (!this?.getAddress) throw new Error("wallet adapter binding lost")
+      return Promise.resolve("0xsigned")
+    }),
   }))
 
 vi.mock("../../src/auth/store.js", () => ({
@@ -33,6 +36,41 @@ describe("auth login", () => {
   afterEach(() => {
     vi.clearAllMocks()
     vi.restoreAllMocks()
+    delete process.env.OPENSEA_AUTH_TOKEN
+    delete process.env.OPENSEA_PRIVATE_KEY
+  })
+
+  it("links a wallet with OPENSEA_PRIVATE_KEY and preserves adapter binding", async () => {
+    process.env.OPENSEA_AUTH_TOKEN = "wallet-jwt"
+    process.env.OPENSEA_PRIVATE_KEY = "fixture-private-key"
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ nonce: "abcd1234efgh5678" }), {
+          status: 200,
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            linkedWalletAddress: "0xfBa662e1a8e91a350702cF3b87D0C2d2Fb4BA57F",
+          }),
+          { status: 200 },
+        ),
+      )
+
+    await authCommand(
+      () => undefined,
+      createCommandTestContext().getFormat,
+    ).parseAsync(["link-wallet", "--api-key", "api-key"], {
+      from: "user",
+    })
+
+    expect(fetchSpy).toHaveBeenCalledTimes(2)
+    expect(signMessage).toHaveBeenCalledOnce()
+    expect(console.log).toHaveBeenCalledWith(
+      expect.stringContaining('"status": "linked"'),
+    )
   })
 
   it("uses the current SIWE and scoped-token endpoints", async () => {
@@ -130,6 +168,7 @@ describe("auth login", () => {
         accessToken: "wallet-jwt",
         refreshToken: "pat-value",
         scopedTokenId: "381768924447939181",
+        requestedScopes: ["write:wallets"],
         scopes: ["write:wallets"],
         authMethod: "siwe",
       }),
@@ -198,6 +237,7 @@ describe("auth login", () => {
       refreshToken: "pat-value",
       scopedTokenId: "381768924447939181",
       expiresAt: "2030-01-01T00:00:00.000Z",
+      requestedScopes: ["write:wallets"],
       scopes: ["write:wallets"],
       address: "0xfba662e1a8e91a350702cf3b87d0c2d2fb4ba57f",
       authMethod: "siwe",

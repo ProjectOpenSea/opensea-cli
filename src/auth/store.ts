@@ -18,6 +18,7 @@ export interface StoredToken {
   refreshToken: string
   scopedTokenId?: string
   expiresAt: string
+  requestedScopes: string[]
   scopes: string[]
   scopeSource?:
     | "authorization_server"
@@ -42,6 +43,7 @@ const storedTokenSchema = z
     refreshToken: z.string().min(1),
     scopedTokenId: z.string().min(1).optional(),
     expiresAt: z.iso.datetime(),
+    requestedScopes: z.array(z.string().min(1)),
     scopes: z.array(z.string().min(1)),
     scopeSource: z
       .enum([

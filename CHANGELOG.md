@@ -1,5 +1,11 @@
 # @opensea/cli
 
+## 1.13.1
+
+### Patch Changes
+
+- e325f04: Keep the requested OAuth scopes in the auth store so `whoami` can report broader grants, and fix `auth link-wallet` to preserve wallet-adapter method binding and accept `OPENSEA_PRIVATE_KEY`.
+
 ## 1.13.0
 
 ### Minor Changes

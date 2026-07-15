@@ -110,6 +110,7 @@ export function loginCommand(
           accessToken: token.accessToken,
           refreshToken: token.refreshToken,
           expiresAt: token.expiresAt.toISOString(),
+          requestedScopes: scopes,
           scopes: token.scopes,
           ...(token.scopeSource ? { scopeSource: token.scopeSource } : {}),
           address,

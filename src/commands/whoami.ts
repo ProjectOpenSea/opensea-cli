@@ -74,6 +74,7 @@ export function whoamiCommand(getFormat: () => OutputFormat): Command {
       }
 
       const jwtScopes = jwt?.opensea_scopes ?? []
+      const broaderScopes = difference(token.scopes, token.requestedScopes)
       const diagnostic = options.diagnostic
         ? {
             unverified: true,
@@ -92,7 +93,17 @@ export function whoamiCommand(getFormat: () => OutputFormat): Command {
             address: token.address,
             auth_method: token.authMethod,
             scopes: token.scopes,
+            requested_scopes: token.requestedScopes,
+            granted_scopes: token.scopes,
             scope_source: token.scopeSource ?? "unknown",
+            ...(broaderScopes.length > 0
+              ? {
+                  scope_warning: {
+                    type: "broader_than_requested",
+                    scopes: broaderScopes,
+                  },
+                }
+              : {}),
             ...(diagnostic ? { diagnostic } : {}),
             expires_at: token.expiresAt,
             expired,

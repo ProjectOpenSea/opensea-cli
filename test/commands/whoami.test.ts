@@ -40,6 +40,7 @@ describe("whoamiCommand", () => {
       accessToken: jwt({ wallet: "0xabc" }),
       refreshToken: "refresh-token",
       expiresAt: "2020-01-01T00:00:00.000Z",
+      requestedScopes: [],
       scopes: [],
       address: "0xabc",
       authMethod: "oauth",
@@ -61,6 +62,7 @@ describe("whoamiCommand", () => {
       accessToken: "opaque-token",
       refreshToken: "refresh-token",
       expiresAt: "2030-01-01T00:00:00.000Z",
+      requestedScopes: [],
       scopes: [],
       address: "0xabc",
       authMethod: "oauth",
@@ -89,6 +91,7 @@ describe("whoamiCommand", () => {
       }),
       refreshToken: "refresh-token",
       expiresAt: "2030-01-01T00:00:00.000Z",
+      requestedScopes: ["read:eligibility"],
       scopes: ["read:eligibility"],
       address: "0xabc",
       authMethod: "oauth",
@@ -108,6 +111,43 @@ describe("whoamiCommand", () => {
     expect(ctx.consoleSpy.mock.calls[0][0]).not.toContain("zitadel")
   })
 
+  it("reports requested and broader granted OAuth scopes", async () => {
+    loadCurrentToken.mockReturnValue({
+      accessToken: jwt({
+        wallet: "0xabc",
+        opensea_scopes: ["read:favorites", "write:favorites", "write:wallets"],
+      }),
+      refreshToken: "refresh-token",
+      expiresAt: "2030-01-01T00:00:00.000Z",
+      requestedScopes: ["read:favorites", "write:favorites"],
+      scopes: ["read:favorites", "write:favorites", "write:wallets"],
+      address: "0xabc",
+      authMethod: "oauth",
+    })
+    const ctx = createCommandTestContext()
+
+    await whoamiCommand(ctx.getFormat).parseAsync([], { from: "user" })
+
+    const output = JSON.parse(ctx.consoleSpy.mock.calls[0][0] as string) as {
+      requested_scopes: string[]
+      granted_scopes: string[]
+      scope_warning: { type: string; scopes: string[] }
+    }
+    expect(output.requested_scopes).toEqual([
+      "read:favorites",
+      "write:favorites",
+    ])
+    expect(output.granted_scopes).toEqual([
+      "read:favorites",
+      "write:favorites",
+      "write:wallets",
+    ])
+    expect(output.scope_warning).toEqual({
+      type: "broader_than_requested",
+      scopes: ["write:wallets"],
+    })
+  })
+
   it("shows unverified JWT diagnostics only when requested", async () => {
     loadCurrentToken.mockReturnValue({
       accessToken: jwt({
@@ -119,6 +159,7 @@ describe("whoamiCommand", () => {
       }),
       refreshToken: "refresh-token",
       expiresAt: "2030-01-01T00:00:00.000Z",
+      requestedScopes: ["read:eligibility"],
       scopes: ["read:eligibility"],
       scopeSource: "token_exchange",
       address: "0xabc",

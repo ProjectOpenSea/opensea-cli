@@ -91,6 +91,7 @@ describe("loginCommand", () => {
       accessToken: "at",
       refreshToken: "rt",
       expiresAt: "2030-01-01T00:00:00.000Z",
+      requestedScopes: ["read:eligibility"],
       scopes: ["read:eligibility"],
       address: "0xabc",
       authMethod: "oauth",
@@ -159,6 +160,11 @@ describe("loginCommand", () => {
       type: "broader_than_requested",
       scopes: ["write:drops"],
     })
+    expect(saveToken).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requestedScopes: ["read:favorites", "write:favorites"],
+      }),
+    )
     expect(errSpy).toHaveBeenCalledWith(
       "Warning: the authorization server granted scopes outside the requested set: write:drops",
     )

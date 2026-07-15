@@ -260,6 +260,7 @@ export function authCommand(
         refreshToken: scopedToken.token,
         scopedTokenId: scopedToken.id,
         expiresAt: expiresAt.toISOString(),
+        requestedScopes: scopes,
         scopes: grantedScopes,
         scopeSource,
         address,
@@ -340,8 +341,14 @@ export function authCommand(
           process.exit(1)
         }
 
-        const adapter = createWalletFromEnv()
-        const signMessage = adapter.signMessage
+        const privateKey = process.env.OPENSEA_PRIVATE_KEY
+        const adapter = privateKey
+          ? new PrivateKeyAdapter({
+              privateKey,
+              rpcUrl: process.env.OPENSEA_RPC_URL ?? "https://eth.merkle.io",
+            })
+          : createWalletFromEnv()
+        const signMessage = adapter.signMessage?.bind(adapter)
         if (!signMessage) {
           console.error("Wallet adapter does not support message signing")
           process.exit(1)
@@ -448,6 +455,7 @@ export function authCommand(
           accessToken: refreshed.accessToken,
           refreshToken: refreshed.refreshToken,
           expiresAt: refreshed.expiresAt.toISOString(),
+          requestedScopes: token.requestedScopes,
           scopes: refreshed.scopes,
           scopeSource: refreshed.scopeSource,
           address: token.address,

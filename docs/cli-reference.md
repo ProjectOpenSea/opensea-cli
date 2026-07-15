@@ -20,9 +20,10 @@ opensea whoami
 ```
 
 `whoami` reads the current local auth token and shows the wallet address,
-scopes, their source, and expiry. Use `opensea whoami --diagnostic` to inspect
-decoded JWT claims and scope differences. Those claims are unverified,
-provider-specific diagnostics only and never authorization data.
+requested and granted scopes, any broader-scope warning, the scope source, and
+expiry. Use `opensea whoami --diagnostic` to inspect decoded JWT claims and
+scope differences. Those claims are unverified, provider-specific diagnostics
+only and never authorization data.
 
 ## Collections
 

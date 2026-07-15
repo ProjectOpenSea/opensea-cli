@@ -26,6 +26,7 @@ const baseToken = {
   accessToken: "access",
   refreshToken: "refresh",
   expiresAt: "2030-01-01T00:00:00.000Z",
+  requestedScopes: ["read:eligibility"],
   scopes: ["read:eligibility"],
   address: "0xAbC",
   authMethod: "oauth" as const,
@@ -120,7 +121,7 @@ describe("auth store", () => {
     expect(loadCurrentToken()).toEqual(siweToken)
   })
 
-  test("rejects prerelease stores missing required token fields", () => {
+  test("rejects prerelease stores missing requested scopes", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
     mkdirSync(`${testHome}/.opensea`, { recursive: true })
     writeFileSync(
@@ -134,6 +135,7 @@ describe("auth store", () => {
             expiresAt: "2030-01-01T00:00:00.000Z",
             scopes: ["read:eligibility"],
             address: "0xabc",
+            authMethod: "oauth",
           },
         },
       }),
