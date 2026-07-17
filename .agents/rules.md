@@ -80,6 +80,7 @@ CI runs `pnpm check-api-paths` on every PR; it fails if `src/sdk.ts` or `src/com
 Each domain has both a CLI command file (`src/commands/<domain>.ts`) and an SDK class (`src/sdk.ts`):
 
 - **accounts** - Account profile lookup
+- **api** - Low-level escape hatch to call any OpenSea API v2 endpoint (CLI only — no SDK class)
 - **assets** - Asset movement transactions (transfers)
 - **auth** - SIWE login and scoped token management (`login`, `status`, `refresh`, `revoke`, `tokens`, `scopes`, `clear`) plus API key requests (`request-key`)
 - **chains** - Chain information and supported networks

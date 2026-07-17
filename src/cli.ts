@@ -159,6 +159,7 @@ program.addCommand(
   loginCommand(
     getFormat,
     () => program.opts<{ authBaseUrl?: string }>().authBaseUrl,
+    () => program.opts<{ baseUrl?: string }>().baseUrl,
   ),
 )
 program.addCommand(searchCommand(getClient, getFormat))

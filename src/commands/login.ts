@@ -11,9 +11,16 @@ import {
   resolveOAuthClientId,
 } from "../auth/oauth-config.js"
 import { loginWithLoopback } from "../auth/oauth-login.js"
+import {
+  resolvePrivateKey,
+  warnIfInlinePrivateKey,
+} from "../auth/private-key.js"
+import { loginWithSiwe } from "../auth/siwe-login.js"
 import { saveToken } from "../auth/store.js"
 import type { OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
+
+const DEFAULT_BASE_URL = "https://api.opensea.io"
 
 /**
  * Request the canonical public API scope set when the user does not choose a
@@ -32,9 +39,10 @@ function scopesOutsideRequested(
 
 /**
  * Top-level `opensea login` — keyless OAuth 2.1 (authorization-code + PKCE)
- * login against the OpenSea authorization server. No private key, no SIWE
- * signing. Falls back to the device authorization flow for headless
- * environments (`--device`, or automatically when no browser is available).
+ * login against the OpenSea authorization server, or SIWE sign-in with a
+ * private key for server-side agents. Falls back to the device authorization
+ * flow for headless environments (`--device`, or automatically when no browser
+ * is available).
  *
  * The resulting token is written to the shared `~/.opensea/auth.json` store,
  * so every other command (and `opensea auth status`) picks it up transparently.
@@ -42,10 +50,11 @@ function scopesOutsideRequested(
 export function loginCommand(
   getFormat: () => OutputFormat,
   getAuthBaseUrl?: () => string | undefined,
+  getBaseUrl?: () => string | undefined,
 ): Command {
   return new Command("login")
     .description(
-      "Log in with OAuth (browser, keyless) and store a scoped auth token",
+      "Log in with OAuth (browser, keyless) or a private key and store a scoped auth token",
     )
     .option(
       "--scopes <scopes>",
@@ -54,6 +63,10 @@ export function loginCommand(
     .option(
       "--client-id <id>",
       "Public OAuth client id (or set OPENSEA_OAUTH_CLIENT_ID); defaults to the OpenSea public client",
+    )
+    .option(
+      "--private-key [key]",
+      "Use a private key for SIWE login (set OPENSEA_PRIVATE_KEY, or pass the key as the value; using the env var is recommended)",
     )
     .option(
       "--device",
@@ -67,18 +80,83 @@ export function loginCommand(
       async (opts: {
         scopes?: string
         clientId?: string
+        privateKey?: string | true
         device?: boolean
         browser: boolean
       }) => {
-        const clientId = resolveOAuthClientId(opts.clientId)
-
-        const issuer = getAuthBaseUrl?.() ?? DEFAULT_AUTH_BASE_URL
         const scopes = opts.scopes
           ? opts.scopes
               .split(",")
               .map(s => s.trim())
               .filter(Boolean)
           : [...DEFAULT_SCOPES]
+
+        if (opts.privateKey !== undefined) {
+          const { privateKey, source } = resolvePrivateKey(opts.privateKey)
+          warnIfInlinePrivateKey(source)
+
+          const ignored: string[] = []
+          if (opts.device) ignored.push("--device")
+          if (!opts.browser) ignored.push("--no-browser")
+          if (opts.clientId) ignored.push("--client-id")
+          if (ignored.length > 0) {
+            console.error(
+              `Warning: ${ignored.join(", ")} ${ignored.length === 1 ? "is" : "are"} not used with SIWE login and ${ignored.length === 1 ? "was" : "were"} ignored.`,
+            )
+          }
+
+          const baseUrl = getBaseUrl?.() ?? DEFAULT_BASE_URL
+          const result = await loginWithSiwe({
+            baseUrl,
+            privateKey,
+            scopes,
+          })
+
+          const broaderScopes = scopesOutsideRequested(scopes, result.scopes)
+          if (broaderScopes.length > 0) {
+            console.error(
+              `Warning: the authorization server granted scopes outside the requested set: ${broaderScopes.join(", ")}`,
+            )
+          }
+
+          saveToken({
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken,
+            scopedTokenId: result.scopedTokenId,
+            expiresAt: result.expiresAt.toISOString(),
+            requestedScopes: scopes,
+            scopes: result.scopes,
+            scopeSource: result.scopeSource,
+            address: result.address,
+            authMethod: "siwe",
+          })
+
+          console.log(
+            formatOutput(
+              {
+                status: "authenticated",
+                address: result.address,
+                requested_scopes: scopes,
+                granted_scopes: result.scopes,
+                scope_source: result.scopeSource,
+                ...(broaderScopes.length > 0
+                  ? {
+                      scope_warning: {
+                        type: "broader_than_requested",
+                        scopes: broaderScopes,
+                      },
+                    }
+                  : {}),
+                expires_at: result.expiresAt.toISOString(),
+              },
+              getFormat(),
+            ),
+          )
+          return
+        }
+
+        const clientId = resolveOAuthClientId(opts.clientId)
+        const issuer = getAuthBaseUrl?.() ?? DEFAULT_AUTH_BASE_URL
         const oauth = new OpenSeaOAuth({ clientId, issuer })
 
         const token = opts.device

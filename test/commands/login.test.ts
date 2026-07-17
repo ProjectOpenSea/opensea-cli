@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const {
   loginWithLoopback,
+  loginWithSiwe,
   saveToken,
   requestDeviceAuthorization,
   pollDeviceToken,
@@ -13,6 +14,7 @@ const {
   const pollDeviceToken = vi.fn()
   return {
     loginWithLoopback: vi.fn(),
+    loginWithSiwe: vi.fn(),
     saveToken: vi.fn(),
     requestDeviceAuthorization,
     pollDeviceToken,
@@ -35,6 +37,7 @@ vi.mock("@opensea/sdk", async importOriginal => {
   }
 })
 vi.mock("../../src/auth/oauth-login.js", () => ({ loginWithLoopback }))
+vi.mock("../../src/auth/siwe-login.js", () => ({ loginWithSiwe }))
 vi.mock("../../src/auth/store.js", () => ({ saveToken }))
 
 import { loginCommand } from "../../src/commands/login.js"
@@ -66,6 +69,7 @@ describe("loginCommand", () => {
     vi.clearAllMocks()
     vi.restoreAllMocks()
     delete process.env.OPENSEA_OAUTH_CLIENT_ID
+    delete process.env.OPENSEA_PRIVATE_KEY
   })
 
   it("runs the loopback flow, extracts the address, and saves the token", async () => {
@@ -262,5 +266,149 @@ describe("loginCommand", () => {
       clientId: "public-client",
       issuer: "https://auth.testnets.opensea.io",
     })
+  })
+
+  it("uses SIWE when --private-key is provided", async () => {
+    loginWithSiwe.mockResolvedValue({
+      accessToken: "siwe-at",
+      refreshToken: "siwe-rt",
+      scopedTokenId: "siwe-id",
+      expiresAt: new Date("2030-01-01T00:00:00.000Z"),
+      requestedScopes: ["write:wallets"],
+      scopes: ["write:wallets"],
+      scopeSource: "token_creation" as const,
+      address: "0xsiwe",
+    })
+
+    const cmd = loginCommand(
+      getFormat,
+      () => undefined,
+      () => "https://testnets-api.opensea.io",
+    )
+    await cmd.parseAsync(
+      ["--private-key", "test-key", "--scopes", "write:wallets"],
+      { from: "user" },
+    )
+
+    expect(loginWithSiwe).toHaveBeenCalledWith({
+      baseUrl: "https://testnets-api.opensea.io",
+      privateKey: "test-key",
+      scopes: ["write:wallets"],
+    })
+    expect(loginWithLoopback).not.toHaveBeenCalled()
+    expect(saveToken).toHaveBeenCalledWith({
+      accessToken: "siwe-at",
+      refreshToken: "siwe-rt",
+      scopedTokenId: "siwe-id",
+      expiresAt: "2030-01-01T00:00:00.000Z",
+      requestedScopes: ["write:wallets"],
+      scopes: ["write:wallets"],
+      scopeSource: "token_creation",
+      address: "0xsiwe",
+      authMethod: "siwe",
+    })
+
+    const output = JSON.parse(logSpy.mock.calls[0][0] as string) as {
+      status: string
+      address: string
+      requested_scopes: string[]
+      granted_scopes: string[]
+    }
+    expect(output.status).toBe("authenticated")
+    expect(output.address).toBe("0xsiwe")
+    expect(output.requested_scopes).toEqual(["write:wallets"])
+    expect(output.granted_scopes).toEqual(["write:wallets"])
+  })
+
+  it("uses OAuth when OPENSEA_PRIVATE_KEY is set but --private-key is omitted", async () => {
+    process.env.OPENSEA_PRIVATE_KEY = "env-private-key"
+    loginWithLoopback.mockResolvedValue(token())
+
+    const cmd = loginCommand(getFormat)
+    await cmd.parseAsync(["--client-id", "public-client"], { from: "user" })
+
+    expect(loginWithLoopback).toHaveBeenCalledTimes(1)
+    expect(loginWithSiwe).not.toHaveBeenCalled()
+  })
+
+  it("uses OPENSEA_PRIVATE_KEY when --private-key is passed without a value", async () => {
+    process.env.OPENSEA_PRIVATE_KEY = "env-private-key"
+    loginWithSiwe.mockResolvedValue({
+      accessToken: "siwe-at",
+      refreshToken: "siwe-rt",
+      scopedTokenId: "siwe-id",
+      expiresAt: new Date("2030-01-01T00:00:00.000Z"),
+      requestedScopes: ["read:eligibility"],
+      scopes: ["read:eligibility"],
+      scopeSource: "token_exchange" as const,
+      address: "0xsiwe",
+    })
+
+    const cmd = loginCommand(getFormat)
+    await cmd.parseAsync(["--private-key"], { from: "user" })
+
+    expect(loginWithSiwe).toHaveBeenCalledWith({
+      baseUrl: "https://api.opensea.io",
+      privateKey: "env-private-key",
+      scopes: AUTH_SCOPES.map(({ name }) => name),
+    })
+  })
+
+  it("warns when a private key is passed as an inline argument", async () => {
+    loginWithSiwe.mockResolvedValue({
+      accessToken: "siwe-at",
+      refreshToken: "siwe-rt",
+      scopedTokenId: "siwe-id",
+      expiresAt: new Date("2030-01-01T00:00:00.000Z"),
+      requestedScopes: ["write:wallets"],
+      scopes: ["write:wallets"],
+      scopeSource: "token_creation" as const,
+      address: "0xsiwe",
+    })
+
+    const cmd = loginCommand(
+      getFormat,
+      () => undefined,
+      () => "https://testnets-api.opensea.io",
+    )
+    await cmd.parseAsync(
+      ["--private-key", "inline-key", "--scopes", "write:wallets"],
+      { from: "user" },
+    )
+
+    expect(errSpy).toHaveBeenCalledWith(expect.stringContaining("insecure"))
+  })
+
+  it("warns when OAuth-only flags are passed with --private-key", async () => {
+    loginWithSiwe.mockResolvedValue({
+      accessToken: "siwe-at",
+      refreshToken: "siwe-rt",
+      scopedTokenId: "siwe-id",
+      expiresAt: new Date("2030-01-01T00:00:00.000Z"),
+      requestedScopes: ["write:wallets"],
+      scopes: ["write:wallets"],
+      scopeSource: "token_creation" as const,
+      address: "0xsiwe",
+    })
+
+    const cmd = loginCommand(getFormat)
+    await cmd.parseAsync(
+      [
+        "--private-key",
+        "test-key",
+        "--device",
+        "--no-browser",
+        "--client-id",
+        "ignored",
+        "--scopes",
+        "write:wallets",
+      ],
+      { from: "user" },
+    )
+
+    expect(errSpy).toHaveBeenCalledWith(
+      expect.stringContaining("--device, --no-browser, --client-id"),
+    )
+    expect(errSpy).toHaveBeenCalledWith(expect.stringContaining("ignored"))
   })
 })

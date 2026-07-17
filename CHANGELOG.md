@@ -1,5 +1,20 @@
 # @opensea/cli
 
+## 1.14.0
+
+### Minor Changes
+
+- 66396b6: Add `--private-key` support to `opensea login` for SIWE authentication, enabling server-side agents to log in without a browser.
+
+### Patch Changes
+
+- Updated dependencies [66396b6]
+- Updated dependencies [fa2a24e]
+- Updated dependencies [333104e]
+- Updated dependencies [d7a44df]
+  - @opensea/api-types@0.8.1
+  - @opensea/sdk@11.4.8
+
 ## 1.13.2
 
 ### Patch Changes

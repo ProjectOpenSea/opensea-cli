@@ -60,10 +60,13 @@ opensea whoami
 opensea api request GET /api/v2/account/0xYOUR_WALLET/favorites --params '{"limit":1}'
 ```
 
-Use `--scopes` with `opensea login` to request a narrower scope set. The `api
-request` command supports GET, POST, PUT, PATCH, and DELETE plus JSON body files,
-so newly published scoped endpoints are available without waiting for a dedicated
-command.
+Use `--scopes` with `opensea login` to request a narrower scope set. For
+server-side agents, set `OPENSEA_PRIVATE_KEY` and pass `--private-key` (or pass
+`--private-key <key>`) to authenticate with SIWE instead of OAuth. Using the
+environment variable is recommended to keep the key out of shell history. The
+`api request` command supports GET, POST, PUT, PATCH, and DELETE plus JSON body
+files, so newly published scoped endpoints are available without waiting for a
+dedicated command.
 
 ## Quick Start
 

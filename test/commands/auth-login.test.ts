@@ -231,6 +231,20 @@ describe("auth login", () => {
     expect(saveToken).not.toHaveBeenCalled()
   })
 
+  it("rejects an untrusted API base URL for SIWE login", async () => {
+    await expect(
+      authCommand(
+        () => "https://evil.com",
+        createCommandTestContext().getFormat,
+      ).parseAsync(
+        ["login", "--private-key", "test-key", "--scopes", "write:wallets"],
+        { from: "user" },
+      ),
+    ).rejects.toThrow("Untrusted SIWE API origin: https://evil.com")
+
+    expect(saveToken).not.toHaveBeenCalled()
+  })
+
   it("revokes the scoped token through the current API", async () => {
     loadCurrentToken.mockReturnValue({
       accessToken: "wallet-jwt",
