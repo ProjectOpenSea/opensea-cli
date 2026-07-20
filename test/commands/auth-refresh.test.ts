@@ -86,6 +86,7 @@ describe("auth refresh", () => {
       ...storedToken,
       authMethod: "siwe",
       scopedTokenId: "token-id",
+      sessionCookie: "access_token=session; refresh_token=refresh",
     })
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(

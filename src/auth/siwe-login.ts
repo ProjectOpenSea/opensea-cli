@@ -42,6 +42,7 @@ export interface SiweLoginResult {
   accessToken: string
   refreshToken: string
   scopedTokenId: string
+  sessionCookie: string
   expiresAt: Date
   requestedScopes: string[]
   scopes: string[]
@@ -131,6 +132,26 @@ export async function exchangeScopedToken(
 }
 
 /**
+ * Rotate a SIWE browser session and return the replacement cookies. Scoped
+ * token management is session-only, so callers refresh before a management
+ * request instead of trying to use the wallet JWT as an administrator token.
+ */
+export async function refreshSiweSession(
+  baseUrl: string,
+  cookie: string,
+): Promise<string> {
+  const response = await fetch(`${baseUrl}/api/v2/auth/session/refresh`, {
+    method: "POST",
+    headers: { Cookie: cookie },
+  })
+  if (!response.ok) {
+    const body = await response.text().catch(() => "")
+    throw new Error(`Session refresh failed (${response.status}): ${body}`)
+  }
+  return sessionCookie(response.headers)
+}
+
+/**
  * Authenticate with SIWE using a private key and exchange the resulting
  * scoped token for a wallet-bound access token.
  */
@@ -166,6 +187,8 @@ export async function loginWithSiwe({
   const { nonce } = (await nonceRes.json()) as { nonce: string }
 
   // 2. Build & sign SIWE message
+  // Webauth uses SIWE only to establish the wallet session. PAT scopes are
+  // authorized separately by the session-authenticated token request below.
   const message = createSiwxMessage({
     address,
     chainArch: "EVM",
@@ -239,6 +262,7 @@ export async function loginWithSiwe({
     accessToken: tokenData.accessToken,
     refreshToken: scopedToken.token,
     scopedTokenId: scopedToken.id,
+    sessionCookie: cookie,
     expiresAt,
     requestedScopes: scopes,
     scopes: grantedScopes,

@@ -55,6 +55,8 @@ CLI (src/cli.ts)              SDK (src/sdk.ts)
 | `src/wallet/` | Wallet adapter re-exports from `@opensea/wallet-adapters` and chain ID resolution. |
 | `src/auth/store.ts` | Persists auth tokens to `~/.opensea/auth.json` (used by both `auth` and `login` commands). |
 | `src/auth/oauth-login.ts` | OAuth 2.1 authorization-code + PKCE loopback helper (used by the `login` command). |
+| `src/auth/siwe-login.ts` | SIWE sign-in helper (used by the `login` command for private-key server-side agents). |
+| `src/auth/private-key.ts` | Private-key resolution + wallet construction for SIWE login. |
 | `src/types/api.ts` | TypeScript interfaces matching OpenSea API v2 response shapes. |
 | `src/types/index.ts` | Re-exports API types plus internal config types. |
 
@@ -82,7 +84,7 @@ Each domain has both a CLI command file (`src/commands/<domain>.ts`) and an SDK 
 - **accounts** - Account profile lookup
 - **api** - Low-level escape hatch to call any OpenSea API v2 endpoint (CLI only — no SDK class)
 - **assets** - Asset movement transactions (transfers)
-- **auth** - SIWE login and scoped token management (`login`, `status`, `refresh`, `revoke`, `tokens`, `scopes`, `clear`) plus API key requests (`request-key`)
+- **auth** - SIWE login and scoped token management (`login`, `link-wallet`, `status`, `refresh`, `revoke`, `tokens`, `scopes`, `clear`) plus API key requests (`request-key`)
 - **chains** - Chain information and supported networks
 - **collections** - Collection metadata, stats, traits
 - **drops** - NFT drop details, listing, and minting
@@ -97,8 +99,9 @@ Each domain has both a CLI command file (`src/commands/<domain>.ts`) and an SDK 
 - **tokens** - Fungible token trending/top/details
 - **tools** - Search, list, and inspect registered AI agent tools (ERC-8257)
 - **transactions** - Transaction status and receipts
-- **login** - Keyless OAuth 2.1 (authorization-code + PKCE) login against the OpenSea authorization server; falls back to device flow for headless environments
+- **login** - Keyless OAuth 2.1 (authorization-code + PKCE) login against the OpenSea authorization server, or SIWE sign-in with a private key (`--private-key`) for server-side agents; falls back to device flow (`--device`) for headless environments
 - **wallet** - Inspect the active wallet adapter's security posture
+- **whoami** - Show the current authenticated wallet, scopes, and project roles decoded from the persisted access token (CLI only — no SDK class)
 
 ## Conventions
 

@@ -17,6 +17,7 @@ import {
   DEFAULT_TOKEN_TTL_SECONDS,
   exchangeScopedToken,
   loginWithSiwe,
+  refreshSiweSession,
 } from "../auth/siwe-login.js"
 import {
   clearTokens,
@@ -100,6 +101,7 @@ export function authCommand(
         accessToken: result.accessToken,
         refreshToken: result.refreshToken,
         scopedTokenId: result.scopedTokenId,
+        sessionCookie: result.sessionCookie,
         expiresAt: result.expiresAt.toISOString(),
         requestedScopes: result.requestedScopes,
         scopes: result.scopes,
@@ -368,12 +370,25 @@ export function authCommand(
       }
       const baseUrl = getBaseUrl() ?? DEFAULT_BASE_URL
       let res: Response
-      if (token.authMethod === "siwe" && token.scopedTokenId) {
+      if (token.authMethod === "siwe") {
+        if (!token.scopedTokenId || !token.sessionCookie) {
+          throw new Error(
+            "Stored SIWE login cannot manage its token. Run `opensea login --private-key` again.",
+          )
+        }
+        const refreshedCookie = await refreshSiweSession(
+          baseUrl,
+          token.sessionCookie,
+        )
+        // Refresh tokens rotate. Persist the replacement before revocation so
+        // a transient DELETE failure can be retried without reusing the old
+        // session token.
+        saveToken({ ...token, sessionCookie: refreshedCookie })
         res = await fetch(
           `${baseUrl}/api/v2/auth/tokens/${token.scopedTokenId}`,
           {
             method: "DELETE",
-            headers: { Authorization: `Bearer ${token.accessToken}` },
+            headers: { Cookie: refreshedCookie },
           },
         )
       } else {

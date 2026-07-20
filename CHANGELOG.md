@@ -1,5 +1,15 @@
 # @opensea/cli
 
+## 1.14.1
+
+### Patch Changes
+
+- 06e96e1: Use the current SIWE session, scoped-token creation, token-exchange, session refresh, and session-only revocation endpoints in the SDK and CLI.
+- Updated dependencies [06e96e1]
+- Updated dependencies [feb1446]
+  - @opensea/sdk@11.4.9
+  - @opensea/api-types@0.8.2
+
 ## 1.14.0
 
 ### Minor Changes

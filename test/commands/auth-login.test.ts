@@ -134,10 +134,11 @@ describe("auth login", () => {
     ]
     expect(verifyUrl).toBe("https://api.opensea.io/api/v2/auth/siwe/verify")
     const verifyBody = JSON.parse(verifyInit.body as string) as {
-      message: { accountType: string }
+      message: { accountType: string; resources?: string[] }
       chainArch: string
     }
     expect(verifyBody.message.accountType).toBe("Ethereum")
+    expect(verifyBody.message.resources).toBeUndefined()
     expect(verifyBody.chainArch).toBe("EVM")
 
     const [createUrl, createInit] = fetchSpy.mock.calls[2] as [
@@ -168,6 +169,8 @@ describe("auth login", () => {
         accessToken: "wallet-jwt",
         refreshToken: "pat-value",
         scopedTokenId: "381768924447939181",
+        sessionCookie:
+          "access_token=session-access; refresh_token=session-refresh",
         requestedScopes: ["write:wallets"],
         scopes: ["write:wallets"],
         authMethod: "siwe",
@@ -250,27 +253,58 @@ describe("auth login", () => {
       accessToken: "wallet-jwt",
       refreshToken: "pat-value",
       scopedTokenId: "381768924447939181",
+      sessionCookie:
+        "access_token=session-access; refresh_token=session-refresh",
       expiresAt: "2030-01-01T00:00:00.000Z",
       requestedScopes: ["write:wallets"],
       scopes: ["write:wallets"],
       address: "0xfba662e1a8e91a350702cf3b87d0c2d2fb4ba57f",
       authMethod: "siwe",
     })
+    const refreshHeaders = new Headers()
+    refreshHeaders.append(
+      "set-cookie",
+      "access_token=rotated-access; Path=/; HttpOnly",
+    )
+    refreshHeaders.append(
+      "set-cookie",
+      "refresh_token=rotated-refresh; Path=/; HttpOnly",
+    )
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
-      .mockResolvedValue(new Response("{}", { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response("{}", { status: 200, headers: refreshHeaders }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
 
     await authCommand(
       () => undefined,
       createCommandTestContext().getFormat,
     ).parseAsync(["revoke"], { from: "user" })
 
-    expect(fetchSpy).toHaveBeenCalledWith(
+    expect(fetchSpy.mock.calls[0]).toEqual([
+      "https://api.opensea.io/api/v2/auth/session/refresh",
+      {
+        method: "POST",
+        headers: {
+          Cookie: "access_token=session-access; refresh_token=session-refresh",
+        },
+      },
+    ])
+    expect(fetchSpy.mock.calls[1]).toEqual([
       "https://api.opensea.io/api/v2/auth/tokens/381768924447939181",
       {
         method: "DELETE",
-        headers: { Authorization: "Bearer wallet-jwt" },
+        headers: {
+          Cookie: "access_token=rotated-access; refresh_token=rotated-refresh",
+        },
       },
+    ])
+    expect(saveToken).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sessionCookie:
+          "access_token=rotated-access; refresh_token=rotated-refresh",
+      }),
     )
     expect(removeToken).toHaveBeenCalledWith(
       "0xfba662e1a8e91a350702cf3b87d0c2d2fb4ba57f",

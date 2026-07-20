@@ -66,7 +66,9 @@ server-side agents, set `OPENSEA_PRIVATE_KEY` and pass `--private-key` (or pass
 environment variable is recommended to keep the key out of shell history. The
 `api request` command supports GET, POST, PUT, PATCH, and DELETE plus JSON body
 files, so newly published scoped endpoints are available without waiting for a
-dedicated command.
+dedicated command. SIWE logins retain the session needed for session-only PAT
+revocation; `opensea auth revoke` refreshes that session before deleting the
+token.
 
 ## Quick Start
 

@@ -164,6 +164,8 @@ describe("whoamiCommand", () => {
       scopeSource: "token_exchange",
       address: "0xabc",
       authMethod: "siwe",
+      scopedTokenId: "pat-id",
+      sessionCookie: "access_token=session; refresh_token=refresh",
     })
     const ctx = createCommandTestContext()
 

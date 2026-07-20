@@ -123,6 +123,7 @@ export function loginCommand(
             accessToken: result.accessToken,
             refreshToken: result.refreshToken,
             scopedTokenId: result.scopedTokenId,
+            sessionCookie: result.sessionCookie,
             expiresAt: result.expiresAt.toISOString(),
             requestedScopes: scopes,
             scopes: result.scopes,

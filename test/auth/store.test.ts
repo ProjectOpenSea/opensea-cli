@@ -114,11 +114,36 @@ describe("auth store", () => {
       ...baseToken,
       authMethod: "siwe" as const,
       scopedTokenId: "381768924447939181",
+      sessionCookie: "access_token=session; refresh_token=refresh",
     }
 
     saveToken(siweToken)
 
     expect(loadCurrentToken()).toEqual(siweToken)
+  })
+
+  test("rejects SIWE stores without session management credentials", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+    mkdirSync(`${testHome}/.opensea`, { recursive: true })
+    writeFileSync(
+      `${testHome}/.opensea/auth.json`,
+      JSON.stringify({
+        currentAddress: "0xabc",
+        tokens: {
+          "0xabc": {
+            ...baseToken,
+            address: "0xabc",
+            authMethod: "siwe",
+            scopedTokenId: "pat-id",
+          },
+        },
+      }),
+    )
+
+    expect(loadCurrentToken()).toBeUndefined()
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("corrupted or incompatible"),
+    )
   })
 
   test("rejects prerelease stores missing requested scopes", () => {

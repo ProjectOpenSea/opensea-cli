@@ -17,6 +17,7 @@ export interface StoredToken {
   accessToken: string
   refreshToken: string
   scopedTokenId?: string
+  sessionCookie?: string
   expiresAt: string
   requestedScopes: string[]
   scopes: string[]
@@ -42,6 +43,7 @@ const storedTokenSchema = z
     accessToken: z.string().min(1),
     refreshToken: z.string().min(1),
     scopedTokenId: z.string().min(1).optional(),
+    sessionCookie: z.string().min(1).optional(),
     expiresAt: z.iso.datetime(),
     requestedScopes: z.array(z.string().min(1)),
     scopes: z.array(z.string().min(1)),
@@ -57,6 +59,23 @@ const storedTokenSchema = z
     authMethod: z.enum(["oauth", "siwe"]),
   })
   .strict()
+  .superRefine((token, context) => {
+    if (token.authMethod !== "siwe") return
+    if (!token.scopedTokenId) {
+      context.addIssue({
+        code: "custom",
+        path: ["scopedTokenId"],
+        message: "SIWE tokens require a scoped token id",
+      })
+    }
+    if (!token.sessionCookie) {
+      context.addIssue({
+        code: "custom",
+        path: ["sessionCookie"],
+        message: "SIWE tokens require session cookies",
+      })
+    }
+  })
 
 const authStoreSchema = z
   .object({
