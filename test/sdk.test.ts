@@ -465,6 +465,27 @@ describe("OpenSeaCLI", () => {
         { limit: 30 },
       )
     })
+
+    it("accountActivity calls correct endpoint with filters", async () => {
+      mockGet.mockResolvedValue({ activities: [] })
+      await sdk.tokens.accountActivity("0xdef", {
+        chains: ["ethereum", "base"],
+        tokens: ["0xaaa", "0xbbb"],
+        type: ["swap", "wrap"],
+        limit: 25,
+        next: "page-1",
+      })
+      expect(mockGet).toHaveBeenCalledWith(
+        "/api/v2/account/0xdef/token-activity",
+        {
+          chains: "ethereum,base",
+          tokens: "0xaaa,0xbbb",
+          type: "swap,wrap",
+          limit: 25,
+          next: "page-1",
+        },
+      )
+    })
   })
 
   describe("search", () => {
@@ -559,7 +580,7 @@ describe("OpenSeaCLI", () => {
         creator: "0x1234",
         sort_by: "newest",
         limit: 10,
-        "cursor.value": "cursor1",
+        cursor: "cursor1",
       })
       expect(result).toEqual(mockResponse)
     })
@@ -575,7 +596,7 @@ describe("OpenSeaCLI", () => {
         creator: undefined,
         sort_by: undefined,
         limit: undefined,
-        "cursor.value": undefined,
+        cursor: undefined,
       })
     })
 
@@ -598,7 +619,7 @@ describe("OpenSeaCLI", () => {
         sort_by: "oldest",
         type: "nft_gated",
         limit: 50,
-        "cursor.value": "page2",
+        cursor: "page2",
       })
     })
 
@@ -609,8 +630,25 @@ describe("OpenSeaCLI", () => {
         sort_by: undefined,
         type: undefined,
         limit: undefined,
-        "cursor.value": undefined,
+        cursor: undefined,
       })
+    })
+
+    it("activity calls correct endpoint with options", async () => {
+      mockGet.mockResolvedValue({ activity: [] })
+      await sdk.tools.activity("8453", "0xabc", "42", {
+        includeCreatorPayments: true,
+        limit: 50,
+        offset: 10,
+      })
+      expect(mockGet).toHaveBeenCalledWith(
+        "/api/v2/tools/8453/0xabc/42/activity",
+        {
+          include_creator_payments: true,
+          limit: 50,
+          offset: 10,
+        },
+      )
     })
   })
 

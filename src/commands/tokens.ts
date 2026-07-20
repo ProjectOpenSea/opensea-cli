@@ -200,6 +200,50 @@ export function tokensCommand(
 
   addPaginationOptions(
     cmd
+      .command("account-activity")
+      .description(
+        "Get fungible token activity for an account (transfers, swaps, wraps, unwraps)",
+      )
+      .argument("<address>", "Account address")
+      .option("--chains <chains>", "Comma-separated chains to filter by")
+      .option(
+        "--tokens <tokens>",
+        "Comma-separated token contract addresses to filter by",
+      )
+      .option(
+        "--type <types>",
+        "Comma-separated activity types (send, receive, swap, wrap, unwrap)",
+      ),
+    "Number of results per page",
+  ).action(
+    async (
+      address: string,
+      options: {
+        limit: string
+        next?: string
+        chains?: string
+        tokens?: string
+        type?: string
+      },
+    ) => {
+      const client = getClient()
+      await outputGet(
+        client,
+        getFormat(),
+        `/api/v2/account/${address}/token-activity`,
+        {
+          chains: options.chains,
+          tokens: options.tokens,
+          type: options.type,
+          limit: parseIntOption(options.limit, "--limit"),
+          next: options.next,
+        },
+      )
+    },
+  )
+
+  addPaginationOptions(
+    cmd
       .command("holders")
       .description(
         "Get paginated holders for a token (with aggregate distribution health)",

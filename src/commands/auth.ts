@@ -1,5 +1,5 @@
 import { AUTH_SCOPES } from "@opensea/api-types"
-import { linkWalletWithSiwx, OPENSEA_SCOPES, OpenSeaOAuth } from "@opensea/sdk"
+import { linkWalletWithSiwx, OpenSeaOAuth } from "@opensea/sdk"
 import {
   createWalletFromEnv,
   PrivateKeyAdapter,
@@ -84,14 +84,23 @@ export function authCommand(
       "--private-key [key]",
       "Use a private key for SIWE login (set OPENSEA_PRIVATE_KEY, or pass the key as the value; using the env var is recommended)",
     )
-    .option(
-      "--scopes <scopes>",
-      "Comma-separated scopes to request",
-      OPENSEA_SCOPES.READ_ELIGIBILITY,
-    )
-    .action(async (opts: { privateKey?: string | true; scopes: string }) => {
+    .option("--scopes <scopes>", "Comma-separated scopes to request")
+    .action(async (opts: { privateKey?: string | true; scopes?: string }) => {
+      if (!opts.scopes?.trim()) {
+        throw new Error(
+          "Private-key login requires --scopes. Run `opensea auth scopes` to list available scopes.",
+        )
+      }
       const baseUrl = getBaseUrl() ?? DEFAULT_BASE_URL
-      const scopes = opts.scopes.split(",").map(s => s.trim())
+      const scopes = opts.scopes
+        .split(",")
+        .map(s => s.trim())
+        .filter(Boolean)
+      if (scopes.length === 0) {
+        throw new Error(
+          "Private-key login requires --scopes. Run `opensea auth scopes` to list available scopes.",
+        )
+      }
       const { privateKey, source } = resolvePrivateKey(opts.privateKey)
       warnIfInlinePrivateKey(source)
 

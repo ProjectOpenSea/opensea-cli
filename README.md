@@ -54,21 +54,20 @@ Get an API key instantly via the command above, or get a full key at [opensea.io
 Wallet-authenticated endpoints also require a scoped token:
 
 ```bash
-opensea login
-opensea auth status
-opensea whoami
-opensea api request GET /api/v2/account/0xYOUR_WALLET/favorites --params '{"limit":1}'
+export OPENSEA_PRIVATE_KEY="..."
+opensea login --private-key --scopes read:favorites
+WALLET=$(opensea --format json whoami | jq -r '.address')
+opensea api request GET "/api/v2/account/$WALLET/favorites" --params '{"limit":1}'
+opensea auth revoke
 ```
 
-Use `--scopes` with `opensea login` to request a narrower scope set. For
-server-side agents, set `OPENSEA_PRIVATE_KEY` and pass `--private-key` (or pass
-`--private-key <key>`) to authenticate with SIWE instead of OAuth. Using the
-environment variable is recommended to keep the key out of shell history. The
-`api request` command supports GET, POST, PUT, PATCH, and DELETE plus JSON body
-files, so newly published scoped endpoints are available without waiting for a
-dedicated command. SIWE logins retain the session needed for session-only PAT
-revocation; `opensea auth revoke` refreshes that session before deleting the
-token.
+Private-key login uses SIWE and requires an explicit `--scopes` list. The
+private key signs locally and is not stored. The CLI
+keeps the session needed to revoke the personal access token (PAT), and
+`api request` sends the stored wallet JWT alongside `OPENSEA_API_KEY`. Use
+`opensea auth refresh` after the JWT expires. For interactive login, run
+`opensea login` without `--private-key`. See the
+[wallet-auth guide](https://docs.opensea.io/reference/auth).
 
 ## Quick Start
 
@@ -109,7 +108,7 @@ opensea --format table collections stats mfers
 | `swaps` | Get swap quotes for token trading |
 | `accounts` | Get account details |
 | `whoami` | Show the current wallet, scopes, and scope source |
-| `api request` | Call any API v2 endpoint with the active API key and scoped token |
+| `api request` | Call any API v2 endpoint with the active API key and wallet JWT |
 
 Global options: `--api-key`, `--chain` (default: ethereum), `--format` (json/table/toon), `--base-url`
 

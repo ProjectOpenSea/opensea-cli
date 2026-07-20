@@ -28,7 +28,6 @@ const DEFAULT_BASE_URL = "https://api.opensea.io"
  * Zitadel's project roles, which can include deferred or internal roles.
  */
 const DEFAULT_SCOPES = AUTH_SCOPES.map(({ name }) => name)
-
 function scopesOutsideRequested(
   requestedScopes: string[],
   grantedScopes: string[],
@@ -84,14 +83,20 @@ export function loginCommand(
         device?: boolean
         browser: boolean
       }) => {
-        const scopes = opts.scopes
+        const requestedScopes = opts.scopes
           ? opts.scopes
               .split(",")
               .map(s => s.trim())
               .filter(Boolean)
-          : [...DEFAULT_SCOPES]
+          : undefined
 
         if (opts.privateKey !== undefined) {
+          if (!requestedScopes?.length) {
+            throw new Error(
+              "Private-key login requires --scopes. Run `opensea auth scopes` to list available scopes.",
+            )
+          }
+          const scopes = requestedScopes
           const { privateKey, source } = resolvePrivateKey(opts.privateKey)
           warnIfInlinePrivateKey(source)
 
@@ -159,6 +164,7 @@ export function loginCommand(
         const clientId = resolveOAuthClientId(opts.clientId)
         const issuer = getAuthBaseUrl?.() ?? DEFAULT_AUTH_BASE_URL
         const oauth = new OpenSeaOAuth({ clientId, issuer })
+        const scopes = requestedScopes ?? [...DEFAULT_SCOPES]
 
         const token = opts.device
           ? await runDeviceFlow(oauth, scopes)

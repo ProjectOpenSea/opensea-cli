@@ -20,6 +20,8 @@ describe("tokensCommand", () => {
     expect(subcommands).toContain("trending")
     expect(subcommands).toContain("top")
     expect(subcommands).toContain("get")
+    expect(subcommands).toContain("activity")
+    expect(subcommands).toContain("account-activity")
     expect(subcommands).toContain("holders")
     expect(subcommands).toContain("liquidity-pools")
   })
@@ -73,6 +75,40 @@ describe("tokensCommand", () => {
 
     expect(ctx.mockClient.get).toHaveBeenCalledWith(
       "/api/v2/chain/ethereum/token/0xabc",
+    )
+  })
+
+  it("account-activity subcommand passes filters and pagination", async () => {
+    ctx.mockClient.get.mockResolvedValue({ activities: [] })
+
+    const cmd = tokensCommand(ctx.getClient, ctx.getFormat)
+    await cmd.parseAsync(
+      [
+        "account-activity",
+        "0xdef",
+        "--chains",
+        "ethereum,base",
+        "--tokens",
+        "0xaaa,0xbbb",
+        "--type",
+        "swap,wrap",
+        "--limit",
+        "25",
+        "--next",
+        "page-1",
+      ],
+      { from: "user" },
+    )
+
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
+      "/api/v2/account/0xdef/token-activity",
+      expect.objectContaining({
+        chains: "ethereum,base",
+        tokens: "0xaaa,0xbbb",
+        type: "swap,wrap",
+        limit: 25,
+        next: "page-1",
+      }),
     )
   })
 

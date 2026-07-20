@@ -55,6 +55,7 @@ import type {
   SweepCollectionRequest,
   SweepCollectionResponse,
   Token,
+  TokenAccountActivityPaginatedResponse,
   TokenBalancePaginatedResponse,
   TokenBalanceSortBy,
   TokenBatchResponse,
@@ -62,6 +63,7 @@ import type {
   TokenHoldersResponse,
   TokenLiquidityPoolsResponse,
   TokenSwapActivityPaginatedResponse,
+  ToolActivityPaginatedResponse,
   ToolListPaginatedResponse,
   ToolSearchPaginatedResponse,
   TraitFilter,
@@ -926,6 +928,25 @@ class TokensAPI {
     })
   }
 
+  async accountActivity(
+    address: string,
+    options?: {
+      chains?: string[]
+      tokens?: string[]
+      type?: string[]
+      limit?: number
+      next?: string
+    },
+  ): Promise<TokenAccountActivityPaginatedResponse> {
+    return this.client.get(`/api/v2/account/${address}/token-activity`, {
+      chains: options?.chains?.join(","),
+      tokens: options?.tokens?.join(","),
+      type: options?.type?.join(","),
+      limit: options?.limit,
+      next: options?.next,
+    })
+  }
+
   async holders(
     chain: Chain,
     address: string,
@@ -1132,7 +1153,7 @@ class ToolsAPI {
         creator: options?.creator,
         sort_by: options?.sortBy,
         limit: options?.limit,
-        "cursor.value": options?.next,
+        cursor: options?.next,
       },
     )
   }
@@ -1157,8 +1178,28 @@ class ToolsAPI {
       sort_by: options?.sortBy,
       type: options?.type,
       limit: options?.limit,
-      "cursor.value": options?.next,
+      cursor: options?.next,
     })
+  }
+
+  async activity(
+    registryChain: string,
+    registryAddr: string,
+    toolId: string,
+    options?: {
+      includeCreatorPayments?: boolean
+      limit?: number
+      offset?: number
+    },
+  ): Promise<ToolActivityPaginatedResponse> {
+    return this.client.get<ToolActivityPaginatedResponse>(
+      `/api/v2/tools/${registryChain}/${registryAddr}/${toolId}/activity`,
+      {
+        include_creator_payments: options?.includeCreatorPayments,
+        limit: options?.limit,
+        offset: options?.offset,
+      },
+    )
   }
 }
 

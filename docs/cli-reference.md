@@ -29,8 +29,8 @@ only and never authorization data.
 
 ```bash
 opensea login [--scopes <scopes>] [--client-id <id>] [--device] [--no-browser]
-opensea login --private-key [--scopes <scopes>]
-opensea login --private-key <key> [--scopes <scopes>]
+opensea login --private-key --scopes <scopes>
+opensea login --private-key <key> --scopes <scopes>
 ```
 
 `login` obtains a scoped access token and stores it in `~/.opensea/auth.json`.
@@ -39,7 +39,8 @@ By default it runs the OAuth 2.1 authorization-code flow in a browser. Use
 URL. Pass `--private-key` to authenticate with SIWE instead of OAuth, which is
 useful for server-side agents. Set `OPENSEA_PRIVATE_KEY` and use `--private-key`
 without a value to keep the key out of shell history; a raw key can be passed as
-an option value when necessary.
+an option value when necessary. Private-key login requires `--scopes` so the
+agent's capabilities are always explicit.
 
 ## Collections
 

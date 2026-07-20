@@ -34,6 +34,7 @@ vi.mock("@opensea/sdk", async importOriginal => {
     OpenSeaOAuth,
     decodeJwtPayload,
     extractWalletAddress: actual.extractWalletAddress,
+    OPENSEA_SCOPES: actual.OPENSEA_SCOPES,
   }
 })
 vi.mock("../../src/auth/oauth-login.js", () => ({ loginWithLoopback }))
@@ -333,28 +334,18 @@ describe("loginCommand", () => {
     expect(loginWithSiwe).not.toHaveBeenCalled()
   })
 
-  it("uses OPENSEA_PRIVATE_KEY when --private-key is passed without a value", async () => {
+  it("requires explicit scopes for private-key login", async () => {
     process.env.OPENSEA_PRIVATE_KEY = "env-private-key"
-    loginWithSiwe.mockResolvedValue({
-      accessToken: "siwe-at",
-      refreshToken: "siwe-rt",
-      scopedTokenId: "siwe-id",
-      sessionCookie: "access_token=session; refresh_token=refresh",
-      expiresAt: new Date("2030-01-01T00:00:00.000Z"),
-      requestedScopes: ["read:eligibility"],
-      scopes: ["read:eligibility"],
-      scopeSource: "token_exchange" as const,
-      address: "0xsiwe",
-    })
 
     const cmd = loginCommand(getFormat)
-    await cmd.parseAsync(["--private-key"], { from: "user" })
+    await expect(
+      cmd.parseAsync(["--private-key"], { from: "user" }),
+    ).rejects.toThrow(
+      "Private-key login requires --scopes. Run `opensea auth scopes` to list available scopes.",
+    )
 
-    expect(loginWithSiwe).toHaveBeenCalledWith({
-      baseUrl: "https://api.opensea.io",
-      privateKey: "env-private-key",
-      scopes: AUTH_SCOPES.map(({ name }) => name),
-    })
+    expect(loginWithSiwe).not.toHaveBeenCalled()
+    expect(saveToken).not.toHaveBeenCalled()
   })
 
   it("warns when a private key is passed as an inline argument", async () => {

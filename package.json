@@ -1,6 +1,6 @@
 {
   "name": "@opensea/cli",
-  "version": "1.14.1",
+  "version": "1.15.0",
   "type": "module",
   "description": "OpenSea CLI - Query the OpenSea API from the command line or programmatically",
   "main": "dist/index.js",
@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@opensea/api-types": "^0.8.2",
-    "@opensea/sdk": "^11.4.9",
+    "@opensea/sdk": "^11.5.0",
     "@opensea/wallet-adapters": "^0.3.3",
     "commander": "^14.0.3",
     "zod": "^4.3.6"

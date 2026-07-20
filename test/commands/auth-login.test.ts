@@ -40,6 +40,17 @@ describe("auth login", () => {
     delete process.env.OPENSEA_PRIVATE_KEY
   })
 
+  it("requires explicit scopes", async () => {
+    await expect(
+      authCommand(
+        () => undefined,
+        createCommandTestContext().getFormat,
+      ).parseAsync(["login", "--private-key", "test-key"], { from: "user" }),
+    ).rejects.toThrow(
+      "Private-key login requires --scopes. Run `opensea auth scopes` to list available scopes.",
+    )
+  })
+
   it("links a wallet with OPENSEA_PRIVATE_KEY and preserves adapter binding", async () => {
     process.env.OPENSEA_AUTH_TOKEN = "wallet-jwt"
     process.env.OPENSEA_PRIVATE_KEY = "fixture-private-key"

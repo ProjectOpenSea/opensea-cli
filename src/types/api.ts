@@ -93,6 +93,8 @@ export type PriceHistoryResponse = Schemas["PriceHistoryResponse"]
 export type OhlcvResponse = Schemas["OhlcvResponse"]
 export type TokenSwapActivityPaginatedResponse =
   Schemas["TokenSwapActivityPaginatedResponse"]
+export type TokenAccountActivityPaginatedResponse =
+  Schemas["TokenAccountActivityPaginatedResponse"]
 export type TokenHoldersResponse = Schemas["TokenHoldersResponse"]
 export type TokenLiquidityPoolsResponse = Schemas["TokenLiquidityPoolsResponse"]
 export type OwnersPaginatedResponse = Schemas["OwnersPaginatedResponse"]
@@ -272,3 +274,5 @@ export interface ValidateMetadataResponse {
 export type RegisteredToolResponse = Schemas["RegisteredToolResponse"]
 export type ToolSearchPaginatedResponse = Schemas["ToolSearchPaginatedResponse"]
 export type ToolListPaginatedResponse = Schemas["ToolListPaginatedResponse"]
+export type ToolActivityPaginatedResponse =
+  Schemas["ToolActivityPaginatedResponse"]

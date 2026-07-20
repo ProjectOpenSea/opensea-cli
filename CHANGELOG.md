@@ -1,5 +1,20 @@
 # @opensea/cli
 
+## 1.15.0
+
+### Minor Changes
+
+- bf5874d: Add `opensea tokens account-activity` to query fungible token activity (transfers, swaps, wraps, unwraps) for an account via `GET /api/v2/account/{address}/token-activity`, and `opensea tools activity` to view payment/usage activity for a registered tool via `GET /api/v2/tools/{registry_chain}/{registry_addr}/{tool_id}/activity`.
+- bf5874d: Add `opensea tools saved` subcommands for listing, saving, and removing saved tools via the wallet-authenticated `GET/POST/DELETE /api/v2/saved-tools` endpoints.
+
+### Patch Changes
+
+- 9bc9708: Require explicit scopes for private-key CLI login, and add typed SDK helpers for the wallet-authenticated social and saved-tools REST endpoints.
+- Updated dependencies [bf5874d]
+- Updated dependencies [bf5874d]
+- Updated dependencies [9bc9708]
+  - @opensea/sdk@11.5.0
+
 ## 1.14.1
 
 ### Patch Changes
