@@ -269,6 +269,51 @@ export interface ValidateMetadataResponse {
   }
 }
 
+// ── Scoped-token write endpoints (social, favorites, orders, profile,
+//    drops, collections, wallets) ────────────────────────────────────
+
+export type WatchlistRequest = Schemas["WatchlistRequest"]
+export type FavoriteResponse = Schemas["FavoriteResponse"]
+export type CancelRequest = Schemas["CancelRequest"]
+export type WalletUnlinkResponse = Schemas["WalletUnlinkResponse"]
+
+export type UpdateProfileSettingsRequest =
+  Schemas["UpdateProfileSettingsRequest"]
+export type UpdateProfileSettingsResponse =
+  Schemas["UpdateProfileSettingsResponse"]
+export type ClaimAccountUsernameRequest = Schemas["ClaimAccountUsernameRequest"]
+export type ClaimAccountUsernameResponse =
+  Schemas["ClaimAccountUsernameResponse"]
+export type UploadProfileImageRequest = Schemas["UploadProfileImageRequest"]
+export type UploadContext = Schemas["UploadContext"]
+export type SetNftPfpRequest = Schemas["SetNftPfpRequest"]
+export type NftPfpResponse = Schemas["NftPfpResponse"]
+export type ClearNftPfpResponse = Schemas["ClearNftPfpResponse"]
+export type CreateProfileShelfRequest = Schemas["CreateProfileShelfRequest"]
+export type ReorderProfileShelvesRequest =
+  Schemas["ReorderProfileShelvesRequest"]
+export type UpdateProfileShelfRequest = Schemas["UpdateProfileShelfRequest"]
+export type ProfileShelfResponse = Schemas["ProfileShelfResponse"]
+export type ProfileShelfActionResponse = Schemas["ProfileShelfActionResponse"]
+
+export type SaveDropEditsRequest = Schemas["SaveDropEditsRequest"]
+export type SavePrerevealDropItemRequest =
+  Schemas["SavePrerevealDropItemRequest"]
+export type SaveSelfMintDropItemRequest = Schemas["SaveSelfMintDropItemRequest"]
+export type UpdateSelfMintDropItemRequest =
+  Schemas["UpdateSelfMintDropItemRequest"]
+export type UpdateDropItemRequest = Schemas["UpdateDropItemRequest"]
+export type UploadDropItemMediaRequest = Schemas["UploadDropItemMediaRequest"]
+export type SaveDropItemMediaRequest = Schemas["SaveDropItemMediaRequest"]
+export type ValidateDropAllowlistRequest =
+  Schemas["ValidateDropAllowlistRequest"]
+
+export type ModifyCollectionRequest = Schemas["ModifyCollectionRequest"]
+export type UpdateCollectionMetadataRequest =
+  Schemas["UpdateCollectionMetadataRequest"]
+export type SetCollectionVisibilityRequest =
+  Schemas["SetCollectionVisibilityRequest"]
+
 // ── Tool Registry types ─────────────────────────────────────────────
 
 export type RegisteredToolResponse = Schemas["RegisteredToolResponse"]

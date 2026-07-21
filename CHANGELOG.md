@@ -1,5 +1,14 @@
 # @opensea/cli
 
+## 1.15.1
+
+### Patch Changes
+
+- 99a5a9e: Add CLI commands for the remaining public scoped-token endpoints: social follow/watch and relationship/followers/following, watchlist add/remove and token/perpetual watchlist reads, order cancellation, wallet unlink, profile writes (settings, username, image upload, NFT PFP set/clear, shelves), drop editing (edits, allowlist, prereveal/self-mint items, item media), and collection editing (modify, metadata, visibility, image upload).
+- Updated dependencies [8df1f43]
+- Updated dependencies [14fcba5]
+  - @opensea/sdk@11.5.1
+
 ## 1.15.0
 
 ### Minor Changes

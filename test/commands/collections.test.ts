@@ -1,6 +1,16 @@
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { collectionsCommand } from "../../src/commands/collections.js"
 import { type CommandTestContext, createCommandTestContext } from "../mocks.js"
+
+function writeTempJson(data: unknown): string {
+  const dir = mkdtempSync(join(tmpdir(), "cli-test-"))
+  const file = join(dir, "body.json")
+  writeFileSync(file, JSON.stringify(data))
+  return file
+}
 
 describe("collectionsCommand", () => {
   let ctx: CommandTestContext
@@ -93,5 +103,62 @@ describe("collectionsCommand", () => {
     expect(ctx.consoleSpy).toHaveBeenCalled()
     const output = ctx.consoleSpy.mock.calls[0][0] as string
     expect(output).toContain("name")
+  })
+
+  it("modify PATCHes the collection with the request body", async () => {
+    ctx.mockClient.patch.mockResolvedValue({ success: true })
+    const body = { description: "gm" }
+    const file = writeTempJson(body)
+
+    const cmd = collectionsCommand(ctx.getClient, ctx.getFormat)
+    try {
+      await cmd.parseAsync(["modify", "cool-cats", "--body", file], {
+        from: "user",
+      })
+    } finally {
+      rmSync(file, { force: true })
+    }
+
+    expect(ctx.mockClient.patch).toHaveBeenCalledWith(
+      "/api/v2/collections/cool-cats",
+      body,
+    )
+  })
+
+  it("set-visibility PATCHes a boolean hidden flag", async () => {
+    ctx.mockClient.patch.mockResolvedValue({ success: true })
+
+    const cmd = collectionsCommand(ctx.getClient, ctx.getFormat)
+    await cmd.parseAsync(["set-visibility", "cool-cats", "--hidden", "true"], {
+      from: "user",
+    })
+
+    expect(ctx.mockClient.patch).toHaveBeenCalledWith(
+      "/api/v2/collections/cool-cats/visibility",
+      { hidden: true },
+    )
+  })
+
+  it("set-visibility rejects a non-boolean --hidden value", async () => {
+    const cmd = collectionsCommand(ctx.getClient, ctx.getFormat)
+    await expect(
+      cmd.parseAsync(["set-visibility", "cool-cats", "--hidden", "maybe"], {
+        from: "user",
+      }),
+    ).rejects.toThrow("--hidden must be 'true' or 'false'")
+  })
+
+  it("upload-image posts the required encoded MIME type to the image endpoint", async () => {
+    ctx.mockClient.post.mockResolvedValue({ upload_url: "https://x" })
+
+    const cmd = collectionsCommand(ctx.getClient, ctx.getFormat)
+    await cmd.parseAsync(
+      ["upload-image", "cool-cats", "logo", "--content-type", "image/png"],
+      { from: "user" },
+    )
+
+    expect(ctx.mockClient.post).toHaveBeenCalledWith(
+      "/api/v2/collections/cool-cats/images/logo?content_type=image%2Fpng",
+    )
   })
 })

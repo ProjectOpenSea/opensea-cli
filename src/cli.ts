@@ -15,6 +15,8 @@ import {
   loginCommand,
   nftsCommand,
   offersCommand,
+  ordersCommand,
+  profileCommand,
   searchCommand,
   swapsCommand,
   tokenGroupsCommand,
@@ -144,8 +146,10 @@ program.addCommand(dropsCommand(getClient, getFormat))
 program.addCommand(nftsCommand(getClient, getFormat))
 program.addCommand(listingsCommand(getClient, getFormat))
 program.addCommand(offersCommand(getClient, getFormat))
+program.addCommand(ordersCommand(getClient, getFormat))
 program.addCommand(eventsCommand(getClient, getFormat))
 program.addCommand(accountsCommand(getClient, getFormat))
+program.addCommand(profileCommand(getClient, getFormat))
 program.addCommand(tokensCommand(getClient, getFormat))
 program.addCommand(tokenGroupsCommand(getClient, getFormat))
 program.addCommand(
@@ -153,6 +157,7 @@ program.addCommand(
     () => program.opts<{ baseUrl?: string }>().baseUrl,
     getFormat,
     () => program.opts<{ authBaseUrl?: string }>().authBaseUrl,
+    getClient,
   ),
 )
 program.addCommand(

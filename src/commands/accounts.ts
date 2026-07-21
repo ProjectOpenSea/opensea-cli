@@ -1,9 +1,17 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
-import { outputGet } from "../output.js"
-import { addPaginationOptions, parseIntOption } from "../parse.js"
-import type { TokenBalanceSortBy } from "../types/index.js"
+import { formatOutput, outputGet } from "../output.js"
+import {
+  addPaginationOptions,
+  parseIntOption,
+  readJsonBodyOption,
+} from "../parse.js"
+import type {
+  FavoriteResponse,
+  TokenBalanceSortBy,
+  WatchlistRequest,
+} from "../types/index.js"
 
 export function accountsCommand(
   getClient: () => OpenSeaClient,
@@ -372,6 +380,187 @@ export function accountsCommand(
       )
     },
   )
+
+  cmd
+    .command("relationship")
+    .description(
+      "Get the authenticated wallet's follow/watch relationship with an account (wallet auth required)",
+    )
+    .argument("<address_or_username>", "Wallet address or OpenSea username")
+    .action(async (addressOrUsername: string) => {
+      const client = getClient()
+      await outputGet(
+        client,
+        getFormat(),
+        `/api/v2/accounts/${addressOrUsername}/relationship`,
+      )
+    })
+
+  addPaginationOptions(
+    cmd
+      .command("followers")
+      .description("List an account's followers")
+      .argument("<address_or_username>", "Wallet address or OpenSea username"),
+  ).action(
+    async (
+      addressOrUsername: string,
+      options: { limit: string; next?: string },
+    ) => {
+      const client = getClient()
+      await outputGet(
+        client,
+        getFormat(),
+        `/api/v2/accounts/${addressOrUsername}/followers`,
+        {
+          limit: parseIntOption(options.limit, "--limit"),
+          cursor: options.next,
+        },
+      )
+    },
+  )
+
+  addPaginationOptions(
+    cmd
+      .command("following")
+      .description("List the accounts an account is following")
+      .argument("<address_or_username>", "Wallet address or OpenSea username"),
+  ).action(
+    async (
+      addressOrUsername: string,
+      options: { limit: string; next?: string },
+    ) => {
+      const client = getClient()
+      await outputGet(
+        client,
+        getFormat(),
+        `/api/v2/accounts/${addressOrUsername}/following`,
+        {
+          limit: parseIntOption(options.limit, "--limit"),
+          cursor: options.next,
+        },
+      )
+    },
+  )
+
+  cmd
+    .command("follow")
+    .description("Follow an account as the authenticated wallet")
+    .argument("<address_or_username>", "Wallet address or OpenSea username")
+    .action(async (addressOrUsername: string) => {
+      const client = getClient()
+      const result = await client.post(
+        `/api/v2/accounts/${addressOrUsername}/follow`,
+      )
+      console.log(formatOutput(result, getFormat()))
+    })
+
+  cmd
+    .command("unfollow")
+    .description("Unfollow an account as the authenticated wallet")
+    .argument("<address_or_username>", "Wallet address or OpenSea username")
+    .action(async (addressOrUsername: string) => {
+      const client = getClient()
+      const result = await client.delete(
+        `/api/v2/accounts/${addressOrUsername}/follow`,
+      )
+      console.log(formatOutput(result, getFormat()))
+    })
+
+  cmd
+    .command("watch")
+    .description("Watch an account as the authenticated wallet")
+    .argument("<address_or_username>", "Wallet address or OpenSea username")
+    .action(async (addressOrUsername: string) => {
+      const client = getClient()
+      const result = await client.post(
+        `/api/v2/accounts/${addressOrUsername}/watch`,
+      )
+      console.log(formatOutput(result, getFormat()))
+    })
+
+  cmd
+    .command("unwatch")
+    .description("Unwatch an account as the authenticated wallet")
+    .argument("<address_or_username>", "Wallet address or OpenSea username")
+    .action(async (addressOrUsername: string) => {
+      const client = getClient()
+      const result = await client.delete(
+        `/api/v2/accounts/${addressOrUsername}/watch`,
+      )
+      console.log(formatOutput(result, getFormat()))
+    })
+
+  cmd
+    .command("token-watchlist")
+    .description(
+      "Get the authenticated wallet's token watchlist (wallet auth required)",
+    )
+    .argument("<address>", "Wallet address")
+    .action(async (address: string) => {
+      const client = getClient()
+      await outputGet(
+        client,
+        getFormat(),
+        `/api/v2/account/${address}/token_watchlist`,
+      )
+    })
+
+  cmd
+    .command("perpetual-watchlist")
+    .description(
+      "Get the authenticated wallet's perpetual watchlist (wallet auth required)",
+    )
+    .argument("<address>", "Wallet address")
+    .action(async (address: string) => {
+      const client = getClient()
+      await outputGet(
+        client,
+        getFormat(),
+        `/api/v2/account/${address}/perpetual_watchlist`,
+      )
+    })
+
+  cmd
+    .command("watchlist-add")
+    .description(
+      "Add an item, collection, or token to the authenticated wallet's watchlist",
+    )
+    .requiredOption(
+      "--body <path>",
+      "Path to JSON file with the WatchlistRequest body",
+    )
+    .action(async (options: { body: string }) => {
+      const client = getClient()
+      const request = readJsonBodyOption<WatchlistRequest>(
+        options.body,
+        "--body",
+      )
+      const result = await client.post<FavoriteResponse>(
+        "/api/v2/watchlist",
+        request,
+      )
+      console.log(formatOutput(result, getFormat()))
+    })
+
+  cmd
+    .command("watchlist-remove")
+    .description("Remove an entry from the authenticated wallet's watchlist")
+    .requiredOption(
+      "--body <path>",
+      "Path to JSON file with the WatchlistRequest body",
+    )
+    .action(async (options: { body: string }) => {
+      const client = getClient()
+      const request = readJsonBodyOption<WatchlistRequest>(
+        options.body,
+        "--body",
+      )
+      const result = await client.delete<FavoriteResponse>(
+        "/api/v2/watchlist",
+        request,
+      )
+      console.log(formatOutput(result, getFormat()))
+    })
 
   return cmd
 }

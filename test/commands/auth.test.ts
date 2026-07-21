@@ -26,6 +26,24 @@ describe("authCommand", () => {
     expect(names).toContain("tokens")
     expect(names).toContain("scopes")
     expect(names).toContain("clear")
+    expect(names).toContain("unlink-wallet")
+  })
+
+  it("unlink-wallet deletes the wallet via the client", async () => {
+    const ctx = createCommandTestContext()
+    ctx.mockClient.delete.mockResolvedValue({ success: true })
+
+    const cmd = authCommand(
+      () => undefined,
+      ctx.getFormat,
+      () => undefined,
+      ctx.getClient,
+    )
+    await cmd.parseAsync(["unlink-wallet", "0xabc"], { from: "user" })
+
+    expect(ctx.mockClient.delete).toHaveBeenCalledWith(
+      "/api/v2/accounts/wallets/0xabc",
+    )
   })
 
   it("request-key POSTs to /api/v2/auth/keys without auth header", async () => {

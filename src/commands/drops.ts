@@ -2,13 +2,25 @@ import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
 import { formatOutput, outputGet } from "../output.js"
-import { addPaginationOptions, parseIntOption } from "../parse.js"
+import {
+  addPaginationOptions,
+  parseIntOption,
+  readJsonBodyOption,
+} from "../parse.js"
 import type {
   Chain,
   DropDeployRequest,
   DropDeployResponse,
   DropEligibilityResponse,
   DropMintResponse,
+  SaveDropEditsRequest,
+  SaveDropItemMediaRequest,
+  SavePrerevealDropItemRequest,
+  SaveSelfMintDropItemRequest,
+  UpdateDropItemRequest,
+  UpdateSelfMintDropItemRequest,
+  UploadDropItemMediaRequest,
+  ValidateDropAllowlistRequest,
 } from "../types/index.js"
 
 export function dropsCommand(
@@ -144,6 +156,184 @@ export function dropsCommand(
         getFormat(),
         `/api/v2/drops/deploy/${chain as Chain}/${txHash}/receipt`,
       )
+    })
+
+  cmd
+    .command("save-edits")
+    .description("Save edits to a drop's stages and settings (Creator Studio)")
+    .argument("<slug>", "Collection slug")
+    .requiredOption(
+      "--body <path>",
+      "Path to JSON file with the SaveDropEditsRequest body",
+    )
+    .action(async (slug: string, options: { body: string }) => {
+      const client = getClient()
+      const request = readJsonBodyOption<SaveDropEditsRequest>(
+        options.body,
+        "--body",
+      )
+      const result = await client.post(`/api/v2/drops/${slug}`, request)
+      console.log(formatOutput(result, getFormat()))
+    })
+
+  cmd
+    .command("create-allowlist-upload")
+    .description("Request a presigned upload for a drop allowlist file")
+    .argument("<slug>", "Collection slug")
+    .action(async (slug: string) => {
+      const client = getClient()
+      const result = await client.post(`/api/v2/drops/${slug}/allowlist`)
+      console.log(formatOutput(result, getFormat()))
+    })
+
+  cmd
+    .command("validate-allowlist")
+    .description("Validate a previously uploaded drop allowlist file")
+    .argument("<slug>", "Collection slug")
+    .requiredOption(
+      "--body <path>",
+      "Path to JSON file with the ValidateDropAllowlistRequest body",
+    )
+    .action(async (slug: string, options: { body: string }) => {
+      const client = getClient()
+      const request = readJsonBodyOption<ValidateDropAllowlistRequest>(
+        options.body,
+        "--body",
+      )
+      const result = await client.post(
+        `/api/v2/drops/${slug}/allowlist/validate`,
+        request,
+      )
+      console.log(formatOutput(result, getFormat()))
+    })
+
+  cmd
+    .command("save-prereveal-item")
+    .description("Save the prereveal item for a drop")
+    .argument("<slug>", "Collection slug")
+    .requiredOption(
+      "--body <path>",
+      "Path to JSON file with the SavePrerevealDropItemRequest body",
+    )
+    .action(async (slug: string, options: { body: string }) => {
+      const client = getClient()
+      const request = readJsonBodyOption<SavePrerevealDropItemRequest>(
+        options.body,
+        "--body",
+      )
+      const result = await client.post(
+        `/api/v2/drops/${slug}/prereveal-item`,
+        request,
+      )
+      console.log(formatOutput(result, getFormat()))
+    })
+
+  cmd
+    .command("save-item")
+    .description("Save a self-mint drop item")
+    .argument("<slug>", "Collection slug")
+    .requiredOption(
+      "--body <path>",
+      "Path to JSON file with the SaveSelfMintDropItemRequest body",
+    )
+    .action(async (slug: string, options: { body: string }) => {
+      const client = getClient()
+      const request = readJsonBodyOption<SaveSelfMintDropItemRequest>(
+        options.body,
+        "--body",
+      )
+      const result = await client.post(`/api/v2/drops/${slug}/items`, request)
+      console.log(formatOutput(result, getFormat()))
+    })
+
+  cmd
+    .command("update-self-mint-item")
+    .description("Replace a self-mint drop item by token id")
+    .argument("<slug>", "Collection slug")
+    .argument("<token_id>", "Token id of the item to update")
+    .requiredOption(
+      "--body <path>",
+      "Path to JSON file with the UpdateSelfMintDropItemRequest body",
+    )
+    .action(
+      async (slug: string, tokenId: string, options: { body: string }) => {
+        const client = getClient()
+        const request = readJsonBodyOption<UpdateSelfMintDropItemRequest>(
+          options.body,
+          "--body",
+        )
+        const result = await client.put(
+          `/api/v2/drops/${slug}/items/${tokenId}`,
+          request,
+        )
+        console.log(formatOutput(result, getFormat()))
+      },
+    )
+
+  cmd
+    .command("update-item")
+    .description("Update fields of a drop item by token id")
+    .argument("<slug>", "Collection slug")
+    .argument("<token_id>", "Token id of the item to update")
+    .requiredOption(
+      "--body <path>",
+      "Path to JSON file with the UpdateDropItemRequest body",
+    )
+    .action(
+      async (slug: string, tokenId: string, options: { body: string }) => {
+        const client = getClient()
+        const request = readJsonBodyOption<UpdateDropItemRequest>(
+          options.body,
+          "--body",
+        )
+        const result = await client.patch(
+          `/api/v2/drops/${slug}/items/${tokenId}`,
+          request,
+        )
+        console.log(formatOutput(result, getFormat()))
+      },
+    )
+
+  cmd
+    .command("create-item-media-upload")
+    .description("Request presigned uploads for drop item media files")
+    .argument("<slug>", "Collection slug")
+    .requiredOption(
+      "--body <path>",
+      "Path to JSON file with the UploadDropItemMediaRequest body",
+    )
+    .action(async (slug: string, options: { body: string }) => {
+      const client = getClient()
+      const request = readJsonBodyOption<UploadDropItemMediaRequest>(
+        options.body,
+        "--body",
+      )
+      const result = await client.post(
+        `/api/v2/drops/${slug}/items/media`,
+        request,
+      )
+      console.log(formatOutput(result, getFormat()))
+    })
+
+  cmd
+    .command("save-item-media")
+    .description("Persist previously uploaded drop item media")
+    .argument("<slug>", "Collection slug")
+    .requiredOption(
+      "--body <path>",
+      "Path to JSON file with the SaveDropItemMediaRequest body",
+    )
+    .action(async (slug: string, options: { body: string }) => {
+      const client = getClient()
+      const request = readJsonBodyOption<SaveDropItemMediaRequest>(
+        options.body,
+        "--body",
+      )
+      const result = await client.post(
+        `/api/v2/drops/${slug}/items/media/save`,
+        request,
+      )
+      console.log(formatOutput(result, getFormat()))
     })
 
   return cmd

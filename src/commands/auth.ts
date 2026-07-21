@@ -26,8 +26,10 @@ import {
   removeToken,
   saveToken,
 } from "../auth/store.js"
+import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
 import { formatOutput } from "../output.js"
+import type { WalletUnlinkResponse } from "../types/index.js"
 
 const DEFAULT_BASE_URL = "https://api.opensea.io"
 
@@ -41,6 +43,7 @@ export function authCommand(
   getBaseUrl: () => string | undefined,
   getFormat: () => OutputFormat,
   getAuthBaseUrl?: () => string | undefined,
+  getClient?: () => OpenSeaClient,
 ): Command {
   const cmd = new Command("auth").description(
     "Authentication and token management",
@@ -250,6 +253,23 @@ export function authCommand(
         }
       },
     )
+
+  cmd
+    .command("unlink-wallet")
+    .description(
+      "Unlink a wallet from the authenticated account (requires write:wallets)",
+    )
+    .argument("<wallet>", "Wallet address to unlink")
+    .action(async (wallet: string) => {
+      if (!getClient) {
+        throw new Error("unlink-wallet is not available in this context")
+      }
+      const client = getClient()
+      const result = await client.delete<WalletUnlinkResponse>(
+        `/api/v2/accounts/wallets/${wallet}`,
+      )
+      console.log(formatOutput(result, getFormat()))
+    })
 
   // --- status ---
   cmd

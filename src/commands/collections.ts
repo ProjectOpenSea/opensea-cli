@@ -15,6 +15,9 @@ import type {
   CollectionBatchResponse,
   CollectionOfferAggregatesPaginatedResponse,
   CollectionOrderBy,
+  ModifyCollectionRequest,
+  SetCollectionVisibilityRequest,
+  UpdateCollectionMetadataRequest,
 } from "../types/index.js"
 
 export function collectionsCommand(
@@ -277,6 +280,95 @@ export function collectionsCommand(
               : undefined,
           },
         )
+      },
+    )
+
+  cmd
+    .command("modify")
+    .description(
+      "Edit a collection's settings (name, description, fees, etc.) — collection editor auth required",
+    )
+    .argument("<slug>", "Collection slug")
+    .requiredOption(
+      "--body <path>",
+      "Path to JSON file with the ModifyCollectionRequest body",
+    )
+    .action(async (slug: string, options: { body: string }) => {
+      const client = getClient()
+      const request = readJsonBodyOption<ModifyCollectionRequest>(
+        options.body,
+        "--body",
+      )
+      const result = await client.patch(`/api/v2/collections/${slug}`, request)
+      console.log(formatOutput(result, getFormat()))
+    })
+
+  cmd
+    .command("update-metadata")
+    .description("Update a collection's about/hero/overview metadata")
+    .argument("<slug>", "Collection slug")
+    .requiredOption(
+      "--body <path>",
+      "Path to JSON file with the UpdateCollectionMetadataRequest body",
+    )
+    .action(async (slug: string, options: { body: string }) => {
+      const client = getClient()
+      const request = readJsonBodyOption<UpdateCollectionMetadataRequest>(
+        options.body,
+        "--body",
+      )
+      const result = await client.patch(
+        `/api/v2/collections/${slug}/metadata`,
+        request,
+      )
+      console.log(formatOutput(result, getFormat()))
+    })
+
+  cmd
+    .command("set-visibility")
+    .description("Show or hide a collection")
+    .argument("<slug>", "Collection slug")
+    .requiredOption(
+      "--hidden <boolean>",
+      "Whether the collection should be hidden (true or false)",
+    )
+    .action(async (slug: string, options: { hidden: string }) => {
+      if (options.hidden !== "true" && options.hidden !== "false") {
+        throw new Error("--hidden must be 'true' or 'false'")
+      }
+      const client = getClient()
+      const body: SetCollectionVisibilityRequest = {
+        hidden: options.hidden === "true",
+      }
+      const result = await client.patch(
+        `/api/v2/collections/${slug}/visibility`,
+        body,
+      )
+      console.log(formatOutput(result, getFormat()))
+    })
+
+  cmd
+    .command("upload-image")
+    .description(
+      "Request a presigned upload for a collection image (logo or banner)",
+    )
+    .argument("<slug>", "Collection slug")
+    .argument("<image_type>", "Image type (e.g. logo, banner)")
+    .requiredOption(
+      "--content-type <mime>",
+      "MIME type of the image to upload (e.g. image/png)",
+    )
+    .action(
+      async (
+        slug: string,
+        imageType: string,
+        options: { contentType: string },
+      ) => {
+        const client = getClient()
+        const result = await client.post(
+          `/api/v2/collections/${slug}/images/${imageType}?content_type=${encodeURIComponent(options.contentType)}`,
+        )
+        console.log(formatOutput(result, getFormat()))
       },
     )
 
