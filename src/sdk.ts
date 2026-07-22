@@ -22,6 +22,8 @@ import type {
   Contract,
   CreateListingActionsRequest,
   CreateListingActionsResponse,
+  CrossChainDropMintRequest,
+  CrossChainDropMintResponse,
   CrossChainFulfillmentResponse,
   DropDeployReceiptResponse,
   DropDeployRequest,
@@ -305,6 +307,18 @@ class DropsAPI {
       minter: options.minter,
       quantity: options.quantity ?? 1,
     })
+  }
+
+  /**
+   * Build ordered transactions for paying on one chain and minting on
+   * another. Submit them in order, then poll `transactions.receipt` with the
+   * returned `receipt_request` until the status is terminal.
+   */
+  async crossChainMint(
+    slug: string,
+    request: CrossChainDropMintRequest,
+  ): Promise<CrossChainDropMintResponse> {
+    return this.client.post(`/api/v2/drops/${slug}/cross_chain_mint`, request)
   }
 
   async deploy(request: DropDeployRequest): Promise<DropDeployResponse> {
@@ -1108,8 +1122,8 @@ export class TransactionsAPI {
 
   /**
    * Fetch the receipt/status for a submitted transaction. Works for all
-   * transaction types: listing fulfillments, cross-chain buys, sweeps, offer
-   * fulfillments, and token swaps.
+   * transaction types: listing fulfillments, cross-chain buys and mints, sweeps,
+   * offer fulfillments, and token swaps.
    */
   async receipt(
     request: TransactionReceiptRequest,

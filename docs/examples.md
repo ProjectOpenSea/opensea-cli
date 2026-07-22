@@ -69,6 +69,23 @@ opensea offers best-for-nft tiny-dinos-eth 1
 opensea offers traits tiny-dinos-eth --type background --value blue --limit 2
 ```
 
+## Cross-chain minting
+
+```bash
+# Build ordered transactions that pay with native currency on Base and mint
+# the drop NFT on its destination chain.
+opensea drops cross-chain-mint pyro-on-ape \
+  --payer 0x1111111111111111111111111111111111111111 \
+  --minter 0x1111111111111111111111111111111111111111 \
+  --payment-chain base \
+  --payment-token 0x0000000000000000000000000000000000000000 \
+  --quantity 1
+
+# After submitting every returned transaction, copy receipt_request from the
+# response into receipt-request.json and poll until SUCCESS or FAILED.
+opensea transactions receipt --request receipt-request.json
+```
+
 ## Events
 
 ```bash

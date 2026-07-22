@@ -164,6 +164,26 @@ describe("OpenSeaCLI", () => {
         quantity: 2,
       })
     })
+
+    it("crossChainMint calls correct endpoint", async () => {
+      mockPost.mockResolvedValue({ transactions: [], receipt_request: {} })
+      const request = {
+        payer: "0xpayer",
+        minter: "0xminter",
+        quantity: 1,
+        payment: {
+          chain: "base",
+          token_address: "0x0000000000000000000000000000000000000000",
+        },
+      }
+
+      await sdk.drops.crossChainMint("pyro-on-ape", request)
+
+      expect(mockPost).toHaveBeenCalledWith(
+        "/api/v2/drops/pyro-on-ape/cross_chain_mint",
+        request,
+      )
+    })
   })
 
   describe("nfts", () => {

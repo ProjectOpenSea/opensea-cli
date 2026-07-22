@@ -20,7 +20,7 @@ export function transactionsCommand(
     .command("receipt")
     .description(
       "Fetch transaction status. Works for listing fulfillments, " +
-        "cross-chain buys, sweeps, offer fulfillments, and token swaps.",
+        "cross-chain buys and mints, sweeps, offer fulfillments, and token swaps.",
     )
     .requiredOption(
       "--request <file>",

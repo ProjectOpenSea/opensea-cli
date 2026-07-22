@@ -86,6 +86,23 @@ const { offers, next } = await client.offers.traits("mfers", {
 })
 ```
 
+## Drops and cross-chain minting
+
+```typescript
+const mint = await client.drops.crossChainMint("pyro-on-ape", {
+  payer: "0x1111111111111111111111111111111111111111",
+  minter: "0x1111111111111111111111111111111111111111",
+  quantity: 1,
+  payment: {
+    chain: "base",
+    token_address: "0x0000000000000000000000000000000000000000",
+  },
+})
+
+// Submit mint.transactions in order, then poll the exact returned request.
+const receipt = await client.transactions.receipt(mint.receipt_request)
+```
+
 ## Events
 
 ```typescript

@@ -9,6 +9,8 @@ import {
 } from "../parse.js"
 import type {
   Chain,
+  CrossChainDropMintRequest,
+  CrossChainDropMintResponse,
   DropDeployRequest,
   DropDeployResponse,
   DropEligibilityResponse,
@@ -102,6 +104,47 @@ export function dropsCommand(
             minter: options.minter,
             quantity: parseIntOption(options.quantity, "--quantity"),
           },
+        )
+        console.log(formatOutput(result, getFormat()))
+      },
+    )
+
+  cmd
+    .command("cross-chain-mint")
+    .description("Build transactions to pay on one chain and mint on another")
+    .argument("<slug>", "Collection slug")
+    .requiredOption("--payer <address>", "Wallet that signs and pays")
+    .requiredOption("--minter <address>", "Wallet that receives the NFT")
+    .requiredOption("--payment-chain <chain>", "Chain used for payment")
+    .requiredOption(
+      "--payment-token <address>",
+      "Payment token contract or the null address for native currency",
+    )
+    .option("--quantity <n>", "Number of tokens to mint", "1")
+    .action(
+      async (
+        slug: string,
+        options: {
+          payer: string
+          minter: string
+          paymentChain: string
+          paymentToken: string
+          quantity: string
+        },
+      ) => {
+        const client = getClient()
+        const request: CrossChainDropMintRequest = {
+          payer: options.payer,
+          minter: options.minter,
+          quantity: parseIntOption(options.quantity, "--quantity"),
+          payment: {
+            chain: options.paymentChain,
+            token_address: options.paymentToken,
+          },
+        }
+        const result = await client.post<CrossChainDropMintResponse>(
+          `/api/v2/drops/${slug}/cross_chain_mint`,
+          request,
         )
         console.log(formatOutput(result, getFormat()))
       },

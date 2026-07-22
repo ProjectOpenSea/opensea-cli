@@ -31,6 +31,7 @@ describe("dropsCommand", () => {
     expect(subcommands).toContain("get")
     expect(subcommands).toContain("eligibility")
     expect(subcommands).toContain("mint")
+    expect(subcommands).toContain("cross-chain-mint")
   })
 
   it("list subcommand passes options", async () => {
@@ -129,6 +130,48 @@ describe("dropsCommand", () => {
     expect(ctx.mockClient.post).toHaveBeenCalledWith(
       "/api/v2/drops/cool-cats/mint",
       { minter: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045", quantity: 2 },
+    )
+  })
+
+  it("cross-chain-mint posts payer, minter, quantity, and payment asset", async () => {
+    ctx.mockClient.post.mockResolvedValue({
+      transactions: [],
+      receipt_request: {
+        swap_quote: { from_assets: [] },
+        relay_request_id: "0xrequest",
+      },
+    })
+
+    const cmd = dropsCommand(ctx.getClient, ctx.getFormat)
+    await cmd.parseAsync(
+      [
+        "cross-chain-mint",
+        "pyro-on-ape",
+        "--payer",
+        "0x1111111111111111111111111111111111111111",
+        "--minter",
+        "0x2222222222222222222222222222222222222222",
+        "--payment-chain",
+        "base",
+        "--payment-token",
+        "0x0000000000000000000000000000000000000000",
+        "--quantity",
+        "2",
+      ],
+      { from: "user" },
+    )
+
+    expect(ctx.mockClient.post).toHaveBeenCalledWith(
+      "/api/v2/drops/pyro-on-ape/cross_chain_mint",
+      {
+        payer: "0x1111111111111111111111111111111111111111",
+        minter: "0x2222222222222222222222222222222222222222",
+        quantity: 2,
+        payment: {
+          chain: "base",
+          token_address: "0x0000000000000000000000000000000000000000",
+        },
+      },
     )
   })
 

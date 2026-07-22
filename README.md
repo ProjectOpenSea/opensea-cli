@@ -102,6 +102,8 @@ opensea --format table collections stats mfers
 | `nfts` | Get, list, refresh metadata, and contract details for NFTs |
 | `listings` | Get all, best, or best-for-nft listings |
 | `offers` | Get all, collection, best-for-nft, and trait offers |
+| `drops` | Query drops and build same-chain or cross-chain mint transactions |
+| `transactions` | Poll transaction and cross-chain receipt status |
 | `events` | List marketplace events (sales, transfers, mints, etc.) |
 | `search` | Search collections, NFTs, tokens, and accounts |
 | `tokens` | Get trending tokens, top tokens, and token details |

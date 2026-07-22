@@ -81,6 +81,25 @@ opensea offers best-for-nft <collection> <token-id>
 opensea offers traits <collection> --type <type> --value <value> [--limit <n>] [--next <cursor>]
 ```
 
+## Drops
+
+```bash
+opensea drops list [--type <type>] [--chains <chains>] [--limit <n>] [--next <cursor>]
+opensea drops get <slug>
+opensea drops mint <slug> --minter <address> [--quantity <n>]
+opensea drops cross-chain-mint <slug> --payer <address> --minter <address> --payment-chain <chain> --payment-token <address> [--quantity <n>]
+```
+
+Cross-chain minting returns ordered transactions plus `receipt_request`.
+Submit the transactions in order, save `receipt_request` unchanged to a JSON
+file, and poll it with the transactions command until the status is terminal.
+
+## Transactions
+
+```bash
+opensea transactions receipt --request <receipt-request.json>
+```
+
 ## Events
 
 ```bash
