@@ -137,6 +137,8 @@ const { asset_events, next } = await client.events.byNFT(
 
 ```typescript
 const account = await client.accounts.get("0x123...")
+const markedAgent = await client.accounts.markAgent("0x123...")
+const clearedAgent = await client.accounts.removeAgent("0x123...")
 ```
 
 ## Tokens
@@ -154,7 +156,17 @@ const { tokens, next } = await client.tokens.top({
 })
 
 const tokenDetails = await client.tokens.get("base", "0x123...")
+
+const activity = await client.tokens.activityStats(
+  "base",
+  "0x4200000000000000000000000000000000000006",
+  { windows: ["1h", "24h"] },
+)
 ```
+
+Token activity stats use the public REST response shape, including
+`computed_at`, `volume_usd`, and `average_trade_usd`. A requested window is
+omitted from `windows` when it has no swaps.
 
 ## Search
 

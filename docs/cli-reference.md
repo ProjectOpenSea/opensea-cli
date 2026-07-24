@@ -125,7 +125,11 @@ opensea search <query> [--types <types>] [--chains <chains>] [--limit <n>]
 opensea tokens trending [--chains <chains>] [--limit <n>] [--next <cursor>]
 opensea tokens top [--chains <chains>] [--limit <n>] [--next <cursor>]
 opensea tokens get <chain> <address>
+opensea tokens activity-stats <chain> <address> [--windows <windows>]
 ```
+
+`--windows` accepts a comma-separated list containing `5m`, `1h`, `4h`, and
+`24h`. If omitted, the API returns every available materialized window.
 
 ## Swaps
 
@@ -137,6 +141,11 @@ opensea swaps quote --from-chain <chain> --from-address <address> --to-chain <ch
 
 ```bash
 opensea accounts get <address>
+opensea accounts mark-agent <wallet>
+opensea accounts remove-agent <wallet>
 ```
+
+Agent designation commands require a wallet-authenticated token with the
+`write:wallets` scope.
 
 > REST list commands support cursor-based pagination. The search command returns a flat list with no cursor. See [pagination.md](pagination.md) for details.

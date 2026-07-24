@@ -58,6 +58,8 @@ import type {
   SweepCollectionResponse,
   Token,
   TokenAccountActivityPaginatedResponse,
+  TokenActivityStatsResponse,
+  TokenActivityStatsWindow,
   TokenBalancePaginatedResponse,
   TokenBalanceSortBy,
   TokenBatchResponse,
@@ -74,6 +76,7 @@ import type {
   TransferRequest,
   TransferResponse,
   ValidateMetadataResponse,
+  WalletAgentStatusResponse,
   WalletPnlResponse,
 } from "./types/index.js"
 import type { TransactionResult, WalletAdapter } from "./wallet/index.js"
@@ -682,6 +685,18 @@ class AccountsAPI {
     return this.client.get(`/api/v2/accounts/${address}`)
   }
 
+  async markAgent(wallet: string): Promise<WalletAgentStatusResponse> {
+    return this.client.put(
+      `/api/v2/accounts/wallets/${encodeURIComponent(wallet)}/agent`,
+    )
+  }
+
+  async removeAgent(wallet: string): Promise<WalletAgentStatusResponse> {
+    return this.client.delete(
+      `/api/v2/accounts/wallets/${encodeURIComponent(wallet)}/agent`,
+    )
+  }
+
   async tokens(
     address: string,
     options?: {
@@ -940,6 +955,17 @@ class TokensAPI {
       limit: options?.limit,
       cursor: options?.next,
     })
+  }
+
+  async activityStats(
+    chain: Chain,
+    address: string,
+    options?: { windows?: TokenActivityStatsWindow[] },
+  ): Promise<TokenActivityStatsResponse> {
+    return this.client.get(
+      `/api/v2/chain/${chain}/token/${address}/activity/stats`,
+      { windows: options?.windows?.join(",") },
+    )
   }
 
   async accountActivity(

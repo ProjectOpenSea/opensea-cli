@@ -55,9 +55,11 @@ Wallet-authenticated endpoints also require a scoped token:
 
 ```bash
 export OPENSEA_PRIVATE_KEY="..."
-opensea login --private-key --scopes read:favorites
+opensea login --private-key --scopes read:favorites,write:wallets
 WALLET=$(opensea --format json whoami | jq -r '.address')
 opensea api request GET "/api/v2/account/$WALLET/favorites" --params '{"limit":1}'
+opensea accounts mark-agent "$WALLET"
+opensea accounts remove-agent "$WALLET"
 opensea auth revoke
 ```
 
@@ -90,6 +92,9 @@ opensea search collections "cool cats"
 # Get trending tokens
 opensea tokens trending --limit 5
 
+# Get materialized token activity for selected windows
+opensea tokens activity-stats base 0x4200000000000000000000000000000000000006 --windows 1h,24h
+
 # Human-readable table output
 opensea --format table collections stats mfers
 ```
@@ -106,9 +111,9 @@ opensea --format table collections stats mfers
 | `transactions` | Poll transaction and cross-chain receipt status |
 | `events` | List marketplace events (sales, transfers, mints, etc.) |
 | `search` | Search collections, NFTs, tokens, and accounts |
-| `tokens` | Get trending tokens, top tokens, and token details |
+| `tokens` | Get trending tokens, top tokens, token details, and activity stats |
 | `swaps` | Get swap quotes for token trading |
-| `accounts` | Get account details |
+| `accounts` | Get account details and manage agent wallet designations |
 | `whoami` | Show the current wallet, scopes, and scope source |
 | `api request` | Call any API v2 endpoint with the active API key and wallet JWT |
 
@@ -130,7 +135,14 @@ const { asset_events } = await client.events.byCollection("mfers", {
   eventType: "sale",
 })
 const { tokens } = await client.tokens.trending({ chains: ["base"], limit: 5 })
+const activity = await client.tokens.activityStats(
+  "base",
+  "0x4200000000000000000000000000000000000006",
+  { windows: ["1h", "24h"] },
+)
 const results = await client.search.collections("mfers", { limit: 5 })
+const markedAgent = await client.accounts.markAgent("0x123...")
+const clearedAgent = await client.accounts.removeAgent("0x123...")
 
 // Error handling
 try {

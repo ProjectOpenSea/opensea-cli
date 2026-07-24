@@ -198,6 +198,26 @@ export function tokensCommand(
     },
   )
 
+  cmd
+    .command("activity-stats")
+    .description(
+      "Get materialized trade count, USD volume, and average trade size for a token",
+    )
+    .argument("<chain>", "Chain")
+    .argument("<address>", "Token contract address")
+    .option("--windows <windows>", "Comma-separated windows (5m, 1h, 4h, 24h)")
+    .action(
+      async (chain: string, address: string, options: { windows?: string }) => {
+        const client = getClient()
+        await outputGet(
+          client,
+          getFormat(),
+          `/api/v2/chain/${chain as Chain}/token/${address}/activity/stats`,
+          { windows: options.windows },
+        )
+      },
+    )
+
   addPaginationOptions(
     cmd
       .command("account-activity")

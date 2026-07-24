@@ -7,6 +7,8 @@ vi.mock("../src/client.js", async importOriginal => {
   const MockOpenSeaClient = vi.fn()
   MockOpenSeaClient.prototype.get = vi.fn()
   MockOpenSeaClient.prototype.post = vi.fn()
+  MockOpenSeaClient.prototype.put = vi.fn()
+  MockOpenSeaClient.prototype.delete = vi.fn()
   MockOpenSeaClient.prototype.getDefaultChain = vi.fn(() => "ethereum")
   MockOpenSeaClient.prototype.getApiKeyPrefix = vi.fn(() => "test...")
   return {
@@ -19,11 +21,15 @@ describe("OpenSeaCLI", () => {
   let sdk: OpenSeaCLI
   let mockGet: ReturnType<typeof vi.fn>
   let mockPost: ReturnType<typeof vi.fn>
+  let mockPut: ReturnType<typeof vi.fn>
+  let mockDelete: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
     sdk = new OpenSeaCLI({ apiKey: "test-key" })
     mockGet = vi.mocked(OpenSeaClient.prototype.get)
     mockPost = vi.mocked(OpenSeaClient.prototype.post)
+    mockPut = vi.mocked(OpenSeaClient.prototype.put)
+    mockDelete = vi.mocked(OpenSeaClient.prototype.delete)
   })
 
   afterEach(() => {
@@ -399,6 +405,22 @@ describe("OpenSeaCLI", () => {
         "/api/v2/accounts/resolve/vitalik.eth",
       )
     })
+
+    it("markAgent calls the wallet agent PUT endpoint", async () => {
+      mockPut.mockResolvedValue({ address: "0xabc", is_agent: true })
+      await sdk.accounts.markAgent("agent/wallet")
+      expect(mockPut).toHaveBeenCalledWith(
+        "/api/v2/accounts/wallets/agent%2Fwallet/agent",
+      )
+    })
+
+    it("removeAgent calls the wallet agent DELETE endpoint", async () => {
+      mockDelete.mockResolvedValue({ address: "0xabc", is_agent: false })
+      await sdk.accounts.removeAgent("agent/wallet")
+      expect(mockDelete).toHaveBeenCalledWith(
+        "/api/v2/accounts/wallets/agent%2Fwallet/agent",
+      )
+    })
   })
 
   describe("tokens", () => {
@@ -456,6 +478,17 @@ describe("OpenSeaCLI", () => {
       mockGet.mockResolvedValue({ address: "0xabc" })
       await sdk.tokens.get("ethereum", "0xabc")
       expect(mockGet).toHaveBeenCalledWith("/api/v2/chain/ethereum/token/0xabc")
+    })
+
+    it("activityStats calls correct endpoint with selected windows", async () => {
+      mockGet.mockResolvedValue({ windows: {} })
+      await sdk.tokens.activityStats("base", "0xabc", {
+        windows: ["1h", "24h"],
+      })
+      expect(mockGet).toHaveBeenCalledWith(
+        "/api/v2/chain/base/token/0xabc/activity/stats",
+        { windows: "1h,24h" },
+      )
     })
 
     it("holders calls correct endpoint with pagination + sort", async () => {

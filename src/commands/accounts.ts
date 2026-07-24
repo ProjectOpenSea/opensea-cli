@@ -10,6 +10,7 @@ import {
 import type {
   FavoriteResponse,
   TokenBalanceSortBy,
+  WalletAgentStatusResponse,
   WatchlistRequest,
 } from "../types/index.js"
 
@@ -26,6 +27,34 @@ export function accountsCommand(
     .action(async (address: string) => {
       const client = getClient()
       await outputGet(client, getFormat(), `/api/v2/accounts/${address}`)
+    })
+
+  cmd
+    .command("mark-agent")
+    .description(
+      "Mark a registered wallet as an agent (requires write:wallets)",
+    )
+    .argument("<wallet>", "Registered wallet address")
+    .action(async (wallet: string) => {
+      const client = getClient()
+      const result = await client.put<WalletAgentStatusResponse>(
+        `/api/v2/accounts/wallets/${encodeURIComponent(wallet)}/agent`,
+      )
+      console.log(formatOutput(result, getFormat()))
+    })
+
+  cmd
+    .command("remove-agent")
+    .description(
+      "Remove a registered wallet's agent designation (requires write:wallets)",
+    )
+    .argument("<wallet>", "Registered wallet address")
+    .action(async (wallet: string) => {
+      const client = getClient()
+      const result = await client.delete<WalletAgentStatusResponse>(
+        `/api/v2/accounts/wallets/${encodeURIComponent(wallet)}/agent`,
+      )
+      console.log(formatOutput(result, getFormat()))
     })
 
   cmd

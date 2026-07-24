@@ -21,9 +21,25 @@ describe("tokensCommand", () => {
     expect(subcommands).toContain("top")
     expect(subcommands).toContain("get")
     expect(subcommands).toContain("activity")
+    expect(subcommands).toContain("activity-stats")
     expect(subcommands).toContain("account-activity")
     expect(subcommands).toContain("holders")
     expect(subcommands).toContain("liquidity-pools")
+  })
+
+  it("activity-stats subcommand passes selected windows", async () => {
+    ctx.mockClient.get.mockResolvedValue({ windows: {} })
+
+    const cmd = tokensCommand(ctx.getClient, ctx.getFormat)
+    await cmd.parseAsync(
+      ["activity-stats", "base", "0xabc", "--windows", "1h,24h"],
+      { from: "user" },
+    )
+
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
+      "/api/v2/chain/base/token/0xabc/activity/stats",
+      { windows: "1h,24h" },
+    )
   })
 
   it("trending subcommand passes options", async () => {

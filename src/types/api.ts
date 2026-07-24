@@ -95,6 +95,9 @@ export type PriceHistoryResponse = Schemas["PriceHistoryResponse"]
 export type OhlcvResponse = Schemas["OhlcvResponse"]
 export type TokenSwapActivityPaginatedResponse =
   Schemas["TokenSwapActivityPaginatedResponse"]
+export type TokenActivityStatsResponse = Schemas["TokenActivityStatsResponse"]
+export type TokenActivityWindowStatsResponse =
+  Schemas["TokenActivityWindowStatsResponse"]
 export type TokenAccountActivityPaginatedResponse =
   Schemas["TokenAccountActivityPaginatedResponse"]
 export type TokenHoldersResponse = Schemas["TokenHoldersResponse"]
@@ -123,6 +126,8 @@ export interface TraitFilter {
   traitType: string
   value: string
 }
+
+export type TokenActivityStatsWindow = "5m" | "1h" | "4h" | "24h"
 
 // ── CLI-specific types (not from API spec) ──────────────────────────
 
@@ -278,6 +283,7 @@ export type WatchlistRequest = Schemas["WatchlistRequest"]
 export type FavoriteResponse = Schemas["FavoriteResponse"]
 export type CancelRequest = Schemas["CancelRequest"]
 export type WalletUnlinkResponse = Schemas["WalletUnlinkResponse"]
+export type WalletAgentStatusResponse = Schemas["WalletAgentStatusResponse"]
 
 export type UpdateProfileSettingsRequest =
   Schemas["UpdateProfileSettingsRequest"]
