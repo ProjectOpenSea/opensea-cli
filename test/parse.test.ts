@@ -27,6 +27,17 @@ describe("parseIntOption", () => {
       'Invalid value for --limit: "" is not an integer',
     )
   })
+
+  it.each([
+    "10foo",
+    "1.9",
+    "1e2",
+    "0x10",
+  ])('throws when "%s" is not entirely an integer', value => {
+    expect(() => parseIntOption(value, "--limit")).toThrow(
+      `Invalid value for --limit: "${value}" is not an integer`,
+    )
+  })
 })
 
 describe("parseFloatOption", () => {
@@ -34,6 +45,9 @@ describe("parseFloatOption", () => {
     expect(parseFloatOption("0.5", "--slippage")).toBe(0.5)
     expect(parseFloatOption("1", "--slippage")).toBe(1)
     expect(parseFloatOption("0.01", "--slippage")).toBe(0.01)
+    expect(parseFloatOption(".5", "--slippage")).toBe(0.5)
+    expect(parseFloatOption("1.", "--slippage")).toBe(1)
+    expect(parseFloatOption("1e-2", "--slippage")).toBe(0.01)
   })
 
   it("throws on non-numeric strings", () => {
@@ -45,6 +59,17 @@ describe("parseFloatOption", () => {
   it("throws on empty string", () => {
     expect(() => parseFloatOption("", "--slippage")).toThrow(
       'Invalid value for --slippage: "" is not a number',
+    )
+  })
+
+  it.each([
+    "0.5oops",
+    "0.01%",
+    "Infinity",
+    "1e309",
+  ])('throws when "%s" is not an entirely finite number', value => {
+    expect(() => parseFloatOption(value, "--slippage")).toThrow(
+      `Invalid value for --slippage: "${value}" is not a number`,
     )
   })
 })
