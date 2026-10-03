@@ -96,7 +96,7 @@ opensea nfts list-by-collection mfers --limit 5
 opensea listings best mfers --limit 5
 
 # Search across OpenSea
-opensea search collections "cool cats"
+opensea search "cool cats" --types collection
 
 # Get trending tokens
 opensea tokens trending --limit 5
@@ -160,7 +160,10 @@ const activity = await client.tokens.activityStats(
   "0x4200000000000000000000000000000000000006",
   { windows: ["1h", "24h"] },
 )
-const results = await client.search.collections("mfers", { limit: 5 })
+const results = await client.search.query("mfers", {
+    assetTypes: ["collection"],
+    limit: 5,
+})
 const declared = await client.agent.declare()
 const { relationships } = await client.agent.list()
 
