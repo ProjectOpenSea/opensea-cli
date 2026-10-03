@@ -1,5 +1,14 @@
 # @opensea/cli
 
+## 2.11.1
+
+### Patch Changes
+
+- 731e93d: Docs: the SDK guide's exports table no longer points at the internal `types/api.ts` path.
+- Updated dependencies [731e93d]
+- Updated dependencies [75baa66]
+  - @opensea/sdk@12.11.2
+
 ## 2.11.0
 
 ### Minor Changes
