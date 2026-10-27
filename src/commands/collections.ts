@@ -161,7 +161,7 @@ export function collectionsCommand(
     const client = getClient()
     await outputGet(client, getFormat(), "/api/v2/pfp/top-collections", {
       limit: parseIntOption(options.limit, "--limit"),
-      chain: options.chain as Chain | undefined,
+      chains: options.chain as Chain | undefined,
     })
   })
 

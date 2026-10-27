@@ -290,7 +290,7 @@ export class CollectionsAPI {
   }): Promise<TopPfpCollectionsResponse> {
     return this.client.get("/api/v2/pfp/top-collections", {
       limit: options.limit,
-      chain: options.chain,
+      chains: options.chain,
     })
   }
 

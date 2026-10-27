@@ -144,7 +144,7 @@ describe("OpenSeaCLI", () => {
       )
     })
 
-    it("topPfp sends limit and chain", async () => {
+    it("topPfp sends limit, and the chain as chains", async () => {
       const ranked = { collections: [] }
       mockGet.mockResolvedValue(ranked)
       await expect(
@@ -152,7 +152,7 @@ describe("OpenSeaCLI", () => {
       ).resolves.toBe(ranked)
       expect(mockGet).toHaveBeenCalledWith("/api/v2/pfp/top-collections", {
         limit: 10,
-        chain: "base",
+        chains: "base",
       })
     })
 

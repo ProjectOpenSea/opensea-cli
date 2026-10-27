@@ -162,7 +162,7 @@ describe("collectionsCommand", () => {
     expect(ctx.consoleSpy).toHaveBeenCalledWith(JSON.stringify(page, null, 2))
   })
 
-  it("top-pfp sends the limit and chain", async () => {
+  it("top-pfp sends the limit, and the chain as chains", async () => {
     const ranked = { collections: [{ rank: 1, pfp_wearer_count: 9 }] }
     ctx.mockClient.get.mockResolvedValue(ranked)
 
@@ -173,7 +173,7 @@ describe("collectionsCommand", () => {
 
     expect(ctx.mockClient.get).toHaveBeenCalledWith(
       "/api/v2/pfp/top-collections",
-      { limit: 50, chain: "base" },
+      { limit: 50, chains: "base" },
     )
     expect(ctx.consoleSpy).toHaveBeenCalledWith(JSON.stringify(ranked, null, 2))
   })
@@ -186,7 +186,7 @@ describe("collectionsCommand", () => {
 
     expect(ctx.mockClient.get).toHaveBeenCalledWith(
       "/api/v2/pfp/top-collections",
-      { limit: 20, chain: undefined },
+      { limit: 20, chains: undefined },
     )
   })
 

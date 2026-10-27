@@ -1,5 +1,16 @@
 # @opensea/cli
 
+## 3.0.2
+
+### Patch Changes
+
+- 09ed4ac: `opensea collections top-pfp --chain <chain>` and `OpenSeaCLI.collections.topPfp({ chain })` now send the chain as `chains`, because `GET /api/v2/pfp/top-collections` deprecated its `chain` parameter in favor of `chains`. The ranking is the same. The `getTopPfpCollections` doc comment now points to `args.chains`.
+- Updated dependencies [c06c3a6]
+- Updated dependencies [002e5ae]
+- Updated dependencies [09ed4ac]
+  - @opensea/sdk@12.13.2
+  - @opensea/api-types@0.17.1
+
 ## 3.0.1
 
 ### Patch Changes
