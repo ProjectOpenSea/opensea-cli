@@ -178,8 +178,7 @@ export function authCommand(
     )
     .option(
       "--statement <statement>",
-      "Override the SIWX statement",
-      "Click to sign in and accept the Platform Terms of Service (https://opensea.io/tos) and Privacy Policy (https://opensea.io/privacy).",
+      "Deprecated and ignored; the API issues the statement with the wallet-link nonce",
     )
     .option(
       "--auth-base-url <url>",
@@ -200,7 +199,6 @@ export function authCommand(
         chainId: string
         domain?: string
         uri?: string
-        statement?: string
         authBaseUrl?: string
         apiBaseUrl?: string
         apiKey?: string
@@ -241,7 +239,6 @@ export function authCommand(
               apiBaseUrl: opts.apiBaseUrl ?? DEFAULT_BASE_URL,
               domain: opts.domain,
               uri: opts.uri,
-              statement: opts.statement,
             },
           )
 

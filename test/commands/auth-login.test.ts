@@ -57,9 +57,13 @@ describe("auth login", () => {
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ nonce: "abcd1234efgh5678" }), {
-          status: 200,
-        }),
+        new Response(
+          JSON.stringify({
+            nonce: "abcd1234efgh5678",
+            statement: "Link this wallet to your OpenSea account.",
+          }),
+          { status: 200 },
+        ),
       )
       .mockResolvedValueOnce(
         new Response(
