@@ -84,12 +84,21 @@ export function nftsCommand(
       cmd
         .command("list-by-collection")
         .description("List NFTs in a collection")
-        .argument("<slug>", "Collection slug"),
+        .argument("<slug>", "Collection slug")
+        .option(
+          "--has-agent-binding <bool>",
+          "Only NFTs that do (true) or do not (false) have an ERC-8217 agent binding",
+        ),
     ),
   ).action(
     async (
       slug: string,
-      options: { limit: string; next?: string; traits?: string },
+      options: {
+        limit: string
+        next?: string
+        traits?: string
+        hasAgentBinding?: string
+      },
     ) => {
       const client = getClient()
       await outputGet(
@@ -102,6 +111,13 @@ export function nftsCommand(
           traits: options.traits
             ? parseTraitsOption(options.traits)
             : undefined,
+          has_agent_binding:
+            options.hasAgentBinding !== undefined
+              ? parseBooleanOption(
+                  options.hasAgentBinding,
+                  "--has-agent-binding",
+                )
+              : undefined,
         },
       )
     },

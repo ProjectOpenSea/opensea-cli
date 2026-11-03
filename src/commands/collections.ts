@@ -10,6 +10,7 @@ import {
   addPaginationOptions,
   addSortDirectionOption,
   parseBooleanOption,
+  parseFloatOption,
   parseIntOption,
   pathSegment,
   readJsonBodyOption,
@@ -156,14 +157,49 @@ export function collectionsCommand(
       .description(
         "Get collections ranked by how many accounts wear one of their verified NFTs as a profile picture",
       )
-      .option("--limit <limit>", "Number of collections (1-50)", "20"),
-  ).action(async (options: { limit: string; chain?: string }) => {
-    const client = getClient()
-    await outputGet(client, getFormat(), "/api/v2/pfp/top-collections", {
-      limit: parseIntOption(options.limit, "--limit"),
-      chains: options.chain as Chain | undefined,
-    })
-  })
+      .option("--limit <limit>", "Number of collections (1-50)", "20")
+      .option(
+        "--categories <categories>",
+        "Comma-separated categories to rank (e.g. art,gaming,pfps)",
+      )
+      .option(
+        "--min-floor-price-usd <usd>",
+        "Minimum floor price in USD, inclusive",
+      )
+      .option(
+        "--max-floor-price-usd <usd>",
+        "Maximum floor price in USD, inclusive",
+      ),
+  ).action(
+    async (options: {
+      limit: string
+      chain?: string
+      categories?: string
+      minFloorPriceUsd?: string
+      maxFloorPriceUsd?: string
+    }) => {
+      const client = getClient()
+      await outputGet(client, getFormat(), "/api/v2/pfp/top-collections", {
+        limit: parseIntOption(options.limit, "--limit"),
+        chains: options.chain as Chain | undefined,
+        categories: options.categories,
+        min_floor_price_usd:
+          options.minFloorPriceUsd !== undefined
+            ? parseFloatOption(
+                options.minFloorPriceUsd,
+                "--min-floor-price-usd",
+              )
+            : undefined,
+        max_floor_price_usd:
+          options.maxFloorPriceUsd !== undefined
+            ? parseFloatOption(
+                options.maxFloorPriceUsd,
+                "--max-floor-price-usd",
+              )
+            : undefined,
+      })
+    },
+  )
 
   addPaginationOptions(
     cmd

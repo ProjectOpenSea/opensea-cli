@@ -35,10 +35,19 @@ export function listingsCommand(
       .argument("<collection>", "Collection slug"),
   )
     .option("--maker <address>", "Filter by order maker address")
+    .option(
+      "--include-private-listings",
+      "Include private listings (excluded by default)",
+    )
     .action(
       async (
         collection: string,
-        options: { limit: string; next?: string; maker?: string },
+        options: {
+          limit: string
+          next?: string
+          maker?: string
+          includePrivateListings?: boolean
+        },
       ) => {
         const client = getClient()
         await outputGet(
@@ -49,6 +58,7 @@ export function listingsCommand(
             limit: parseIntOption(options.limit, "--limit"),
             next: options.next,
             maker: options.maker,
+            include_private_listings: options.includePrivateListings,
           },
         )
       },
@@ -109,12 +119,21 @@ export function listingsCommand(
       cmd
         .command("best")
         .description("Get best listings for a collection")
-        .argument("<collection>", "Collection slug"),
+        .argument("<collection>", "Collection slug")
+        .option(
+          "--include-private-listings",
+          "Include private listings (excluded by default)",
+        ),
     ),
   ).action(
     async (
       collection: string,
-      options: { limit: string; next?: string; traits?: string },
+      options: {
+        limit: string
+        next?: string
+        traits?: string
+        includePrivateListings?: boolean
+      },
     ) => {
       const client = getClient()
       await outputGet(
@@ -127,6 +146,7 @@ export function listingsCommand(
           traits: options.traits
             ? parseTraitsOption(options.traits)
             : undefined,
+          include_private_listings: options.includePrivateListings,
         },
       )
     },
@@ -137,14 +157,25 @@ export function listingsCommand(
     .description("Get best listing for a specific NFT")
     .argument("<collection>", "Collection slug")
     .argument("<token-id>", "Token ID")
-    .action(async (collection: string, tokenId: string) => {
-      const client = getClient()
-      await outputGet(
-        client,
-        getFormat(),
-        `/api/v2/listings/collection/${pathSegment(collection)}/nfts/${pathSegment(tokenId)}/best`,
-      )
-    })
+    .option(
+      "--include-private-listings",
+      "Include private listings (excluded by default)",
+    )
+    .action(
+      async (
+        collection: string,
+        tokenId: string,
+        options: { includePrivateListings?: boolean },
+      ) => {
+        const client = getClient()
+        await outputGet(
+          client,
+          getFormat(),
+          `/api/v2/listings/collection/${pathSegment(collection)}/nfts/${pathSegment(tokenId)}/best`,
+          { include_private_listings: options.includePrivateListings },
+        )
+      },
+    )
 
   cmd
     .command("cross-chain-fulfill")

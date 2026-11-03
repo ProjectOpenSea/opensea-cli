@@ -287,10 +287,16 @@ export class CollectionsAPI {
   async topPfp(options: {
     limit: number
     chain?: Chain
+    categories?: string[]
+    minFloorPriceUsd?: number
+    maxFloorPriceUsd?: number
   }): Promise<TopPfpCollectionsResponse> {
     return this.client.get("/api/v2/pfp/top-collections", {
       limit: options.limit,
       chains: options.chain,
+      categories: options.categories?.join(","),
+      min_floor_price_usd: options.minFloorPriceUsd,
+      max_floor_price_usd: options.maxFloorPriceUsd,
     })
   }
 
@@ -1012,12 +1018,18 @@ class NFTsAPI {
 
   async listByCollection(
     slug: string,
-    options?: { limit?: number; next?: string; traits?: TraitFilter[] },
+    options?: {
+      limit?: number
+      next?: string
+      traits?: TraitFilter[]
+      hasAgentBinding?: boolean
+    },
   ): Promise<{ nfts: NFT[]; next?: string }> {
     return this.client.get(`/api/v2/collection/${pathSegment(slug)}/nfts`, {
       limit: options?.limit,
       next: options?.next,
       traits: encodeTraits(options?.traits),
+      has_agent_binding: options?.hasAgentBinding,
     })
   }
 
@@ -1194,7 +1206,12 @@ class ListingsAPI {
 
   async all(
     collectionSlug: string,
-    options?: { limit?: number; next?: string; maker?: string },
+    options?: {
+      limit?: number
+      next?: string
+      maker?: string
+      includePrivateListings?: boolean
+    },
   ): Promise<{ listings: Listing[]; next?: string }> {
     return this.client.get(
       `/api/v2/listings/collection/${pathSegment(collectionSlug)}/all`,
@@ -1202,13 +1219,19 @@ class ListingsAPI {
         limit: options?.limit,
         next: options?.next,
         maker: options?.maker,
+        include_private_listings: options?.includePrivateListings,
       },
     )
   }
 
   async best(
     collectionSlug: string,
-    options?: { limit?: number; next?: string; traits?: TraitFilter[] },
+    options?: {
+      limit?: number
+      next?: string
+      traits?: TraitFilter[]
+      includePrivateListings?: boolean
+    },
   ): Promise<{ listings: Listing[]; next?: string }> {
     return this.client.get(
       `/api/v2/listings/collection/${pathSegment(collectionSlug)}/best`,
@@ -1216,13 +1239,19 @@ class ListingsAPI {
         limit: options?.limit,
         next: options?.next,
         traits: encodeTraits(options?.traits),
+        include_private_listings: options?.includePrivateListings,
       },
     )
   }
 
-  async bestForNFT(collectionSlug: string, tokenId: string): Promise<Listing> {
+  async bestForNFT(
+    collectionSlug: string,
+    tokenId: string,
+    options?: { includePrivateListings?: boolean },
+  ): Promise<Listing> {
     return this.client.get(
       `/api/v2/listings/collection/${pathSegment(collectionSlug)}/nfts/${pathSegment(tokenId)}/best`,
+      { include_private_listings: options?.includePrivateListings },
     )
   }
 
@@ -1344,8 +1373,14 @@ class OffersAPI {
   async traits(
     collectionSlug: string,
     options: {
-      type: string
-      value: string
+      type?: string
+      value?: string
+      mode?: "STRING" | "NUMERIC" | "MULTI"
+      floatValue?: number
+      intValue?: number
+      minValue?: number
+      maxValue?: number
+      traits?: TraitFilter[]
       limit?: number
       next?: string
     },
@@ -1355,6 +1390,12 @@ class OffersAPI {
       {
         type: options.type,
         value: options.value,
+        mode: options.mode,
+        float_value: options.floatValue,
+        int_value: options.intValue,
+        min_value: options.minValue,
+        max_value: options.maxValue,
+        traits: encodeTraits(options.traits),
         limit: options.limit,
         next: options.next,
       },
@@ -1840,6 +1881,8 @@ class TokensAPI {
   async trending(options?: {
     limit?: number
     chains?: string[]
+    sortBy?: string
+    sortDirection?: "asc" | "desc"
     next?: string
   }): Promise<{ tokens: Token[]; next?: string }> {
     // The tokens API uses "cursor" as its query param instead of "next".
@@ -1847,6 +1890,8 @@ class TokensAPI {
     return this.client.get("/api/v2/tokens/trending", {
       limit: options?.limit,
       chains: options?.chains?.join(","),
+      sort_by: options?.sortBy,
+      sort_direction: options?.sortDirection,
       cursor: options?.next,
     })
   }
@@ -1854,6 +1899,8 @@ class TokensAPI {
   async top(options?: {
     limit?: number
     chains?: string[]
+    sortBy?: string
+    sortDirection?: "asc" | "desc"
     next?: string
   }): Promise<{ tokens: Token[]; next?: string }> {
     // The tokens API uses "cursor" as its query param instead of "next".
@@ -1861,6 +1908,8 @@ class TokensAPI {
     return this.client.get("/api/v2/tokens/top", {
       limit: options?.limit,
       chains: options?.chains?.join(","),
+      sort_by: options?.sortBy,
+      sort_direction: options?.sortDirection,
       cursor: options?.next,
     })
   }
@@ -2171,6 +2220,9 @@ class ToolsAPI {
     tags?: string[]
     accessType?: string
     creator?: string
+    source?: string
+    collection?: string
+    includeDetails?: boolean
     sortBy?: string
     limit?: number
     next?: string
@@ -2183,6 +2235,9 @@ class ToolsAPI {
         tags: options?.tags?.join(","),
         access_type: options?.accessType,
         creator: options?.creator,
+        source: options?.source,
+        collection: options?.collection,
+        include_details: options?.includeDetails,
         sort_by: options?.sortBy,
         limit: options?.limit,
         cursor: options?.next,
@@ -2203,12 +2258,14 @@ class ToolsAPI {
   async list(options?: {
     sortBy?: string
     type?: string
+    source?: string
     limit?: number
     next?: string
   }): Promise<ToolListPaginatedResponse> {
     return this.client.get<ToolListPaginatedResponse>("/api/v2/tools", {
       sort_by: options?.sortBy,
       type: options?.type,
+      source: options?.source,
       limit: options?.limit,
       cursor: options?.next,
     })

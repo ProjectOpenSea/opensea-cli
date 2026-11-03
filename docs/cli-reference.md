@@ -116,7 +116,7 @@ opensea collections stats <slug>
 opensea collections traits <slug>
 opensea collections trait-floors <slug>
 opensea collections pfp-profiles <slug> [--limit <n>] [--next <cursor>]
-opensea collections top-pfp [--limit <n>] [--chain <chain>]
+opensea collections top-pfp [--limit <n>] [--chain <chain>] [--categories <list>] [--min-floor-price-usd <usd>] [--max-floor-price-usd <usd>]
 ```
 
 `trait-floors` prints the floor price of each text trait value that has at
@@ -181,7 +181,7 @@ whether enforcement is on and whether the contract supports it.
 
 ```bash
 opensea nfts get <chain> <contract> <token-id>
-opensea nfts list-by-collection <slug> [--limit <n>] [--next <cursor>]
+opensea nfts list-by-collection <slug> [--limit <n>] [--next <cursor>] [--traits <json>] [--has-agent-binding <true|false>]
 opensea nfts list-by-contract <chain> <contract> [--limit <n>] [--next <cursor>]
 opensea nfts list-by-account <chain> <address> [--limit <n>] [--next <cursor>] [--include-auto-hidden]
 opensea nfts list-by-group <group> [--franchise <v>] [--grader <v>] [--grade <v>] [--subject <v>] [--year <v>] [--set <v>] [--language <v>] [--edition <v>] [--product-type <v>] [--collection-slug <slug>] [--query <text>] [--is-listed <true|false>] [--min-estimated-value-usd <usd>] [--max-estimated-value-usd <usd>] [--sort-by <field>] [--sort-direction <dir>] [--limit <n>] [--next <cursor>]
@@ -202,9 +202,9 @@ opensea nfts list-by-group trading_cards --franchise Pokemon --grader PSA --grad
 ## Listings
 
 ```bash
-opensea listings all <collection> [--limit <n>] [--next <cursor>]
-opensea listings best <collection> [--limit <n>] [--next <cursor>]
-opensea listings best-for-nft <collection> <token-id>
+opensea listings all <collection> [--limit <n>] [--next <cursor>] [--maker <address>] [--include-private-listings]
+opensea listings best <collection> [--limit <n>] [--next <cursor>] [--traits <json>] [--include-private-listings]
+opensea listings best-for-nft <collection> <token-id> [--include-private-listings]
 opensea listings actions --body <request.json>
 opensea listings fulfillment-actions --body <request.json>
 opensea listings post <chain> --body <signed-order.json> [--protocol seaport]
@@ -217,7 +217,7 @@ opensea listings fulfillment-data --body <request.json>
 opensea offers all <collection> [--limit <n>] [--next <cursor>]
 opensea offers collection <collection> [--limit <n>] [--next <cursor>]
 opensea offers best-for-nft <collection> <token-id>
-opensea offers traits <collection> --type <type> --value <value> [--limit <n>] [--next <cursor>]
+opensea offers traits <collection> [--type <type>] [--value <value>] [--mode <STRING|NUMERIC|MULTI>] [--float-value <n>] [--int-value <n>] [--min-value <n>] [--max-value <n>] [--traits <json>] [--limit <n>] [--next <cursor>]
 opensea offers actions --body <request.json>
 opensea offers fulfillment-actions --body <request.json>
 opensea offers post <chain> --body <signed-order.json> [--protocol seaport]
@@ -380,8 +380,8 @@ opensea search <query> [--types <types>] [--chains <chains>] [--limit <n>]
 ## Tokens
 
 ```bash
-opensea tokens trending [--chains <chains>] [--limit <n>] [--next <cursor>]
-opensea tokens top [--chains <chains>] [--limit <n>] [--next <cursor>]
+opensea tokens trending [--chains <chains>] [--sort-by <field>] [--sort-direction <asc|desc>] [--limit <n>] [--next <cursor>]
+opensea tokens top [--chains <chains>] [--sort-by <field>] [--sort-direction <asc|desc>] [--limit <n>] [--next <cursor>]
 opensea tokens get <chain> <address>
 opensea tokens payment-token <chain> <address>
 opensea tokens activity-stats <chain> <address> [--windows <windows>]

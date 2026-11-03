@@ -74,6 +74,25 @@ describe("tokensCommand", () => {
     )
   })
 
+  it("trending and top pass sort options", async () => {
+    ctx.mockClient.get.mockResolvedValue({ tokens: [] })
+    const cmd = tokensCommand(ctx.getClient, ctx.getFormat)
+
+    for (const sub of ["trending", "top"]) {
+      await cmd.parseAsync(
+        [sub, "--sort-by", "market_cap", "--sort-direction", "asc"],
+        { from: "user" },
+      )
+      expect(ctx.mockClient.get).toHaveBeenLastCalledWith(
+        `/api/v2/tokens/${sub}`,
+        expect.objectContaining({
+          sort_by: "market_cap",
+          sort_direction: "asc",
+        }),
+      )
+    }
+  })
+
   it("top subcommand passes options", async () => {
     ctx.mockClient.get.mockResolvedValue({ tokens: [] })
 

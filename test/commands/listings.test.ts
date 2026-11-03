@@ -76,6 +76,43 @@ describe("listingsCommand", () => {
 
     expect(ctx.mockClient.get).toHaveBeenCalledWith(
       "/api/v2/listings/collection/cool-cats/nfts/123/best",
+      { include_private_listings: undefined },
+    )
+  })
+
+  it("listing subcommands pass --include-private-listings", async () => {
+    ctx.mockClient.get.mockResolvedValue({ listings: [] })
+    const cmd = listingsCommand(ctx.getClient, ctx.getFormat)
+
+    await cmd.parseAsync(
+      ["all", "cool-cats", "--include-private-listings", "--maker", "0xabc"],
+      { from: "user" },
+    )
+    await cmd.parseAsync(["best", "cool-cats", "--include-private-listings"], {
+      from: "user",
+    })
+    await cmd.parseAsync(
+      ["best-for-nft", "cool-cats", "123", "--include-private-listings"],
+      { from: "user" },
+    )
+
+    expect(ctx.mockClient.get).toHaveBeenNthCalledWith(
+      1,
+      "/api/v2/listings/collection/cool-cats/all",
+      expect.objectContaining({
+        include_private_listings: true,
+        maker: "0xabc",
+      }),
+    )
+    expect(ctx.mockClient.get).toHaveBeenNthCalledWith(
+      2,
+      "/api/v2/listings/collection/cool-cats/best",
+      expect.objectContaining({ include_private_listings: true }),
+    )
+    expect(ctx.mockClient.get).toHaveBeenNthCalledWith(
+      3,
+      "/api/v2/listings/collection/cool-cats/nfts/123/best",
+      { include_private_listings: true },
     )
   })
 

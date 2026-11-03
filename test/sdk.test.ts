@@ -562,9 +562,12 @@ describe("OpenSeaCLI", () => {
 
     it("bestForNFT calls correct endpoint", async () => {
       mockGet.mockResolvedValue({})
-      await sdk.listings.bestForNFT("slug", "123")
+      await sdk.listings.bestForNFT("slug", "123", {
+        includePrivateListings: true,
+      })
       expect(mockGet).toHaveBeenCalledWith(
         "/api/v2/listings/collection/slug/nfts/123/best",
+        { include_private_listings: true },
       )
     })
 
@@ -664,6 +667,25 @@ describe("OpenSeaCLI", () => {
       expect(mockGet).toHaveBeenCalledWith(
         "/api/v2/offers/collection/slug/traits",
         { type: "Background", value: "Blue", limit: 10, next: undefined },
+      )
+    })
+
+    it("traits sends numeric and multi-trait filters", async () => {
+      mockGet.mockResolvedValue({ offers: [] })
+      await sdk.offers.traits("slug", {
+        mode: "MULTI",
+        traits: [{ traitType: "Background", value: "Blue" }],
+        minValue: 1,
+        maxValue: 2,
+      })
+      expect(mockGet).toHaveBeenCalledWith(
+        "/api/v2/offers/collection/slug/traits",
+        expect.objectContaining({
+          mode: "MULTI",
+          traits: '[{"traitType":"Background","value":"Blue"}]',
+          min_value: 1,
+          max_value: 2,
+        }),
       )
     })
 
@@ -985,6 +1007,25 @@ describe("OpenSeaCLI", () => {
       )
       expect(mockGet).toHaveBeenCalledWith(
         "/api/v2/chain/base/payment_token/0xabc%2Fx",
+      )
+    })
+
+    it("trending and top send sort options", async () => {
+      mockGet.mockResolvedValue({ tokens: [] })
+      await sdk.tokens.trending({ sortBy: "market_cap", sortDirection: "asc" })
+      await sdk.tokens.top({ sortBy: "price", sortDirection: "desc" })
+      expect(mockGet).toHaveBeenNthCalledWith(
+        1,
+        "/api/v2/tokens/trending",
+        expect.objectContaining({
+          sort_by: "market_cap",
+          sort_direction: "asc",
+        }),
+      )
+      expect(mockGet).toHaveBeenNthCalledWith(
+        2,
+        "/api/v2/tokens/top",
+        expect.objectContaining({ sort_by: "price", sort_direction: "desc" }),
       )
     })
 

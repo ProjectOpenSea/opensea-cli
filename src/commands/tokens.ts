@@ -28,17 +28,31 @@ export function tokensCommand(
         "Comma-separated list of chains to filter by",
       ),
     "Number of results (max 100)",
-  ).action(
-    async (options: { chains?: string; limit: string; next?: string }) => {
-      const client = getClient()
-      await outputGet(client, getFormat(), "/api/v2/tokens/trending", {
-        chains: options.chains,
-        limit: parseIntOption(options.limit, "--limit"),
-        // Tokens API uses "cursor" instead of "next" as the query param
-        cursor: options.next,
-      })
-    },
   )
+    .option(
+      "--sort-by <field>",
+      "Sort field (market_cap, fdv, one_hour_volume, one_day_volume, one_hour_price_change, one_day_price_change, seven_day_price_change, fourteen_day_price_change, thirty_day_price_change, two_hundred_day_price_change, one_year_price_change, price, genesis_date, score)",
+    )
+    .option("--sort-direction <dir>", "Sort direction (asc, desc)")
+    .action(
+      async (options: {
+        chains?: string
+        sortBy?: string
+        sortDirection?: string
+        limit: string
+        next?: string
+      }) => {
+        const client = getClient()
+        await outputGet(client, getFormat(), "/api/v2/tokens/trending", {
+          chains: options.chains,
+          sort_by: options.sortBy,
+          sort_direction: options.sortDirection,
+          limit: parseIntOption(options.limit, "--limit"),
+          // Tokens API uses "cursor" instead of "next" as the query param
+          cursor: options.next,
+        })
+      },
+    )
 
   addPaginationOptions(
     cmd
@@ -49,17 +63,31 @@ export function tokensCommand(
         "Comma-separated list of chains to filter by",
       ),
     "Number of results (max 100)",
-  ).action(
-    async (options: { chains?: string; limit: string; next?: string }) => {
-      const client = getClient()
-      await outputGet(client, getFormat(), "/api/v2/tokens/top", {
-        chains: options.chains,
-        limit: parseIntOption(options.limit, "--limit"),
-        // Tokens API uses "cursor" instead of "next" as the query param
-        cursor: options.next,
-      })
-    },
   )
+    .option(
+      "--sort-by <field>",
+      "Sort field (market_cap, fdv, one_hour_volume, one_day_volume, one_hour_price_change, one_day_price_change, seven_day_price_change, fourteen_day_price_change, thirty_day_price_change, two_hundred_day_price_change, one_year_price_change, price, genesis_date, score)",
+    )
+    .option("--sort-direction <dir>", "Sort direction (asc, desc)")
+    .action(
+      async (options: {
+        chains?: string
+        sortBy?: string
+        sortDirection?: string
+        limit: string
+        next?: string
+      }) => {
+        const client = getClient()
+        await outputGet(client, getFormat(), "/api/v2/tokens/top", {
+          chains: options.chains,
+          sort_by: options.sortBy,
+          sort_direction: options.sortDirection,
+          limit: parseIntOption(options.limit, "--limit"),
+          // Tokens API uses "cursor" instead of "next" as the query param
+          cursor: options.next,
+        })
+      },
+    )
 
   cmd
     .command("get")

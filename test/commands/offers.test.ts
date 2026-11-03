@@ -79,6 +79,79 @@ describe("offersCommand", () => {
     )
   })
 
+  it("traits subcommand sends a numeric range", async () => {
+    ctx.mockClient.get.mockResolvedValue({ offers: [] })
+    const cmd = offersCommand(ctx.getClient, ctx.getFormat)
+
+    await cmd.parseAsync(
+      [
+        "traits",
+        "cool-cats",
+        "--type",
+        "Level",
+        "--mode",
+        "NUMERIC",
+        "--min-value",
+        "1",
+        "--max-value",
+        "5.5",
+      ],
+      { from: "user" },
+    )
+
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
+      "/api/v2/offers/collection/cool-cats/traits",
+      expect.objectContaining({
+        type: "Level",
+        mode: "NUMERIC",
+        min_value: 1,
+        max_value: 5.5,
+      }),
+    )
+  })
+
+  it("traits subcommand sends multi-trait filters and numeric values", async () => {
+    ctx.mockClient.get.mockResolvedValue({ offers: [] })
+    const cmd = offersCommand(ctx.getClient, ctx.getFormat)
+    const traits = '[{"traitType":"Background","value":"Red"}]'
+
+    await cmd.parseAsync(["traits", "cool-cats", "--traits", traits], {
+      from: "user",
+    })
+    await cmd.parseAsync(
+      ["traits", "cool-cats", "--type", "Level", "--int-value", "3"],
+      { from: "user" },
+    )
+
+    expect(ctx.mockClient.get).toHaveBeenNthCalledWith(
+      1,
+      "/api/v2/offers/collection/cool-cats/traits",
+      expect.objectContaining({ traits }),
+    )
+    expect(ctx.mockClient.get).toHaveBeenNthCalledWith(
+      2,
+      "/api/v2/offers/collection/cool-cats/traits",
+      expect.objectContaining({ type: "Level", int_value: 3 }),
+    )
+  })
+
+  it("traits subcommand requires --type or --traits", async () => {
+    const cmd = offersCommand(ctx.getClient, ctx.getFormat)
+    await expect(
+      cmd.parseAsync(["traits", "cool-cats"], { from: "user" }),
+    ).rejects.toThrow("Provide --type or --traits")
+  })
+
+  it("traits subcommand rejects a non-numeric --min-value", async () => {
+    const cmd = offersCommand(ctx.getClient, ctx.getFormat)
+    await expect(
+      cmd.parseAsync(
+        ["traits", "cool-cats", "--type", "Level", "--min-value", "abc"],
+        { from: "user" },
+      ),
+    ).rejects.toThrow("--min-value")
+  })
+
   it("traits subcommand passes required options", async () => {
     ctx.mockClient.get.mockResolvedValue({ offers: [] })
 

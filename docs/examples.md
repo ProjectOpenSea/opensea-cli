@@ -65,8 +65,11 @@ opensea offers collection tiny-dinos-eth --limit 2
 # Get best offer for a specific NFT
 opensea offers best-for-nft tiny-dinos-eth 1
 
-# Get trait offers (type and value are required)
+# Get trait offers for a string trait (--type and --value)
 opensea offers traits tiny-dinos-eth --type background --value blue --limit 2
+# Numeric trait range, or several traits at once
+opensea offers traits tiny-dinos-eth --type level --min-value 1 --max-value 5
+opensea offers traits tiny-dinos-eth --traits '[{"traitType":"background","value":"blue"},{"traitType":"eyes","value":"laser"}]'
 ```
 
 ## Cross-chain minting

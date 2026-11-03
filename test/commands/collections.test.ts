@@ -178,6 +178,33 @@ describe("collectionsCommand", () => {
     expect(ctx.consoleSpy).toHaveBeenCalledWith(JSON.stringify(ranked, null, 2))
   })
 
+  it("top-pfp sends categories and floor price bounds", async () => {
+    ctx.mockClient.get.mockResolvedValue({ collections: [] })
+    const cmd = collectionsCommand(ctx.getClient, ctx.getFormat)
+
+    await cmd.parseAsync(
+      [
+        "top-pfp",
+        "--categories",
+        "art,pfps",
+        "--min-floor-price-usd",
+        "10",
+        "--max-floor-price-usd",
+        "250.5",
+      ],
+      { from: "user" },
+    )
+
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
+      "/api/v2/pfp/top-collections",
+      expect.objectContaining({
+        categories: "art,pfps",
+        min_floor_price_usd: 10,
+        max_floor_price_usd: 250.5,
+      }),
+    )
+  })
+
   it("top-pfp sends the default limit, which the endpoint requires", async () => {
     ctx.mockClient.get.mockResolvedValue({ collections: [] })
 

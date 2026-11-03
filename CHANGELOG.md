@@ -1,5 +1,19 @@
 # @opensea/cli
 
+## 3.1.0
+
+### Minor Changes
+
+- d3b4487: API parity: expose every query param the spec defines on existing operations.
+
+  - SDK: `getAllOffers` and `getAllListings` take `maker`; `getNFTsByCollection` takes `hasAgentBinding`; `getTraitOffers` accepts `undefined` `type`/`value` plus a `TraitOffersFilters` argument (`mode`, `minValue`, `maxValue`, multi-trait `traits`). The deprecated `OpenSeaAPI` forwarders match.
+  - CLI: `tokens trending`/`top` add `--sort-by`/`--sort-direction`; `listings all`/`best`/`best-for-nft` add `--include-private-listings`; `nfts list-by-collection` adds `--has-agent-binding`; `collections top-pfp` adds `--categories`, `--min-floor-price-usd`, `--max-floor-price-usd`; `offers traits` makes `--type`/`--value` optional and adds `--mode`, `--float-value`, `--int-value`, `--min-value`, `--max-value`, `--traits`; `tools search` adds `--source`, `--collection`, `--include-details`; `tools list` adds `--source`. The programmatic `OpenSeaCLI` methods take the same options.
+
+### Patch Changes
+
+- Updated dependencies [d3b4487]
+  - @opensea/sdk@12.15.0
+
 ## 3.0.3
 
 ### Patch Changes

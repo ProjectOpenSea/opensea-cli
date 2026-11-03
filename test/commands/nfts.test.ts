@@ -41,6 +41,21 @@ describe("nftsCommand", () => {
     )
   })
 
+  it("list-by-collection passes --has-agent-binding", async () => {
+    ctx.mockClient.get.mockResolvedValue({ nfts: [] })
+    const cmd = nftsCommand(ctx.getClient, ctx.getFormat)
+
+    await cmd.parseAsync(
+      ["list-by-collection", "cool-cats", "--has-agent-binding", "true"],
+      { from: "user" },
+    )
+
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
+      "/api/v2/collection/cool-cats/nfts",
+      expect.objectContaining({ has_agent_binding: true }),
+    )
+  })
+
   it("list-by-collection passes options", async () => {
     ctx.mockClient.get.mockResolvedValue({ nfts: [] })
 

@@ -71,6 +71,40 @@ describe("toolsCommand", () => {
     )
   })
 
+  it("search subcommand passes source, collection and include-details", async () => {
+    ctx.mockClient.get.mockResolvedValue({ tools: [] })
+    const cmd = toolsCommand(ctx.getClient, ctx.getFormat)
+
+    await cmd.parseAsync(
+      [
+        "search",
+        "--source",
+        "x402_bazaar",
+        "--collection",
+        "cool-cats",
+        "--include-details",
+        "false",
+      ],
+      { from: "user" },
+    )
+
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
+      "/api/v2/tools/search",
+      expect.objectContaining({
+        source: "x402_bazaar",
+        collection: "cool-cats",
+        include_details: false,
+      }),
+    )
+  })
+
+  it("search subcommand rejects an invalid --include-details", async () => {
+    const cmd = toolsCommand(ctx.getClient, ctx.getFormat)
+    await expect(
+      cmd.parseAsync(["search", "--include-details", "yes"], { from: "user" }),
+    ).rejects.toThrow("--include-details must be 'true' or 'false'")
+  })
+
   it("search subcommand with defaults", async () => {
     ctx.mockClient.get.mockResolvedValue({ results: [] })
 
@@ -156,6 +190,18 @@ describe("toolsCommand", () => {
         limit: 50,
         cursor: "page2",
       }),
+    )
+  })
+
+  it("list subcommand passes source", async () => {
+    ctx.mockClient.get.mockResolvedValue({ tools: [] })
+    const cmd = toolsCommand(ctx.getClient, ctx.getFormat)
+
+    await cmd.parseAsync(["list", "--source", "onchain"], { from: "user" })
+
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
+      "/api/v2/tools",
+      expect.objectContaining({ source: "onchain" }),
     )
   })
 

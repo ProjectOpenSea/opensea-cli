@@ -5,6 +5,7 @@ import { formatOutput, outputGet } from "../output.js"
 import {
   addLimitOption,
   addPaginationOptions,
+  parseBooleanOption,
   parseIntOption,
   pathSegment,
 } from "../parse.js"
@@ -32,6 +33,18 @@ export function toolsCommand(
       )
       .option("--creator <address>", "Filter by creator address")
       .option(
+        "--source <source>",
+        "Filter by source (onchain, x402_bazaar, x402_bankr); all sources when omitted",
+      )
+      .option(
+        "--collection <slug>",
+        "Only tools gated by owning an NFT in this collection",
+      )
+      .option(
+        "--include-details <bool>",
+        "Include pricing recipients and access requirements (true, false; default true)",
+      )
+      .option(
         "--sort-by <sort>",
         "Sort order (relevance, newest, most_used)",
         "relevance",
@@ -43,6 +56,9 @@ export function toolsCommand(
       tags?: string
       accessType?: string
       creator?: string
+      source?: string
+      collection?: string
+      includeDetails?: string
       sortBy: string
       limit: string
       next?: string
@@ -54,6 +70,12 @@ export function toolsCommand(
         tags: options.tags,
         access_type: options.accessType,
         creator: options.creator,
+        source: options.source,
+        collection: options.collection,
+        include_details:
+          options.includeDetails !== undefined
+            ? parseBooleanOption(options.includeDetails, "--include-details")
+            : undefined,
         sort_by: options.sortBy,
         limit: parseIntOption(options.limit, "--limit"),
         cursor: options.next,
@@ -129,11 +151,16 @@ export function toolsCommand(
       .option(
         "--type <type>",
         "Filter by access type (open, nft_gated, token_gated, subscription, gated)",
+      )
+      .option(
+        "--source <source>",
+        "Filter by source (onchain, x402_bazaar, x402_bankr); all sources when omitted",
       ),
   ).action(
     async (options: {
       sortBy: string
       type?: string
+      source?: string
       limit: string
       next?: string
     }) => {
@@ -141,6 +168,7 @@ export function toolsCommand(
       await outputGet(client, getFormat(), "/api/v2/tools", {
         sort_by: options.sortBy,
         type: options.type,
+        source: options.source,
         limit: parseIntOption(options.limit, "--limit"),
         cursor: options.next,
       })

@@ -4,7 +4,9 @@ import type { OutputFormat } from "../output.js"
 import { formatOutput, outputGet } from "../output.js"
 import {
   addPaginationOptions,
+  parseFloatOption,
   parseIntOption,
+  parseTraitsOption,
   pathSegment,
   readJsonBodyOption,
 } from "../parse.js"
@@ -116,20 +118,43 @@ export function offersCommand(
   addPaginationOptions(
     cmd
       .command("traits")
-      .description("Get trait offers for a collection")
+      .description(
+        "Get trait offers for a collection: one string trait (--type/--value), a numeric range (--type with --min-value/--max-value), or several traits (--traits)",
+      )
       .argument("<collection>", "Collection slug")
-      .requiredOption("--type <type>", "Trait type (required)")
-      .requiredOption("--value <value>", "Trait value (required)"),
+      .option("--type <type>", "Trait type")
+      .option("--value <value>", "Trait value as a string")
+      .option(
+        "--mode <mode>",
+        "Bid category (STRING, NUMERIC, MULTI); inferred from the other options when omitted",
+      )
+      .option("--float-value <n>", "Trait value as a decimal number")
+      .option("--int-value <n>", "Trait value as an integer")
+      .option("--min-value <n>", "Minimum value for a numeric trait range")
+      .option("--max-value <n>", "Maximum value for a numeric trait range")
+      .option(
+        "--traits <json>",
+        'Multi-trait filters (JSON array, e.g. \'[{"traitType":"Background","value":"Red"}]\')',
+      ),
   ).action(
     async (
       collection: string,
       options: {
-        type: string
-        value: string
+        type?: string
+        value?: string
+        mode?: string
+        floatValue?: string
+        intValue?: string
+        minValue?: string
+        maxValue?: string
+        traits?: string
         limit: string
         next?: string
       },
     ) => {
+      if (!options.type && !options.traits) {
+        throw new Error("Provide --type or --traits")
+      }
       const client = getClient()
       await outputGet(
         client,
@@ -138,6 +163,26 @@ export function offersCommand(
         {
           type: options.type,
           value: options.value,
+          mode: options.mode,
+          float_value:
+            options.floatValue !== undefined
+              ? parseFloatOption(options.floatValue, "--float-value")
+              : undefined,
+          int_value:
+            options.intValue !== undefined
+              ? parseIntOption(options.intValue, "--int-value")
+              : undefined,
+          min_value:
+            options.minValue !== undefined
+              ? parseFloatOption(options.minValue, "--min-value")
+              : undefined,
+          max_value:
+            options.maxValue !== undefined
+              ? parseFloatOption(options.maxValue, "--max-value")
+              : undefined,
+          traits: options.traits
+            ? parseTraitsOption(options.traits)
+            : undefined,
           limit: parseIntOption(options.limit, "--limit"),
           next: options.next,
         },
