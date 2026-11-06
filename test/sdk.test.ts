@@ -53,6 +53,7 @@ describe("OpenSeaCLI", () => {
       expect(sdk.swaps).toBeDefined()
       expect(sdk.health).toBeDefined()
       expect(sdk.tools).toBeDefined()
+      expect(sdk.signals).toBeDefined()
     })
   })
 
@@ -1310,6 +1311,55 @@ describe("OpenSeaCLI", () => {
     })
   })
 
+  describe("signals", () => {
+    it("get calls the signal endpoint", async () => {
+      mockGet.mockResolvedValue({ signal_id: "sig_v1_a" })
+      const result = await sdk.signals.get("sig_v1_a")
+      expect(mockGet).toHaveBeenCalledWith("/api/v2/signals/sig_v1_a")
+      expect(result).toEqual({ signal_id: "sig_v1_a" })
+    })
+
+    it("list maps the subject to snake_case and next to cursor", async () => {
+      const mockResponse = { signals: [], next: "c2" }
+      mockGet.mockResolvedValue(mockResponse)
+      const result = await sdk.signals.list({
+        chain: "base",
+        contract: "0xc",
+        tokenId: "7",
+        limit: 100,
+        next: "c1",
+      })
+      expect(mockGet).toHaveBeenCalledWith("/api/v2/signals", {
+        chain: "base",
+        contract: "0xc",
+        token_id: "7",
+        collection: undefined,
+        limit: 100,
+        cursor: "c1",
+      })
+      expect(result).toEqual(mockResponse)
+    })
+
+    it("create posts the request body unchanged", async () => {
+      mockPost.mockResolvedValue({ signal_id: "sig_v1_new" })
+      const result = await sdk.signals.create({
+        text: "gm",
+        collection: "doodles",
+      })
+      expect(mockPost).toHaveBeenCalledWith("/api/v2/signals", {
+        text: "gm",
+        collection: "doodles",
+      })
+      expect(result).toEqual({ signal_id: "sig_v1_new" })
+    })
+
+    it("delete sends DELETE and resolves to undefined", async () => {
+      mockDelete.mockResolvedValue(undefined)
+      await expect(sdk.signals.delete("sig_v1_a")).resolves.toBeUndefined()
+      expect(mockDelete).toHaveBeenCalledWith("/api/v2/signals/sig_v1_a")
+    })
+  })
+
   describe("health", () => {
     it("check returns ok with auth when both calls succeed", async () => {
       mockGet.mockResolvedValue({})
@@ -1899,6 +1949,16 @@ describe("OpenSeaCLI", () => {
         s => s.tools.activity("base/1", "0xr/2", "t/3"),
         "GET /api/v2/tools/base%2F1/0xr%2F2/t%2F3/activity",
       ],
+      [
+        "signals.get",
+        s => s.signals.get("sig_v1_a/b"),
+        "GET /api/v2/signals/sig_v1_a%2Fb",
+      ],
+      [
+        "signals.delete",
+        s => s.signals.delete("sig_v1_a/b"),
+        "DELETE /api/v2/signals/sig_v1_a%2Fb",
+      ],
     ])("%s encodes every path argument", async (_name, call, path) => {
       await call(sdk)
       expect(requestedPaths()).toEqual([path])
@@ -1910,6 +1970,7 @@ describe("OpenSeaCLI", () => {
       ["accounts.makePrivate ..", s => s.accounts.makePrivate("..")],
       ["tokens.get .", s => s.tokens.get(chain, ".")],
       ["tools.get ..", s => s.tools.get("base", "..", "1")],
+      ["signals.delete ..", s => s.signals.delete("..")],
     ])("%s is rejected before any request", async (_name, call) => {
       await expect(call(sdk)).rejects.toThrow("Invalid path segment")
       expect(requestedPaths()).toEqual([])

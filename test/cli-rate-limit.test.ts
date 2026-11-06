@@ -18,6 +18,7 @@ vi.mock("../src/commands/index.js", () => ({
   ordersCommand: () => new Command("orders"),
   profileCommand: () => new Command("profile"),
   searchCommand: () => new Command("search"),
+  signalsCommand: () => new Command("signals"),
   swapsCommand: () => new Command("swaps"),
   tokenGroupsCommand: () => new Command("token-groups"),
   tokensCommand: () => new Command("tokens"),

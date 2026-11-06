@@ -22,6 +22,7 @@ import {
   ordersCommand,
   profileCommand,
   searchCommand,
+  signalsCommand,
   swapsCommand,
   tokenGroupsCommand,
   tokensCommand,
@@ -204,6 +205,7 @@ export function createProgram(): Command {
     ),
   )
   program.addCommand(searchCommand(getClient, getFormat))
+  program.addCommand(signalsCommand(getClient, getFormat))
   program.addCommand(swapsCommand(getClient, getFormat))
   program.addCommand(toolsCommand(getClient, getFormat))
   program.addCommand(transactionsCommand(getClient, getFormat))

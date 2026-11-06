@@ -1,5 +1,45 @@
 # @opensea/cli
 
+## 4.0.0
+
+### Major Changes
+
+- 0335395: **Breaking:** removes the drop item media save by media token.
+
+  SDK: `WalletAuthAPI.saveDropItemMedia` is gone. CLI: `opensea drops save-item-media` is gone.
+
+  The endpoint they called, `POST /api/v2/drops/{slug}/items/media/save`, no longer exists. os2-core deprecated it in ProjectOpenSea/os2-core#60956 and removed it in ProjectOpenSea/os2-core#67914. Its last successful save was on 2026-10-02. Keeping these would mean shipping calls that 404.
+
+  Migration: upload the files under one upload batch id and save them by filename. In the SDK, pass `uploadBatchId` to `createDropItemMediaUpload`, then call `saveDropItemMediaBatch(slug, { upload_batch_id, filenames })`. In the CLI, `opensea drops upload-items <slug> <dir>` does both steps for a folder, and `save-item-media-batch` saves a batch that is already uploaded.
+
+- 355bb4d: Sync OpenAPI spec. Adds the Signal endpoints: `get_signal` and `list_signals` (`GET /api/v2/signals/{signal_id}`, `GET /api/v2/signals`), and `create_signal` and `delete_signal` (`POST /api/v2/signals`, `DELETE /api/v2/signals/{signal_id}`, which need a bearer token with `write:posts`). New schemas: `CreateSignalRequest`, `SignalMutationResponse`, `SignalResponse`, `SignalSubjectResponse` and `SignalsResponse`.
+
+  Also from the spec: `DropMintRequest` gains `skip_balance_check`, `DropMintResponse` gains the stage fields, `SetCreatorFeeEnforcementRequest` gains `allow_eip7702_transfers` and `allow_smart_wallet_transfers`, and `V1ErrorWrapper` gains `code`. Breaking: `ChainIdentifier` drops `stablechain` (and `CHAIN_IDENTIFIERS` with it), and `save_drop_item_media` and its `SaveDropItemMediaRequest` schema are removed.
+
+  Fields with a spec `default` are now generated as optional unless the schema lists them as required. Request fields such as `skip_balance_check`, `include_optional_creator_fees` and `unreveal` can be omitted. `TokenDetailedResponse.status` and `TokenBalanceResponse.status` are optional for the same reason.
+
+  CLI: the `SaveDropItemMediaRequest` type export is removed along with the endpoint, which `opensea drops save-item-media` already stopped calling.
+
+### Minor Changes
+
+- 09ca01f: Add OpenSea signals.
+
+  SDK: `api.signals.getSignal(signalId)` and `api.signals.listSignals(args)` read public signals with an API key. `api.walletAuth.createSignal(body)` and `api.walletAuth.deleteSignal(signalId)` post and delete them with a wallet token holding the `write:posts` scope. New types: `ListSignalsArgs`, `GetSignalResponse` and `ListSignalsResponse`.
+
+  CLI: `opensea signals get`, `list`, `create` and `delete`, and `OpenSeaCLI.signals` with `get`, `list`, `create` and `delete`. Sign in with `opensea auth login --private-key --scopes write:posts` to post or delete; `write:posts` is a preview scope, so browser OAuth login does not offer it yet.
+
+  `list` subjects are `chain` and `contract` for a currency, plus `tokenId` (`--token-id`) for an NFT, or `collection` alone. A page can be empty while `next` is set, so keep paging until `next` is null. Creating a signal is not idempotent.
+
+### Patch Changes
+
+- c0ee307: Sync OpenAPI spec. Breaking: `ChainIdentifier` drops `blast` and `arc` (and `CHAIN_IDENTIFIERS` with it), and the unreferenced `EventBase` and `PerpetualFutureBaseResponse` schemas are removed. `SavePrerevealDropItemRequest` gains `unreveal`. Most operations now document their 401/403/404/409/500 error responses as `V1ErrorWrapper`, and several 400/403 responses no longer reuse the success schema. Updated drop item media/IPFS/prereveal descriptions. The CLI keeps its `EventBase` type export as a deprecated local definition.
+- Updated dependencies [f07f3d6]
+- Updated dependencies [0335395]
+- Updated dependencies [c0ee307]
+- Updated dependencies [355bb4d]
+  - @opensea/sdk@13.0.0
+  - @opensea/api-types@0.18.0
+
 ## 3.1.0
 
 ### Minor Changes

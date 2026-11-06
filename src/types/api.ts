@@ -30,7 +30,19 @@ export type Listing = Schemas["Listing"]
 export type ListingPrice = Schemas["ListingPrice"]
 export type Payment = Schemas["Payment"]
 export type Event = Schemas["Event"]
-export type EventBase = Schemas["EventBase"]
+/**
+ * @deprecated The API spec no longer defines `EventBase`; use `Event` or a
+ * specific event type such as `SaleEvent`. Kept so existing imports compile.
+ */
+export interface EventBase {
+  event_type: string
+  event_timestamp: number
+  transaction?: string
+  order_hash?: string
+  protocol_address?: string
+  chain: string
+  payment?: Payment
+}
 export type SaleEvent = Schemas["SaleEvent"]
 export type TransferEvent = Schemas["TransferEvent"]
 export type OrderEvent = Schemas["OrderEvent"]
@@ -338,7 +350,6 @@ export type UpdateSelfMintDropItemRequest =
   Schemas["UpdateSelfMintDropItemRequest"]
 export type UpdateDropItemRequest = Schemas["UpdateDropItemRequest"]
 export type UploadDropItemMediaRequest = Schemas["UploadDropItemMediaRequest"]
-export type SaveDropItemMediaRequest = Schemas["SaveDropItemMediaRequest"]
 export type SaveDropItemMediaBatchRequest =
   Schemas["SaveDropItemMediaBatchRequest"]
 export type SaveDropItemMediaResponse = Schemas["SaveDropItemMediaResponse"]
@@ -370,6 +381,14 @@ export type CollectionTransactionResponse =
 export type CollectionTransactionsResponse =
   Schemas["CollectionTransactionsResponse"]
 export type CollectionRefreshResponse = Schemas["CollectionRefreshResponse"]
+
+// ── Signal types ────────────────────────────────────────────────────
+
+export type SignalResponse = Schemas["SignalResponse"]
+export type SignalSubjectResponse = Schemas["SignalSubjectResponse"]
+export type SignalsResponse = Schemas["SignalsResponse"]
+export type CreateSignalRequest = Schemas["CreateSignalRequest"]
+export type SignalMutationResponse = Schemas["SignalMutationResponse"]
 
 // ── Tool Registry types ─────────────────────────────────────────────
 

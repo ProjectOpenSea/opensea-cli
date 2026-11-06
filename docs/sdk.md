@@ -335,6 +335,43 @@ for (const result of results) {
 }
 ```
 
+## Signals
+
+```typescript
+const signal = await client.signals.get("sig_v1_...")
+
+const { signals, next } = await client.signals.list({
+  collection: "doodles-official",
+  limit: 50,
+})
+
+const { signals: itemSignals } = await client.signals.list({
+  chain: "base",
+  contract: "0x123...",
+  tokenId: "42",
+})
+```
+
+Pick one subject per call: `chain` and `contract` for a currency, plus `tokenId` for an NFT, or
+`collection` alone. A page can be empty while `next` is set, so pass `next` back until it is null.
+
+`create` and `delete` need an `authToken` with the `write:posts` scope. `create` takes the snake_case
+request body and is not idempotent: a retry after an unknown outcome can post twice.
+
+```typescript
+const writer = new OpenSeaCLI({
+  apiKey: process.env.OPENSEA_API_KEY,
+  authToken: process.env.OPENSEA_AUTH_TOKEN,
+})
+
+const { signal_id } = await writer.signals.create({
+  text: "Floor looks thin",
+  collection: "doodles-official",
+})
+
+await writer.signals.delete(signal_id)
+```
+
 ## Swaps
 
 ```typescript

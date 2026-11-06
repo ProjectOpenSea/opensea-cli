@@ -46,6 +46,7 @@ import type {
   CreateOfferActionsResponse,
   CreateOfferFulfillmentActionsRequest,
   CreateOfferFulfillmentActionsResponse,
+  CreateSignalRequest,
   CreatorFeeEnforcementStatusResponse,
   CriteriaOfferRequest,
   CrossChainDropMintRequest,
@@ -89,6 +90,9 @@ import type {
   SearchAssetType,
   SearchResponse,
   SetCollectionPricingCurrencyResponse,
+  SignalMutationResponse,
+  SignalResponse,
+  SignalsResponse,
   SignedOrderRequest,
   StandardizedNftFacetsResponse,
   StandardizedNftListResponse,
@@ -190,6 +194,7 @@ export class OpenSeaCLI {
   readonly agent: AgentAPI
   readonly tokens: TokensAPI
   readonly search: SearchAPI
+  readonly signals: SignalsAPI
   readonly swaps: SwapsAPI
   readonly transactions: TransactionsAPI
   readonly assets: AssetsAPI
@@ -210,6 +215,7 @@ export class OpenSeaCLI {
     this.agent = new AgentAPI(this.client)
     this.tokens = new TokensAPI(this.client)
     this.search = new SearchAPI(this.client)
+    this.signals = new SignalsAPI(this.client)
     this.swaps = new SwapsAPI(this.client)
     this.transactions = new TransactionsAPI(this.client)
     this.assets = new AssetsAPI(this.client)
@@ -2297,6 +2303,53 @@ class ToolsAPI {
         offset: options?.offset,
       },
     )
+  }
+}
+
+class SignalsAPI {
+  constructor(private client: OpenSeaClient) {}
+
+  /** Get a public signal. `signalId` is the opaque `sig_v1_...` reference; pass it unchanged. */
+  async get(signalId: string): Promise<SignalResponse> {
+    return this.client.get<SignalResponse>(
+      `/api/v2/signals/${pathSegment(signalId)}`,
+    )
+  }
+
+  /**
+   * List public signals about one subject, newest first: `chain` and `contract` for a currency,
+   * plus `tokenId` for an item, or `collection` alone. A page can be empty while `next` is set,
+   * so keep paging until `next` is null.
+   */
+  async list(options: {
+    chain?: string
+    contract?: string
+    tokenId?: string
+    collection?: string
+    limit?: number
+    next?: string
+  }): Promise<SignalsResponse> {
+    return this.client.get<SignalsResponse>("/api/v2/signals", {
+      chain: options.chain,
+      contract: options.contract,
+      token_id: options.tokenId,
+      collection: options.collection,
+      limit: options.limit,
+      cursor: options.next,
+    })
+  }
+
+  /**
+   * Post a signal as the auth token's account. Needs the `write:posts` scope. Not idempotent:
+   * a retry after an unknown outcome can post twice once the per-subject cooldown has passed.
+   */
+  async create(request: CreateSignalRequest): Promise<SignalMutationResponse> {
+    return this.client.post<SignalMutationResponse>("/api/v2/signals", request)
+  }
+
+  /** Delete a signal the auth token's account owns. Needs the `write:posts` scope. */
+  async delete(signalId: string): Promise<void> {
+    await this.client.delete(`/api/v2/signals/${pathSegment(signalId)}`)
   }
 }
 

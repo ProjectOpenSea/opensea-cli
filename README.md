@@ -123,6 +123,7 @@ opensea --format table collections stats mfers
 | `search` | Search collections, NFTs, tokens, and accounts |
 | `tokens` | Get trending tokens, top tokens, token details, and activity stats |
 | `swaps` | Get swap quotes for token trading |
+| `signals` | Read public signals about a currency, NFT or collection, and post or delete your own |
 | `accounts` | Get account details |
 | `agent` | Declare an agent account and run the ownership handshake |
 | `whoami` | Show the current wallet, the wallets its token covers, scopes, and scope source |

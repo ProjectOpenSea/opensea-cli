@@ -294,7 +294,6 @@ opensea drops upload-file --context <path|-> --file <path> [--index <n>]
 opensea drops upload-items <slug> <dir> [--manifest <path>] [--concurrency <n>]
 opensea drops create-item-media-upload <slug> --body <path> [--upload-batch-id <uuid>]
 opensea drops save-item-media-batch <slug> (--body <path> | --upload-batch-id <uuid> --dir <path>)
-opensea drops save-item-media <slug> --body <path>
 ```
 
 `publish` and `unpublish` print a ready-to-sign transaction. With `--send`
@@ -350,7 +349,6 @@ To run the steps yourself, pass one `--upload-batch-id` (a UUID you generate
 per set of files) to every `create-item-media-upload` request, upload each
 context with `upload-file`, then run `save-item-media-batch` with a body of
 `{"upload_batch_id": "<uuid>", "filenames": [...]}` (up to 15,000 filenames).
-`save-item-media`, which saves by media token, is deprecated.
 
 ## Transactions
 
@@ -397,6 +395,36 @@ opensea profile shelves <address>
 ```
 
 `shelves` lists the profile shelves of any wallet and needs an API key alone.
+
+## Signals
+
+```bash
+opensea signals get <signal_id>
+opensea signals list --chain <chain> --contract <address> [--token-id <id>] [--limit <limit>] [--next <cursor>]
+opensea signals list --collection <slug> [--limit <limit>] [--next <cursor>]
+opensea signals create --text <text> (--chain <chain> --contract <address> [--token-id <id>] | --collection <slug>) [--author-address <address>]
+opensea signals delete <signal_id>
+```
+
+Signals are public posts about one subject: a currency (`--chain` and `--contract`), an NFT (add
+`--token-id`, a decimal on EVM chains and the mint address on Solana), or a collection
+(`--collection` alone). `get` and `list` need only an API key. `list` returns the newest first and
+can return an empty page with a `next` cursor, so keep passing `--next` until `next` is null.
+Signal IDs are opaque `sig_v1_...` strings; pass them back unchanged.
+
+`create` and `delete` need a wallet token with the `write:posts` scope:
+
+```bash
+export OPENSEA_PRIVATE_KEY="..."
+opensea login --private-key --scopes write:posts
+opensea signals create --text "Floor looks thin" --collection doodles-official
+opensea signals delete sig_v1_...
+```
+
+`--author-address` defaults to the wallet the token signed in with. `create` is not idempotent:
+retrying after an unknown outcome can post twice once the per-subject cooldown passes, and a post
+inside the cooldown returns 422. `delete` returns 404 for a signal that is missing, already deleted
+or owned by another account. Signals cannot be edited.
 
 ## Swaps
 

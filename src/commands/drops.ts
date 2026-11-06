@@ -26,7 +26,6 @@ import type {
   DropTransactionResponse,
   SaveDropEditsRequest,
   SaveDropItemMediaBatchRequest,
-  SaveDropItemMediaRequest,
   SavePrerevealDropItemRequest,
   SaveSelfMintDropItemRequest,
   UpdateDropItemRequest,
@@ -914,29 +913,6 @@ export function dropsCommand(
         console.log(formatOutput(result, getFormat()))
       },
     )
-
-  cmd
-    .command("save-item-media")
-    .description(
-      "Deprecated: use save-item-media-batch or upload-items. Persist previously uploaded drop item media by media token",
-    )
-    .argument("<slug>", "Collection slug")
-    .requiredOption(
-      "--body <path>",
-      "Path to JSON file with the SaveDropItemMediaRequest body",
-    )
-    .action(async (slug: string, options: { body: string }) => {
-      const client = getClient()
-      const request = readJsonBodyOption<SaveDropItemMediaRequest>(
-        options.body,
-        "--body",
-      )
-      const result = await client.post(
-        `/api/v2/drops/${pathSegment(slug)}/items/media/save`,
-        request,
-      )
-      console.log(formatOutput(result, getFormat()))
-    })
 
   addDropTransactionCommand(cmd, "publish", getClient, getFormat)
   addDropTransactionCommand(cmd, "unpublish", getClient, getFormat)

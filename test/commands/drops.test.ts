@@ -1563,14 +1563,6 @@ describe("dropsCommand", () => {
       }
       expect(ctx.mockClient.post).not.toHaveBeenCalled()
     })
-
-    it("marks save-item-media deprecated in its help", () => {
-      const cmd = dropsCommand(ctx.getClient, ctx.getFormat)
-      const save = cmd.commands.find(c => c.name() === "save-item-media")
-      expect(save?.description()).toMatch(
-        /^Deprecated: use save-item-media-batch/,
-      )
-    })
   })
 })
 
@@ -1640,10 +1632,6 @@ describe("dropsCommand path arguments", () => {
     [
       ["save-item-media-batch", "d/1", "--body", BODY],
       "POST /api/v2/drops/d%2F1/items/media/save-batch",
-    ],
-    [
-      ["save-item-media", "d/1", "--body", BODY],
-      "POST /api/v2/drops/d%2F1/items/media/save",
     ],
     [["publish", "d/1"], "POST /api/v2/drops/d%2F1/publish"],
     [["unpublish", "d/1"], "POST /api/v2/drops/d%2F1/unpublish"],
