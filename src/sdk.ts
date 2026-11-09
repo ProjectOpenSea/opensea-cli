@@ -2014,9 +2014,9 @@ class TokensAPI {
     return this.client.get(
       `/api/v2/account/${pathSegment(address)}/token-activity`,
       {
-        chains: options?.chains?.join(","),
-        tokens: options?.tokens?.join(","),
-        type: options?.type?.join(","),
+        chains: options?.chains,
+        tokens: options?.tokens,
+        type: options?.type,
         limit: options?.limit,
         next: options?.next,
       },

@@ -11,6 +11,13 @@ import {
 } from "../parse.js"
 import type { BatchTokensRequest, TokenBatchResponse } from "../types/index.js"
 
+function splitList(value?: string): string[] | undefined {
+  return value
+    ?.split(",")
+    .map(item => item.trim())
+    .filter(Boolean)
+}
+
 export function tokensCommand(
   getClient: () => OpenSeaClient,
   getFormat: () => OutputFormat,
@@ -293,9 +300,9 @@ export function tokensCommand(
         getFormat(),
         `/api/v2/account/${pathSegment(address)}/token-activity`,
         {
-          chains: options.chains,
-          tokens: options.tokens,
-          type: options.type,
+          chains: splitList(options.chains),
+          tokens: splitList(options.tokens),
+          type: splitList(options.type),
           limit: parseIntOption(options.limit, "--limit"),
           next: options.next,
         },

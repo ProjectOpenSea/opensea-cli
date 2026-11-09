@@ -1137,9 +1137,9 @@ describe("OpenSeaCLI", () => {
       expect(mockGet).toHaveBeenCalledWith(
         "/api/v2/account/0xdef/token-activity",
         {
-          chains: "ethereum,base",
-          tokens: "0xaaa,0xbbb",
-          type: "swap,wrap",
+          chains: ["ethereum", "base"],
+          tokens: ["0xaaa", "0xbbb"],
+          type: ["swap", "wrap"],
           limit: 25,
           next: "page-1",
         },

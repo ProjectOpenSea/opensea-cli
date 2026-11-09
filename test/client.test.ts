@@ -666,6 +666,23 @@ describe("encoded path segments on the wire", () => {
     )
   })
 
+  it("sends account activity filters as repeated query keys", async () => {
+    mockFetchResponse({ activities: [], next: null })
+    const sdk = new OpenSeaCLI({ apiKey: "test-key", maxRetries: 0 })
+
+    await sdk.tokens.accountActivity("0xdef", {
+      chains: ["ethereum", "base"],
+      tokens: ["0xaaa", "0xbbb"],
+      type: ["send", "receive"],
+    })
+
+    const url = new URL(String(vi.mocked(fetch).mock.calls[0][0]))
+    expect(url.pathname).toBe("/api/v2/account/0xdef/token-activity")
+    expect(url.searchParams.getAll("chains")).toEqual(["ethereum", "base"])
+    expect(url.searchParams.getAll("tokens")).toEqual(["0xaaa", "0xbbb"])
+    expect(url.searchParams.getAll("type")).toEqual(["send", "receive"])
+  })
+
   it("keeps encoded segments encoded in the URL a POST requests", async () => {
     mockFetchResponse({})
     const sdk = new OpenSeaCLI({ apiKey: "test-key", maxRetries: 0 })

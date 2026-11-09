@@ -1,5 +1,13 @@
 # @opensea/cli
 
+## 4.0.2
+
+### Patch Changes
+
+- 7a92777: `tokens.accountActivity()` and `opensea tokens account-activity` send multiple `chains`, `tokens` and `type` filters as repeated query keys, the format the API documents, instead of one comma-separated value. The API accepts both today and returns the same results, so filtering is unchanged. The command still takes comma-separated flag values and now trims spaces and empty entries. Reported in [opensea-cli#55](https://github.com/ProjectOpenSea/opensea-cli/issues/55) by @omerbek.
+- Updated dependencies [5a42c0a]
+  - @opensea/sdk@13.0.3
+
 ## 4.0.1
 
 ### Patch Changes
