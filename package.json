@@ -1,6 +1,6 @@
 {
   "name": "@opensea/cli",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "type": "module",
   "description": "OpenSea CLI - Query the OpenSea API from the command line or programmatically",
   "main": "dist/index.js",
@@ -12,8 +12,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
+    "build": "tsdown",
+    "dev": "tsdown --watch",
     "format": "biome format --write .",
     "format:check": "biome format .",
     "lint": "biome check .",
@@ -23,17 +23,17 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@opensea/api-types": "^0.18.0",
-    "@opensea/sdk": "^13.0.0",
-    "@opensea/wallet-adapters": "^1.2.1",
+    "@opensea/api-types": "^0.18.1",
+    "@opensea/sdk": "^13.0.1",
+    "@opensea/wallet-adapters": "^1.2.2",
     "commander": "^14.0.3",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@vitest/coverage-v8": "^3.2.4",
-    "tsup": "^8.3.0",
-    "typescript": "^6.0.2",
+    "tsdown": "^0.23.4",
+    "typescript": "^7.0.2",
     "vitest": "^3.2.4",
     "@biomejs/biome": "2.5.2"
   },
