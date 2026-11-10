@@ -1,3 +1,13 @@
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import type { MockInstance } from "vitest"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { authCommand } from "../../src/commands/auth.js"
@@ -326,5 +336,167 @@ describe("authCommand path arguments", () => {
       }),
     ).rejects.toThrow(`Invalid path segment: "${segment}"`)
     expect(requestedPaths(ctx.mockClient)).toEqual([])
+  })
+})
+
+describe("auth request-key --save", () => {
+  const instantKey = {
+    api_key: "instant-key-value",
+    expires_at: "2026-01-01T00:00:00Z",
+    name: "instant",
+  }
+  let configDir: string
+  let logSpy: MockInstance<typeof console.log> | undefined
+  let errorSpy: MockInstance<typeof console.error>
+
+  beforeEach(() => {
+    configDir = mkdtempSync(join(tmpdir(), "opensea-request-key-test-"))
+    vi.stubEnv("OPENSEA_CONFIG_DIR", configDir)
+    vi.stubEnv("OPENSEA_API_KEY", "")
+    errorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.restoreAllMocks()
+    rmSync(configDir, { recursive: true, force: true })
+  })
+
+  function respondWith(body: unknown): void {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(body), { status: 201 }),
+    )
+  }
+
+  function stdoutText(): string {
+    return (logSpy?.mock.calls ?? []).flat().join("")
+  }
+
+  async function run(...args: string[]): Promise<void> {
+    const ctx = createCommandTestContext()
+    logSpy = ctx.consoleSpy
+    await authCommand(() => undefined, ctx.getFormat).parseAsync(
+      ["request-key", ...args],
+      { from: "user" },
+    )
+  }
+
+  it.skipIf(process.platform === "win32")(
+    "writes the key to api_key with mode 0600",
+    async () => {
+      respondWith(instantKey)
+
+      await run("--save")
+
+      const file = join(configDir, "api_key")
+      expect(readFileSync(file, "utf-8")).toBe("instant-key-value\n")
+      expect(statSync(file).mode & 0o777).toBe(0o600)
+    },
+  )
+
+  it("prints the rest of the body and the path, never the key", async () => {
+    respondWith(instantKey)
+
+    await run("--save")
+
+    const stdout = stdoutText()
+    const stderr = errorSpy.mock.calls.flat().join("")
+    expect(JSON.parse(stdout)).toEqual({
+      expires_at: "2026-01-01T00:00:00Z",
+      name: "instant",
+      saved_to: join(configDir, "api_key"),
+    })
+    expect(stdout).not.toContain("instant-key-value")
+    expect(stderr).not.toContain("instant-key-value")
+  })
+
+  it("notes on stderr when OPENSEA_API_KEY will override the saved key", async () => {
+    vi.stubEnv("OPENSEA_API_KEY", "env-key")
+    respondWith(instantKey)
+
+    await run("--save")
+
+    expect(errorSpy.mock.calls.flat().join("")).toContain(
+      "OPENSEA_API_KEY is set and takes precedence",
+    )
+  })
+
+  it("exits 1 without writing when the response has no api_key", async () => {
+    respondWith({ expires_at: "2026-01-01T00:00:00Z" })
+    vi.spyOn(process, "exit").mockImplementation(code => {
+      throw new Error(`process.exit(${code})`)
+    })
+
+    await expect(run("--save")).rejects.toThrow("process.exit(1)")
+
+    expect(errorSpy.mock.calls.flat().join("")).toContain("no api_key")
+    expect(existsSync(join(configDir, "api_key"))).toBe(false)
+  })
+
+  it("--if-missing skips the request when OPENSEA_API_KEY is set", async () => {
+    vi.stubEnv("OPENSEA_API_KEY", "env-key")
+    respondWith(instantKey)
+
+    await run("--save", "--if-missing")
+
+    expect(globalThis.fetch).not.toHaveBeenCalled()
+    expect(existsSync(join(configDir, "api_key"))).toBe(false)
+    expect(JSON.parse(stdoutText())).toMatchObject({
+      status: "skipped",
+      reason: "OPENSEA_API_KEY is set",
+    })
+  })
+
+  it("--if-missing skips the request when a key is already saved", async () => {
+    writeFileSync(join(configDir, "api_key"), "cached-key\n")
+    respondWith(instantKey)
+
+    await run("--save", "--if-missing")
+
+    expect(globalThis.fetch).not.toHaveBeenCalled()
+    expect(readFileSync(join(configDir, "api_key"), "utf-8")).toBe(
+      "cached-key\n",
+    )
+    expect(stdoutText()).not.toContain("cached-key")
+    expect(JSON.parse(stdoutText())).toMatchObject({
+      status: "skipped",
+      reason: "a key is already saved",
+    })
+  })
+
+  it("--if-missing fetches when the env var and cache are only whitespace", async () => {
+    vi.stubEnv("OPENSEA_API_KEY", "  ")
+    writeFileSync(join(configDir, "api_key"), " \n")
+    respondWith(instantKey)
+
+    await run("--save", "--if-missing")
+
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1)
+    expect(readFileSync(join(configDir, "api_key"), "utf-8")).toBe(
+      "instant-key-value\n",
+    )
+  })
+
+  it("--if-missing without --save exits 1 before any request", async () => {
+    respondWith(instantKey)
+    vi.spyOn(process, "exit").mockImplementation(code => {
+      throw new Error(`process.exit(${code})`)
+    })
+
+    await expect(run("--if-missing")).rejects.toThrow("process.exit(1)")
+
+    expect(globalThis.fetch).not.toHaveBeenCalled()
+    expect(errorSpy.mock.calls.flat().join("")).toContain(
+      "--if-missing requires --save",
+    )
+  })
+
+  it("does not write anything without --save", async () => {
+    respondWith(instantKey)
+
+    await run()
+
+    expect(existsSync(join(configDir, "api_key"))).toBe(false)
+    expect(JSON.parse(stdoutText())).toEqual(instantKey)
   })
 })

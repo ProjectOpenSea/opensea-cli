@@ -1,5 +1,6 @@
 import { Command } from "commander"
 import { EXIT_AUTH_ERROR } from "./api-error.js"
+import { getApiKeyFile, resolveApiKey } from "./auth/api-key.js"
 import { DEFAULT_AUTH_BASE_URL } from "./auth/oauth-config.js"
 import { canRefreshAutomatically, refreshForRequest } from "./auth/refresh.js"
 import { loadCurrentToken } from "./auth/store.js"
@@ -58,7 +59,7 @@ export function createProgram(): Command {
     .addHelpText("before", BANNER)
     .option(
       "--api-key <key>",
-      "OpenSea API key (or set OPENSEA_API_KEY env var)",
+      "OpenSea API key (or set OPENSEA_API_KEY; falls back to the key saved by auth request-key --save)",
     )
     .option("--chain <chain>", "Default chain", "ethereum")
     .option("--format <format>", "Output format (json, table, or toon)", "json")
@@ -96,10 +97,10 @@ export function createProgram(): Command {
       authRefresh: boolean
     }>()
 
-    const apiKey = opts.apiKey ?? process.env.OPENSEA_API_KEY
+    const apiKey = resolveApiKey(opts.apiKey)
     if (!apiKey) {
       console.error(
-        "Error: API key required. Use --api-key or set OPENSEA_API_KEY environment variable.",
+        `Error: API key required. Use --api-key, set OPENSEA_API_KEY, or run \`opensea auth request-key --save\` to save a free-tier key to ${getApiKeyFile()}.`,
       )
       process.exit(EXIT_AUTH_ERROR)
     }

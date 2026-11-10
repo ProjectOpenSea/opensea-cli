@@ -3,6 +3,14 @@ import { uploadToContext } from "@opensea/sdk"
 import { OpenSeaClient } from "./client.js"
 import { checkHealth } from "./health.js"
 import { pathSegment } from "./parse.js"
+import {
+  checkSavedSwapQuote,
+  createSavedSwapQuote,
+  parseSavedSwapQuote,
+  type SavedSwapQuote,
+  signSavedSwapQuote,
+  verifySavedSwapQuoteMac,
+} from "./saved-swap-quote.js"
 import type {
   Account,
   AccountResolveResponse,
@@ -2175,6 +2183,77 @@ export class SwapsAPI {
       )
     }
 
+    return results
+  }
+
+  /**
+   * Get a quote wrapped with the request and the time it was fetched, for `executeQuote` to run
+   * later. Serialize it with `JSON.stringify` to save it. With `macKey`, it also carries a `mac`
+   * that `executeQuote({ macKey })` checks.
+   */
+  async quoteForExecution(
+    options: {
+      fromChain: string
+      fromAddress: string
+      toChain: string
+      toAddress: string
+      quantity: string
+      address: string
+      slippage?: number
+      recipient?: string
+    },
+    signing?: { macKey?: Uint8Array },
+  ): Promise<SavedSwapQuote> {
+    const response = await this.quote(options)
+    const saved = createSavedSwapQuote(options, response)
+    return signing?.macKey ? signSavedSwapQuote(saved, signing.macKey) : saved
+  }
+
+  /**
+   * Sign and send exactly the transactions of a saved quote, in order, without re-quoting.
+   *
+   * Throws `SavedSwapQuoteError` before sending anything when the quote is malformed, older than
+   * `maxAgeSeconds` (default 120), built for an address other than the wallet's, or carries a
+   * transaction on a chain other than its `from_chain`. With `macKey`, it also refuses a quote
+   * whose `mac` is missing or does not match. Without one, `saved` is trusted as given: pass a
+   * key whenever the quote was read from a file rather than built by your own code.
+   */
+  async executeQuote(
+    saved: SavedSwapQuote,
+    wallet: WalletAdapter,
+    options?: {
+      macKey?: Uint8Array
+      maxAgeSeconds?: number
+      now?: Date
+      onSending?: (tx: { to: string; chain: string; chainId: number }) => void
+      /** Called after each send, so a later failure does not hide the hashes already sent. */
+      onSent?: (result: TransactionResult) => void
+    },
+  ): Promise<TransactionResult[]> {
+    const evmWallet = requireEvmAdapter(wallet, "swap execution")
+    const quote = parseSavedSwapQuote(saved)
+    if (options?.macKey) verifySavedSwapQuoteMac(quote, options.macKey)
+    checkSavedSwapQuote(quote, {
+      walletAddress: await evmWallet.getAddress(),
+      maxAgeSeconds: options?.maxAgeSeconds,
+      now: options?.now,
+    })
+
+    const results: TransactionResult[] = []
+    for (const tx of quote.response.transactions) {
+      // parseSavedSwapQuote guarantees `to` on every transaction.
+      const to = tx.to as string
+      const chainId = resolveChainId(tx.chain)
+      options?.onSending?.({ to, chain: tx.chain, chainId })
+      const result = await evmWallet.sendTransaction({
+        to,
+        data: tx.data,
+        value: tx.value ?? "0",
+        chainId,
+      })
+      results.push(result)
+      options?.onSent?.(result)
+    }
     return results
   }
 

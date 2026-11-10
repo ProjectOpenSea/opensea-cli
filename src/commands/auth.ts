@@ -5,6 +5,12 @@ import {
   PrivateKeyAdapter,
 } from "@opensea/wallet-adapters"
 import { Command } from "commander"
+import {
+  getApiKeyFile,
+  loadCachedApiKey,
+  resolveApiKey,
+  saveApiKey,
+} from "../auth/api-key.js"
 import { DEFAULT_AUTH_BASE_URL } from "../auth/oauth-config.js"
 import {
   resolvePrivateKey,
@@ -61,7 +67,35 @@ export function authCommand(
   cmd
     .command("request-key")
     .description("Request a free-tier API key (keys expire after 7 days)")
-    .action(async () => {
+    .option(
+      "--save",
+      "Save the key for later commands instead of printing it (mode 0600, in OPENSEA_CONFIG_DIR or ~/.opensea)",
+    )
+    .option(
+      "--if-missing",
+      "With --save, do nothing when OPENSEA_API_KEY is set or a key is already saved",
+    )
+    .action(async (opts: { save?: boolean; ifMissing?: boolean }) => {
+      if (opts.ifMissing) {
+        if (!opts.save) {
+          console.error("Error: --if-missing requires --save")
+          process.exit(1)
+        }
+        const reason = process.env.OPENSEA_API_KEY?.trim()
+          ? "OPENSEA_API_KEY is set"
+          : loadCachedApiKey()
+            ? "a key is already saved"
+            : undefined
+        if (reason) {
+          console.log(
+            formatOutput(
+              { status: "skipped", reason, saved_to: getApiKeyFile() },
+              getFormat(),
+            ),
+          )
+          return
+        }
+      }
       const baseUrl = getBaseUrl() ?? DEFAULT_BASE_URL
       const { timeout, verbose } = getRequestOptions?.() ?? {}
       const url = `${baseUrl}/api/v2/auth/keys`
@@ -91,7 +125,28 @@ export function authCommand(
         process.exit(1)
       }
       const result = (await response.json()) as Record<string, unknown>
-      console.log(formatOutput(result, getFormat()))
+      if (!opts.save) {
+        console.log(formatOutput(result, getFormat()))
+        return
+      }
+      const { api_key: apiKey, ...rest } = result
+      if (typeof apiKey !== "string" || apiKey.trim() === "") {
+        console.error(
+          JSON.stringify(
+            { error: "API Error", message: "Response had no api_key" },
+            null,
+            2,
+          ),
+        )
+        process.exit(1)
+      }
+      const savedTo = saveApiKey(apiKey)
+      if (process.env.OPENSEA_API_KEY?.trim()) {
+        console.error(
+          "Note: OPENSEA_API_KEY is set and takes precedence over the saved key.",
+        )
+      }
+      console.log(formatOutput({ ...rest, saved_to: savedTo }, getFormat()))
     })
 
   // --- login ---
@@ -186,7 +241,7 @@ export function authCommand(
     )
     .option(
       "--api-key <key>",
-      "OpenSea API key (or set OPENSEA_API_KEY env var)",
+      "OpenSea API key (or set OPENSEA_API_KEY; falls back to the key saved by auth request-key --save)",
     )
     .option(
       "--api-base-url <url>",
@@ -232,7 +287,7 @@ export function authCommand(
             },
             {
               authToken,
-              apiKey: opts.apiKey ?? process.env.OPENSEA_API_KEY,
+              apiKey: resolveApiKey(opts.apiKey),
               chainArch: opts.chainArch,
               chainId: Number(opts.chainId),
               authBaseUrl: opts.authBaseUrl ?? DEFAULT_AUTH_BASE_URL,

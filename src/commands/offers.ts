@@ -1,5 +1,12 @@
 import { Command } from "commander"
 import type { OpenSeaClient } from "../client.js"
+import {
+  addSendOptions,
+  requestedOffer,
+  runMarketplaceSteps,
+  type SendOptions,
+} from "../marketplace/cli.js"
+import { planActionSteps } from "../marketplace/guard.js"
 import type { OutputFormat } from "../output.js"
 import { formatOutput, outputGet } from "../output.js"
 import {
@@ -19,10 +26,12 @@ import type {
   CreateOfferFulfillmentActionsResponse,
   CriteriaOfferRequest,
   FulfillListingResponse,
+  GetOrderResponse,
   Offer,
   OfferFulfillmentDataRequest,
   SignedOrderRequest,
 } from "../types/index.js"
+import { resolveChainId } from "../wallet/index.js"
 
 export function offersCommand(
   getClient: () => OpenSeaClient,
@@ -190,45 +199,86 @@ export function offersCommand(
     },
   )
 
-  cmd
-    .command("actions")
-    .description("Get ordered actions needed to create an offer")
-    .requiredOption(
-      "--body <path>",
-      "Path to JSON file with the CreateOfferActionsRequest body",
+  addSendOptions(
+    cmd
+      .command("actions")
+      .description(
+        "Get ordered actions needed to create an offer; with --send, run them and post the signed offer",
+      )
+      .requiredOption(
+        "--body <path>",
+        "Path to JSON file with the CreateOfferActionsRequest body",
+      ),
+  ).action(async (options: SendOptions & { body: string }) => {
+    const client = getClient()
+    const request = readJsonBodyOption<CreateOfferActionsRequest>(
+      options.body,
+      "--body",
     )
-    .action(async (options: { body: string }) => {
-      const client = getClient()
-      const request = readJsonBodyOption<CreateOfferActionsRequest>(
-        options.body,
-        "--body",
-      )
-      const result = await client.post<CreateOfferActionsResponse>(
-        "/api/v2/offers/actions",
-        request,
-      )
-      console.log(formatOutput(result, getFormat()))
+    await runMarketplaceSteps({
+      client,
+      format: getFormat(),
+      options,
+      account: request.address,
+      purpose: "offer creation",
+      orderChain: request.item.chain,
+      requestedOrder: () => requestedOffer(client, request),
+      request: () =>
+        client.post<CreateOfferActionsResponse>(
+          "/api/v2/offers/actions",
+          request,
+        ),
+      plan: (response, requestedOrder) => ({
+        steps: planActionSteps(response.steps, request.address, {
+          requestedOrder,
+          chainId: resolveChainId(request.item.chain),
+        }),
+      }),
     })
+  })
 
-  cmd
-    .command("fulfillment-actions")
-    .description("Get ordered actions needed to fulfill an offer")
-    .requiredOption(
-      "--body <path>",
-      "Path to JSON file with the offer fulfillment request body",
+  addSendOptions(
+    cmd
+      .command("fulfillment-actions")
+      .description(
+        "Get ordered actions needed to fulfill an offer; with --send, accept it with the configured wallet",
+      )
+      .requiredOption(
+        "--body <path>",
+        "Path to JSON file with the offer fulfillment request body",
+      ),
+  ).action(async (options: SendOptions & { body: string }) => {
+    const client = getClient()
+    const request = readJsonBodyOption<CreateOfferFulfillmentActionsRequest>(
+      options.body,
+      "--body",
     )
-    .action(async (options: { body: string }) => {
-      const client = getClient()
-      const request = readJsonBodyOption<CreateOfferFulfillmentActionsRequest>(
-        options.body,
-        "--body",
-      )
-      const result = await client.post<CreateOfferFulfillmentActionsResponse>(
-        "/api/v2/offers/fulfillment/actions",
-        request,
-      )
-      console.log(formatOutput(result, getFormat()))
+    await runMarketplaceSteps({
+      client,
+      format: getFormat(),
+      options,
+      account: request.fulfiller.address,
+      purpose: "offer fulfillment",
+      acceptedOffer: async () => {
+        const { offer } = request
+        const response = await client.get<GetOrderResponse>(
+          `/api/v2/orders/chain/${pathSegment(offer.chain)}/protocol/${pathSegment(offer.protocol_address)}/${pathSegment(offer.hash)}`,
+        )
+        return (response.order as { protocol_data?: { parameters?: unknown } })
+          .protocol_data?.parameters
+      },
+      request: () =>
+        client.post<CreateOfferFulfillmentActionsResponse>(
+          "/api/v2/offers/fulfillment/actions",
+          request,
+        ),
+      plan: response => ({
+        steps: planActionSteps(response.steps, request.fulfiller.address, {
+          chainId: resolveChainId(request.offer.chain),
+        }),
+      }),
     })
+  })
 
   cmd
     .command("post")

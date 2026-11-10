@@ -5,7 +5,7 @@ Full command reference for all `opensea` CLI commands.
 ## Global Options
 
 ```
---api-key <key>     OpenSea API key (or set OPENSEA_API_KEY env var)
+--api-key <key>     OpenSea API key (or set OPENSEA_API_KEY env var; falls back to the saved key)
 --chain <chain>     Default chain (default: ethereum)
 --format <format>   Output format: json, table, or toon (default: json)
 --base-url <url>    API base URL override (for testing against staging or proxies)
@@ -24,9 +24,19 @@ pass; use `events by-account --chain` or `events by-nft <chain>` instead.
 ## Authentication
 
 ```bash
+opensea auth request-key [--save [--if-missing]]
 opensea whoami
 opensea auth refresh
 ```
+
+The API key comes from `--api-key`, then `OPENSEA_API_KEY`, then the key saved
+in `~/.opensea/api_key` (`OPENSEA_CONFIG_DIR` overrides the directory). An empty
+value falls through to the next source. `auth request-key` prints a new
+free-tier key; with `--save` it writes the key to that file (mode 0600) and
+prints the rest of the response plus `saved_to` instead of the key. Add
+`--if-missing` to skip the request when `OPENSEA_API_KEY` is set or a non-empty
+key is already saved; it then prints `status: "skipped"` and the reason. The skill's
+`opensea-resolve-key.sh` reads and writes the same file.
 
 A wallet auth token from `opensea login` or `opensea auth login` is
 short-lived. When the stored token has expired, or a request made with it returns 401,
@@ -205,8 +215,10 @@ opensea nfts list-by-group trading_cards --franchise Pokemon --grader PSA --grad
 opensea listings all <collection> [--limit <n>] [--next <cursor>] [--maker <address>] [--include-private-listings]
 opensea listings best <collection> [--limit <n>] [--next <cursor>] [--traits <json>] [--include-private-listings]
 opensea listings best-for-nft <collection> <token-id> [--include-private-listings]
-opensea listings actions --body <request.json>
-opensea listings fulfillment-actions --body <request.json>
+opensea listings actions --body <request.json> [--dry-run | --send [--yes --expect-plan <digest>] [--wallet-provider <provider>] [--rpc-url <url>] [--allow-unlimited-approval]]
+opensea listings fulfillment-actions --body <request.json> [--dry-run | --send ...]
+opensea listings sweep --collection <slug> --max-items <n> --max-price-per-item <wei> --buyer <address> --payment-chain <chain> --payment-token <address> [--recipient <address>] [--dry-run | --send ...]
+opensea listings cross-chain-fulfill --hashes <h1,h2> --listing-chain <chain> --protocol-address <address> --fulfiller <address> --payment-chain <chain> --payment-token <address> [--recipient <address>] [--dry-run | --send ...]
 opensea listings post <chain> --body <signed-order.json> [--protocol seaport]
 opensea listings fulfillment-data --body <request.json>
 ```
@@ -218,8 +230,8 @@ opensea offers all <collection> [--limit <n>] [--next <cursor>]
 opensea offers collection <collection> [--limit <n>] [--next <cursor>]
 opensea offers best-for-nft <collection> <token-id>
 opensea offers traits <collection> [--type <type>] [--value <value>] [--mode <STRING|NUMERIC|MULTI>] [--float-value <n>] [--int-value <n>] [--min-value <n>] [--max-value <n>] [--traits <json>] [--limit <n>] [--next <cursor>]
-opensea offers actions --body <request.json>
-opensea offers fulfillment-actions --body <request.json>
+opensea offers actions --body <request.json> [--dry-run | --send ...]
+opensea offers fulfillment-actions --body <request.json> [--dry-run | --send ...]
 opensea offers post <chain> --body <signed-order.json> [--protocol seaport]
 opensea offers build --body <request.json>
 opensea offers post-criteria --body <signed-criteria-offer.json>
@@ -233,8 +245,18 @@ opensea offers fulfillment-data --body <request.json>
 ```bash
 opensea orders get <chain> <protocol_address> <order_hash>
 opensea orders cancel <chain> <protocol_address> <order_hash> [--body <request.json>]
-opensea orders cancel-actions <chain> <protocol_address> <order_identifier> --body <request.json>
+opensea orders cancel-actions <chain> <protocol_address> <order_identifier> --body <request.json> [--dry-run | --send ...]
 ```
+
+### Signing and sending marketplace steps
+
+Without a flag, the action commands above print the API's steps. `--dry-run` checks every step and prints what `--send` would do: items, prices in human units, fees and recipients, seller proceeds or NFT recipient, the native `value` of each transaction, every `to` address, and warnings. `--send` runs the steps with the configured EVM wallet: it sends approvals and Seaport calls in order, signs a listing or offer as EIP-712 and posts it, and prints each transaction hash and posted order.
+
+On a terminal `--send` prints the plan and asks `Sign and send N steps? [y/N]` before the first signature or broadcast. Without a terminal it refuses unless `--yes` is passed together with `--expect-plan <digest>`, and `--yes` also skips the prompt, so an agent passes them only after the user approved the `--dry-run` summary. `--send` and `--dry-run` together are refused.
+
+`--dry-run` prints `Plan digest: <hex>` and includes it as `plan_digest`. It is a SHA-256 over a JSON array with one entry per step, in order. A transaction contributes its chain id, `to`, full calldata after approval lowering, native value, and an approval's spender and amount. In the calldata of an order whose zone is OpenSea's SignedZone on that chain, the 8-byte expiration and 64-byte signature in `extraData`, which the zone issues fresh on every fetch, are zeroed; this applies only to the SIP-6 version 0x00 layout, whose embedded fulfiller must be the account or the step is refused. Any other zone or layout is hashed as is. An order signature contributes the EIP-712 domain's chainId and verifyingContract, the offerer, every offer and consideration item's type, token, identifier, start and end amounts and, for consideration, recipient, and the order type, zone, zone hash and conduit key; its salt, start and end times and counter, which change on every fetch, are left out. Fetching the same trade again gives the same digest. `--send --expect-plan <digest>` refuses before using the wallet when the fresh plan's digest differs.
+
+Both refuse, before anything is signed: a transaction that is not a Seaport fulfillment call (or `cancel`) on its chain's Seaport, or an `approve`/`setApprovalForAll` of Seaport or that chain's OpenSea conduit sent to the contract the step names; an order whose EIP-712 domain or types are not Seaport's; a listing or offer whose NFT, quantity, currency, total, fees (more than 11% to anyone but the offerer) or end time differ from the request; a step on another chain than the request names (for `cross-chain-fulfill`, any chain but the listing and payment chains); a `cancel` whose orders, by Seaport order hash, are not exactly the requested order; and chains `@opensea/sdk` does not know. The API builds every ERC-20 approval for max uint256 and emits one only when the wallet's allowance does not cover the order. `--send` and `--dry-run` lower it to exactly what the plan spends in that token (an offer's amount plus every buy's payment; for `cross-chain-fulfill`, the listings' own price in the payment token, refused when it cannot be loaded), which still raises the allowance and never lowers what other open orders rely on, and refuse an approval for a token the plan does not spend. `--allow-unlimited-approval` sends the API's approval unchanged. `--rpc-url` (or the wallet's own RPC URL) makes it wait for each transaction to confirm before the next.
 
 The action commands work across EVM chains and Solana. For Solana, preserve base58 address casing, use `svm_order.id` as the order identifier, and pass through the order's returned protocol address.
 
@@ -429,8 +451,18 @@ or owned by another account. Signals cannot be edited.
 ## Swaps
 
 ```bash
-opensea swaps quote --from-chain <chain> --from-address <address> --to-chain <chain> --to-address <address> --quantity <quantity> --address <address> [--slippage <slippage>] [--recipient <recipient>]
+opensea swaps quote --from-chain <chain> --from-address <address> --to-chain <chain> --to-address <address> --quantity <quantity> --address <address> [--slippage <slippage>] [--recipient <recipient>] [--out <file>]
+opensea swaps execute --quote <file> [--max-age <seconds>] [--wallet-provider <provider>] [--dry-run]
+opensea swaps execute --from-chain <chain> --from-address <address> --to-chain <chain> --to-address <address> --quantity <quantity> [--slippage <slippage>] [--recipient <recipient>] [--wallet-provider <provider>] [--dry-run]
 ```
+
+`quote --out` saves the quote with its request and fetch time, plus a `mac` (HMAC-SHA256 under a
+key the CLI creates once at `${OPENSEA_CONFIG_DIR:-~/.opensea}/quote-key`, mode 0600). `execute
+--quote` prints every call, then signs exactly that quote's transactions without re-quoting. It
+refuses a file whose `mac` is missing or does not verify under this machine's quote key (anything
+that can read the key can also sign a file, so keep it private), a quote older than `--max-age` (default 120 seconds), one built for an address other
+than the signing wallet, or one with a transaction on a chain other than its `from_chain`. `execute` without `--quote` fetches a fresh quote and signs it,
+so only `--slippage` bounds how far it can differ from a quote shown earlier.
 
 ## Accounts
 

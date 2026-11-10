@@ -106,7 +106,11 @@ export function getAuthFile(): string {
   return join(getAuthDir(), "auth.json")
 }
 
-function ensureDir(): void {
+/**
+ * Create {@link getAuthDir} with mode 0700 if it is missing, and tighten an
+ * existing one to 0700. Shared by the auth store and the cached API key.
+ */
+export function ensureAuthDir(): void {
   const authDir = getAuthDir()
   try {
     if (!existsSync(authDir)) {
@@ -149,7 +153,7 @@ function readStore(): AuthStore {
 }
 
 function writeStore(store: AuthStore): void {
-  ensureDir()
+  ensureAuthDir()
   const authFile = getAuthFile()
   try {
     if (existsSync(authFile)) {

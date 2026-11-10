@@ -42,12 +42,15 @@ npx @opensea/cli collections get mfers
 
 ## Authentication
 
-Set your API key via environment variable or flag:
+Save an instant key once, or set your API key via environment variable or flag:
 
 ```bash
-# Get an instant free-tier API key (no signup needed)
-export OPENSEA_API_KEY=$(curl -s -X POST https://api.opensea.io/api/v2/auth/keys | jq -r '.api_key')
+# Get an instant free-tier API key (no signup needed) and save it to ~/.opensea/api_key
+opensea auth request-key --save --if-missing   # no-op when a key is already set or saved
 opensea collections get mfers
+
+# or set it in the environment, which takes precedence over the saved key
+export OPENSEA_API_KEY=your-api-key
 
 # or pass inline
 opensea --api-key your-api-key collections get mfers
@@ -224,7 +227,7 @@ TOON collapses uniform arrays of objects into CSV-like tables with a single head
 ## Requirements
 
 - Node.js >= 18.0.0
-- OpenSea API key — get one instantly: `curl -s -X POST https://api.opensea.io/api/v2/auth/keys | jq -r '.api_key'` or from [opensea.io/settings/developer](https://opensea.io/settings/developer)
+- OpenSea API key: get one instantly with `opensea auth request-key --save` or from [opensea.io/settings/developer](https://opensea.io/settings/developer)
 
 ## Development
 
