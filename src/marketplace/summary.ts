@@ -336,8 +336,18 @@ async function describeTransaction(
       const items = list(details.assetIdentifiers).map(a => describeAsset(a))
       return `Sell ${items.join(", ")} into the offer through Seaport`
     }
-    case "cancelOrdersAction":
-      return `Cancel order ${list(details.orderIds).join(", ")} onchain through Seaport`
+    case "cancelOrdersAction": {
+      // Name orders by the hash the guard matched the calldata to, which is
+      // what the person asked to cancel. `orderIds` is the API's internal id.
+      const hashes = step.cancelledOrderHashes ?? []
+      const ids = list(details.orderIds).map(String)
+      const orders = hashes.length > 0 ? hashes.join(", ") : ids.join(", ")
+      const internal =
+        hashes.length > 0 && ids.length > 0
+          ? ` (order id ${ids.join(", ")})`
+          : ""
+      return `Cancel order ${orders}${internal} onchain through Seaport`
+    }
     default:
       return `Fulfill through Seaport; the NFTs go to ${nftRecipient}, the recipient requested`
   }

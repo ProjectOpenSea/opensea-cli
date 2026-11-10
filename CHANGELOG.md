@@ -1,5 +1,18 @@
 # @opensea/cli
 
+## 4.1.1
+
+### Patch Changes
+
+- c7dc630: `orders cancel-actions --dry-run` and `--send` now name the order in the cancel step's summary by its order hash, the one the request asked to cancel and the guard matched the calldata to, with the API's internal order id in parentheses. They previously showed only the internal id.
+
+  `swaps execute --quote` now runs the saved-quote checks (age against `--max-age`, wallet address, transaction chain) before printing the quote summary, so a refused quote prints only the error instead of the summary and calldata first. The summary's USD line is relabeled to match what the quote API returns: `total_price_usd` is the value of the tokens sent and `total_cost_usd` the value of the tokens received, so it now reads "Sends about $X, receives about $Y". It previously labeled them the other way round.
+
+- Updated dependencies [11c50f9]
+- Updated dependencies [c7dc630]
+  - @opensea/sdk@13.0.5
+  - @opensea/wallet-adapters@1.2.4
+
 ## 4.1.0
 
 ### Minor Changes

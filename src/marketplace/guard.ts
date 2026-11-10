@@ -654,6 +654,11 @@ export interface PlannedTransaction {
   /** Gas limit the API recommends, when it gave one. */
   gas?: string
   approval?: PlannedApproval
+  /**
+   * Seaport order hashes a cancel step's calldata cancels, set once
+   * `checkCancelledOrders` has matched them to the request.
+   */
+  cancelledOrderHashes?: string[]
   /** The action body as the API returned it, for summaries. */
   details: Record<string, unknown>
 }
@@ -772,7 +777,7 @@ export function planActionSteps(
       planned.type === "transaction" &&
       planned.action === "cancelOrdersAction"
     ) {
-      checkCancelledOrders(
+      planned.cancelledOrderHashes = checkCancelledOrders(
         planned,
         options?.cancelledOrders,
         `step ${index + 1} (${planned.action})`,
@@ -1404,13 +1409,13 @@ export function decodeCancelCalldata(data: string): SeaportOrderComponents[] {
 
 /**
  * Refuse a cancel step unless the orders its `cancel` calldata cancels are
- * exactly `requested`, compared by Seaport order hash.
+ * exactly `requested`, compared by Seaport order hash. Returns those hashes.
  */
 export function checkCancelledOrders(
   step: PlannedTransaction,
   requested: readonly string[] | undefined,
   label: string,
-): void {
+): string[] {
   const refuse = (reason: string) =>
     new MarketplaceGuardError(`Refusing ${label}: ${reason}`)
   if (!requested) {
@@ -1432,6 +1437,7 @@ export function checkCancelledOrders(
       `it cancels ${[...got].join(", ") || "no orders"}, not the requested ${[...want].join(", ")}`,
     )
   }
+  return hashes
 }
 
 /** One transaction of a `cross_chain_fulfillment_data` response. */

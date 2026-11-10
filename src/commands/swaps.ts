@@ -192,12 +192,15 @@ export function swapsCommand(
         )
 
       if (savedQuote) {
+        // Refuse a stale or mismatched quote before printing its summary and
+        // calldata, so a refused quote prints only the error. executeQuote
+        // runs the same checks again right before it signs.
+        checkSavedSwapQuote(savedQuote, {
+          walletAddress: address,
+          maxAgeSeconds,
+        })
         console.error(describeSavedQuote(savedQuote))
         if (options.dryRun) {
-          checkSavedSwapQuote(savedQuote, {
-            walletAddress: address,
-            maxAgeSeconds,
-          })
           console.log(formatOutput(savedQuote.response, format))
           return
         }
@@ -322,7 +325,10 @@ function describeSavedQuote(saved: SavedSwapQuote): string {
   const lines = [
     `Saved quote from ${saved.saved_at} for ${request.address}:`,
     `  ${request.quantity} smallest units of ${request.from_address} on ${request.from_chain} -> ${request.to_address} on ${request.to_chain}`,
-    `  Value in $${response.quote.total_cost_usd}, out $${response.quote.total_price_usd}, slippage ${response.quote.slippage_tolerance}`,
+    // The API fills total_price_usd from the tokens sent and total_cost_usd
+    // from the tokens received, the reverse of what the OpenAPI field
+    // descriptions say. Label by what the API returns.
+    `  Sends about $${response.quote.total_price_usd}, receives about $${response.quote.total_cost_usd} (USD estimates), slippage ${response.quote.slippage_tolerance}`,
   ]
   lines.push(
     `  Recipient: ${request.recipient ?? `${request.address} (the wallet)`}`,

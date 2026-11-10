@@ -269,7 +269,7 @@ describe("summarizePlan", () => {
     const descriptions = summary.steps.map(s => s.description)
     expect(descriptions).toEqual([
       `Sell ${NFT} #9 into the offer through Seaport`,
-      "Cancel order 0xorder onchain through Seaport",
+      `Cancel order ${LIVE_ORDER_HASH} (order id 0xorder) onchain through Seaport`,
       `Approve ${CONDUIT} (OpenSea conduit) to spend an unlimited amount of ${WETH}. ${SHARED}`,
       `Approve ${SEAPORT.toLowerCase()} (Seaport) to transfer ${NFT} #7`,
       `Revoke ${CONDUIT} (OpenSea conduit)'s approval for ${NFT}`,
@@ -285,6 +285,39 @@ describe("summarizePlan", () => {
       "Step 1 sells into an offer whose terms could not be loaded; check its price with opensea orders get before sending",
       `Step 3 approves ${CONDUIT} to spend an unlimited amount of ${WETH}`,
     ])
+  })
+
+  it("names a cancel by hash alone without internal ids, and by internal id without matched hashes", async () => {
+    const plan = (orderIds?: string[]) =>
+      planActionSteps(
+        [
+          {
+            cancelOrdersAction: {
+              transaction: transaction({
+                to: SEAPORT,
+                data: cancelCalldata([LIVE_ORDER]),
+              }),
+              ...(orderIds ? { orderIds } : {}),
+            },
+          },
+        ],
+        ACCOUNT,
+        { cancelledOrders: [LIVE_ORDER_HASH] },
+      )
+    const descriptionOf = async (steps: ReturnType<typeof plan>) =>
+      (await summarizePlan(steps, ACCOUNT, lookup)).steps[0].description
+
+    expect(await descriptionOf(plan())).toBe(
+      `Cancel order ${LIVE_ORDER_HASH} onchain through Seaport`,
+    )
+
+    const unmatched = plan(["internal-7"])
+    for (const step of unmatched) {
+      if (step.type === "transaction") delete step.cancelledOrderHashes
+    }
+    expect(await descriptionOf(unmatched)).toBe(
+      "Cancel order internal-7 onchain through Seaport",
+    )
   })
 
   it("shows the accepted offer's price, fees and the seller's proceeds", async () => {

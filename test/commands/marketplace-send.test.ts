@@ -795,6 +795,41 @@ describe("marketplace --send and --dry-run", () => {
     )
   })
 
+  it("orders cancel-actions --dry-run names the order by its hash, not the API's internal id", async () => {
+    ctx.mockClient.post.mockResolvedValueOnce({
+      steps: [
+        {
+          cancelOrdersAction: {
+            transaction: transaction({
+              to: SEAPORT,
+              data: cancelCalldata([LIVE_ORDER]),
+            }),
+            orderIds: ["internal-123"],
+          },
+        },
+      ],
+    })
+    await ordersCommand(ctx.getClient, ctx.getFormat).parseAsync(
+      [
+        "cancel-actions",
+        "base",
+        SEAPORT,
+        LIVE_ORDER_HASH,
+        "--body",
+        writeTempJson({ address: ACCOUNT }),
+        "--dry-run",
+      ],
+      { from: "user" },
+    )
+    const summary = lastJson(ctx.consoleSpy) as {
+      steps: { description: string }[]
+    }
+    expect(summary.steps.map(step => step.description)).toEqual([
+      `Cancel order ${LIVE_ORDER_HASH} (order id internal-123) onchain through Seaport`,
+    ])
+    expect(walletMock.createWalletFromEnv).not.toHaveBeenCalled()
+  })
+
   it("orders cancel-actions --send refuses calldata that cancels a different order", async () => {
     const wallet = createMockWallet()
     walletMock.createWalletFromEnv.mockReturnValue(wallet)

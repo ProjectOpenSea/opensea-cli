@@ -50,8 +50,10 @@ const QUOTE_RESPONSE = {
     marketplace_fee_bps: 45,
     route_errors: [],
     slippage_tolerance: 0.01,
-    total_cost_usd: 0.21,
-    total_price_usd: 0.2,
+    // As the API returns them: total_price_usd is the tokens sent,
+    // total_cost_usd the tokens received.
+    total_cost_usd: 0.2,
+    total_price_usd: 0.21,
   },
   transactions: [
     { chain: "base", to: ROUTER, data: "0x12345678abcd", value: "1000" },
@@ -256,6 +258,9 @@ describe("swaps saved quotes", () => {
       "1000 smallest units of 0x0000000000000000000000000000000000000000 on base -> 0x833589fcd6edb6e08f4c7c32d4f71b54bda02913 on base",
     )
     expect(stderr()).toContain(
+      "Sends about $0.21, receives about $0.2 (USD estimates), slippage 0.01",
+    )
+    expect(stderr()).toContain(
       "Recipient: 0x5555555555555555555555555555555555555555",
     )
     expect(stderr()).toContain(
@@ -308,6 +313,8 @@ describe("swaps saved quotes", () => {
       "but the wallet is 0x9999999999999999999999999999999999999999",
     )
     expect(ctx.consoleSpy).not.toHaveBeenCalled()
+    expect(stderr()).not.toContain("Saved quote from")
+    expect(stderr()).not.toContain("data 0x12345678abcd")
   })
 
   it("execute --quote refuses an expired quote, and --max-age extends the limit", async () => {
@@ -322,6 +329,22 @@ describe("swaps saved quotes", () => {
 
     await run(["execute", "--quote", file, "--max-age", "300"])
     expect(wallet.sendTransaction).toHaveBeenCalledOnce()
+  })
+
+  it("execute --quote refused by --max-age prints the error without the summary or calldata", async () => {
+    const saved = freshSaved()
+    saved.saved_at = new Date(NOW.getTime() - 200_000).toISOString()
+    const file = writeSaved(saved)
+
+    for (const mode of [[], ["--dry-run"]]) {
+      await expect(
+        run(["execute", "--quote", file, "--max-age", "60", ...mode]),
+      ).rejects.toThrow("Saved swap quote expired: saved 200s ago, limit 60s")
+    }
+    expect(stderr()).not.toContain("Saved quote from")
+    expect(stderr()).not.toContain("data 0x12345678abcd")
+    expect(ctx.consoleSpy).not.toHaveBeenCalled()
+    expect(wallet.sendTransaction).not.toHaveBeenCalled()
   })
 
   it("execute --quote refuses a malformed file before creating the wallet", async () => {
