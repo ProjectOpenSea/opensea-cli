@@ -9,28 +9,29 @@
 
 # opensea-cli <!-- omit in toc -->
 
-Query the OpenSea API from the command line or programmatically. Designed for both AI agents and developers.
+Query the OpenSea API from your terminal or from TypeScript. Output defaults to JSON for scripts and agents, with table and TOON formats available.
 
-## Table of Contents
+## Table of contents
 
 - [Install](#install)
 - [Authentication](#authentication)
-- [Quick Start](#quick-start)
+- [Quick start](#quick-start)
 - [Commands](#commands)
 - [Programmatic SDK](#programmatic-sdk)
-- [Output Formats](#output-formats)
-- [Exit Codes](#exit-codes)
-- [Requirements](#requirements)
+- [Output formats](#output-formats)
+- [Exit codes](#exit-codes)
 - [Development](#development)
 - [Docs](#docs)
 
 ## Install
 
+Requires Node.js 18 or newer.
+
 ```bash
 npm install -g @opensea/cli
 ```
 
-Or use without installing:
+Or run it without installing:
 
 ```bash
 npx @opensea/cli collections get mfers
@@ -38,7 +39,7 @@ npx @opensea/cli collections get mfers
 
 ## Authentication
 
-Save an instant key once, or set your API key via environment variable or flag:
+API commands need a key. The CLI reads it from `--api-key`, then `OPENSEA_API_KEY`, then the key saved in `~/.opensea/api_key`.
 
 ```bash
 # Get an instant free-tier API key (no signup needed) and save it to ~/.opensea/api_key
@@ -52,9 +53,11 @@ export OPENSEA_API_KEY=your-api-key
 opensea --api-key your-api-key collections get mfers
 ```
 
-Get an API key instantly via the command above, or get a full key at [opensea.io/settings/developer](https://opensea.io/settings/developer) for higher rate limits. See [API key docs](https://docs.opensea.io/reference/api-keys) for details.
+`auth request-key` returns a free-tier key with no signup. For higher rate limits, create a key at [opensea.io/settings/developer](https://opensea.io/settings/developer). See the [API key docs](https://docs.opensea.io/reference/api-keys).
 
-Wallet-authenticated endpoints also require a scoped token:
+### Wallet login
+
+Wallet-authenticated endpoints also need a scoped token:
 
 ```bash
 export OPENSEA_PRIVATE_KEY="..."
@@ -66,20 +69,13 @@ opensea agent list
 opensea auth revoke
 ```
 
-Private-key login uses SIWE and requires an explicit `--scopes` list. The
-private key signs locally and is not stored. The CLI
-keeps the session needed to revoke the personal access token (PAT), and
-`api request` sends the stored wallet JWT alongside `OPENSEA_API_KEY`. When
-the stored JWT has expired, or a request with it returns 401, the CLI refreshes
-it once, prints a one-line notice to stderr, and continues. It does this only
-against OpenSea's own servers (not with `--base-url` or `--auth-base-url`), and
-`--no-auth-refresh` turns it off; `opensea auth refresh` runs it on demand. If
-the refresh token itself is refused, the error names the login command to run
-instead. For interactive login, run
-`opensea login` without `--private-key`. See the
-[wallet-auth guide](https://docs.opensea.io/reference/auth).
+`login --private-key` signs in with SIWE and requires an explicit `--scopes` list. The key signs locally and is never stored. Run `opensea login` without `--private-key` to log in interactively. See the [wallet-auth guide](https://docs.opensea.io/reference/auth).
 
-## Quick Start
+The CLI stores the session it needs to revoke the personal access token (PAT), and `api request` sends the stored wallet JWT along with `OPENSEA_API_KEY`.
+
+When the stored JWT has expired, or a request with it returns 401, the CLI refreshes it once, prints a one-line notice to stderr, and continues. This only happens against OpenSea's own servers, not with `--base-url` or `--auth-base-url`. Turn it off with `--no-auth-refresh`, or refresh on demand with `opensea auth refresh`. If the refresh token itself is rejected, the error names the login command to run.
+
+## Quick start
 
 ```bash
 # Get collection details
@@ -128,9 +124,9 @@ opensea --format table collections stats mfers
 | `whoami` | Show the current wallet, the wallets its token covers, scopes, and scope source |
 | `api request` | Call any API v2 endpoint with the active API key and wallet JWT |
 
-This table is a high-level summary; run `opensea --help` for the current command list and [docs/cli-reference.md](docs/cli-reference.md) for the full reference.
+Run `opensea --help` for the current list, and see [docs/cli-reference.md](docs/cli-reference.md) for every option.
 
-Global options: `--api-key`, `--chain` (default: ethereum), `--format` (json/table/toon), `--base-url`. A `--chain` you pass, before or after the subcommand, reaches subcommands that take `--chain`; the `ethereum` default never does.
+Global options include `--api-key`, `--chain` (default `ethereum`), `--format` (`json`, `table` or `toon`), `--base-url`, `--fields`, `--max-lines`, `--timeout`, `--max-retries`, `--no-retry` and `--verbose`. A `--chain` you pass, before or after the subcommand, reaches subcommands that accept `--chain`. The `ethereum` default never does.
 
 ## Programmatic SDK
 
@@ -179,29 +175,29 @@ try {
 }
 ```
 
-Full SDK reference: [docs/sdk.md](docs/sdk.md)
+Full reference: [docs/sdk.md](docs/sdk.md).
 
-## Output Formats
+## Output formats
 
-JSON (default) - structured output for agents and scripts:
+JSON is the default:
 
 ```bash
 opensea collections get mfers
 ```
 
-Table - human-readable output:
+Table output is easier to read:
 
 ```bash
 opensea --format table collections list --limit 5
 ```
 
-TOON - [Token-Oriented Object Notation](https://github.com/toon-format/toon), a compact format that uses ~40% fewer tokens than JSON. Ideal for piping output into LLM / AI agent context windows:
+[TOON](https://github.com/toon-format/toon) (Token-Oriented Object Notation) uses about 40% fewer tokens than JSON, which helps when output goes into an LLM context window:
 
 ```bash
 opensea --format toon tokens trending --limit 5
 ```
 
-Example TOON output for a list of tokens:
+Uniform arrays of objects become CSV-like rows under one header, and nested objects use YAML-like indentation:
 
 ```
 tokens[3]{name,symbol,chain,market_cap,price_usd}:
@@ -211,19 +207,14 @@ tokens[3]{name,symbol,chain,market_cap,price_usd}:
 next: abc123
 ```
 
-TOON collapses uniform arrays of objects into CSV-like tables with a single header row, while nested objects use YAML-like indentation. The encoding is performed server-side via the `Accept: text/markdown` header — no client-side encoder is needed.
+The API does the encoding (the CLI sends `Accept: text/markdown`), so there is no client-side encoder.
 
-## Exit Codes
+## Exit codes
 
-- `0` - Success
-- `1` - API error (non-429)
-- `2` - Authentication error (missing API key, or HTTP 401)
-- `3` - Rate limited (HTTP 429)
-
-## Requirements
-
-- Node.js >= 18.0.0
-- OpenSea API key: get one instantly with `opensea auth request-key --save` or from [opensea.io/settings/developer](https://opensea.io/settings/developer)
+- `0`: success
+- `1`: API error other than 401 or 429, or any other failure such as a network error
+- `2`: authentication error (missing API key, HTTP 401, or a rejected token refresh)
+- `3`: rate limited (HTTP 429)
 
 ## Development
 
@@ -241,11 +232,11 @@ npm run type-check      # TypeScript type checking
 
 | Document | Description |
 |---|---|
-| [CLI Reference](docs/cli-reference.md) | Full command reference with all options and flags |
-| [Examples](docs/examples.md) | Real-world usage examples for every command |
-| [SDK Reference](docs/sdk.md) | Full programmatic SDK API with all methods |
+| [CLI reference](docs/cli-reference.md) | Every command, option and flag |
+| [Examples](docs/examples.md) | Usage examples for every command |
+| [SDK reference](docs/sdk.md) | Every method in the programmatic SDK |
 | [Pagination](docs/pagination.md) | Cursor-based pagination patterns for CLI and SDK |
-| [Event Types](docs/events.md) | Event type values and filtering |
+| [Event types](docs/events.md) | Event type values and filtering |
 
 ## Contributing
 
