@@ -159,6 +159,10 @@ export function collectionsCommand(
       )
       .option("--limit <limit>", "Number of collections (1-50)", "20")
       .option(
+        "--chains <chains>",
+        "Comma-separated chains whose wearers count (combined with --chain)",
+      )
+      .option(
         "--categories <categories>",
         "Comma-separated categories to rank (e.g. art,gaming,pfps)",
       )
@@ -174,6 +178,7 @@ export function collectionsCommand(
     async (options: {
       limit: string
       chain?: string
+      chains?: string
       categories?: string
       minFloorPriceUsd?: string
       maxFloorPriceUsd?: string
@@ -181,7 +186,9 @@ export function collectionsCommand(
       const client = getClient()
       await outputGet(client, getFormat(), "/api/v2/pfp/top-collections", {
         limit: parseIntOption(options.limit, "--limit"),
-        chains: options.chain as Chain | undefined,
+        chains:
+          [options.chain, options.chains].filter(Boolean).join(",") ||
+          undefined,
         categories: options.categories,
         min_floor_price_usd:
           options.minFloorPriceUsd !== undefined

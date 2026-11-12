@@ -41,7 +41,7 @@ export { DropsAPI, OpenSeaCLI, SwapsAPI } from "./sdk.js"
 export type * from "./types/index.js"
 export { selectUploadContext } from "./upload.js"
 export type {
-  TransactionRequest,
+  EvmTransactionRequest,
   TransactionResult,
   WalletAdapter,
   WalletCapabilities,

@@ -178,6 +178,21 @@ describe("collectionsCommand", () => {
     expect(ctx.consoleSpy).toHaveBeenCalledWith(JSON.stringify(ranked, null, 2))
   })
 
+  it("top-pfp sends --chains, combined with --chain", async () => {
+    ctx.mockClient.get.mockResolvedValue({ collections: [] })
+    const cmd = collectionsCommand(ctx.getClient, ctx.getFormat)
+
+    await cmd.parseAsync(
+      ["top-pfp", "--chain", "base", "--chains", "ethereum,shape"],
+      { from: "user" },
+    )
+
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
+      "/api/v2/pfp/top-collections",
+      expect.objectContaining({ chains: "base,ethereum,shape" }),
+    )
+  })
+
   it("top-pfp sends categories and floor price bounds", async () => {
     ctx.mockClient.get.mockResolvedValue({ collections: [] })
     const cmd = collectionsCommand(ctx.getClient, ctx.getFormat)

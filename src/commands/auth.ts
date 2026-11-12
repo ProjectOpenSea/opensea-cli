@@ -232,14 +232,6 @@ export function authCommand(
       "Override the SIWX URI (defaults to https://opensea.io)",
     )
     .option(
-      "--statement <statement>",
-      "Deprecated and ignored; the API issues the statement with the wallet-link nonce",
-    )
-    .option(
-      "--auth-base-url <url>",
-      "Deprecated; SIWX nonces now use --api-base-url",
-    )
-    .option(
       "--api-key <key>",
       "OpenSea API key (or set OPENSEA_API_KEY; falls back to the key saved by auth request-key --save)",
     )
@@ -254,7 +246,6 @@ export function authCommand(
         chainId: string
         domain?: string
         uri?: string
-        authBaseUrl?: string
         apiBaseUrl?: string
         apiKey?: string
       }) => {
@@ -290,7 +281,6 @@ export function authCommand(
               apiKey: resolveApiKey(opts.apiKey),
               chainArch: opts.chainArch,
               chainId: Number(opts.chainId),
-              authBaseUrl: opts.authBaseUrl ?? DEFAULT_AUTH_BASE_URL,
               apiBaseUrl: opts.apiBaseUrl ?? DEFAULT_BASE_URL,
               domain: opts.domain,
               uri: opts.uri,

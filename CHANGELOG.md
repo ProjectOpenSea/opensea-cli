@@ -1,5 +1,32 @@
 # @opensea/cli
 
+## 5.0.0
+
+### Major Changes
+
+- ed09a89: `TransactionRequest` is removed; use `EvmTransactionRequest`.
+- 960af93: Remove deprecated types, options, and flags. Migration:
+
+  - `EventBase` type: use `Event`, or a specific event type such as `SaleEvent`, `TransferEvent`, or `OrderEvent`.
+  - `Account` type: use `AccountResponse`.
+  - `Collection` type: use `CollectionDetailedResponse`.
+  - `CollectionStats` type: use `CollectionStatsResponse`.
+  - `NFT` type: use `NftDetailed`.
+  - `EventPayment` type: use `Payment`.
+  - `EventAsset` type: use `Nft`.
+  - `chain` option on `events.list()`: `GET /api/v2/events` has no chain filter and the option was never sent. Drop it, or use `events.byAccount()` with `chain`, or `events.byNFT()`, for events on one chain.
+  - `opensea auth link-wallet --statement`: drop it. The API issues the statement with the wallet-link nonce.
+  - `opensea auth link-wallet --auth-base-url`: use `--api-base-url`, which SIWX nonces and the link request already use. The global `--auth-base-url` option (OAuth issuer) is unchanged.
+
+  Also adds `--chains <list>` to `opensea collections top-pfp` and a `chains` option to `collections.topPfp()`. Both combine with the existing `--chain` / `chain`, and the request sends them as the `chains` query parameter.
+
+### Patch Changes
+
+- Updated dependencies [aac5e9c]
+- Updated dependencies [ed09a89]
+  - @opensea/sdk@14.0.0
+  - @opensea/wallet-adapters@2.0.0
+
 ## 4.1.1
 
 ### Patch Changes

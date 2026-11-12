@@ -12,8 +12,8 @@ import {
   verifySavedSwapQuoteMac,
 } from "./saved-swap-quote.js"
 import type {
-  Account,
   AccountResolveResponse,
+  AccountResponse,
   AgentAccountStatusResponse,
   AgentProfileRelationshipsResponse,
   AgentRelationshipListResponse,
@@ -30,7 +30,6 @@ import type {
   Chain,
   ChainListResponse,
   ClosedPositionsResponse,
-  Collection,
   CollectionBatchResponse,
   CollectionDetailedResponse,
   CollectionHoldersPaginatedResponse,
@@ -40,7 +39,7 @@ import type {
   CollectionPaginatedResponse,
   CollectionPfpProfilesResponse,
   CollectionRefreshResponse,
-  CollectionStats,
+  CollectionStatsResponse,
   CollectionTransactionResponse,
   CollectionTransactionsResponse,
   Contract,
@@ -78,9 +77,9 @@ import type {
   HealthResult,
   Listing,
   ListingFulfillmentDataRequest,
-  NFT,
   NftAnalyticsResponse,
   NftBatchResponse,
+  NftDetailed,
   Offer,
   OfferFulfillmentDataRequest,
   OhlcvResponse,
@@ -243,8 +242,8 @@ class ChainsAPI {
 export class CollectionsAPI {
   constructor(private client: OpenSeaClient) {}
 
-  async get(slug: string): Promise<Collection> {
-    return this.client.get<Collection>(
+  async get(slug: string): Promise<CollectionDetailedResponse> {
+    return this.client.get<CollectionDetailedResponse>(
       `/api/v2/collections/${pathSegment(slug)}`,
     )
   }
@@ -256,7 +255,7 @@ export class CollectionsAPI {
     orderBy?: CollectionOrderBy
     creatorUsername?: string
     includeHidden?: boolean
-  }): Promise<{ collections: Collection[]; next?: string }> {
+  }): Promise<{ collections: CollectionDetailedResponse[]; next?: string }> {
     return this.client.get("/api/v2/collections", {
       chain: options?.chain,
       limit: options?.limit,
@@ -267,8 +266,8 @@ export class CollectionsAPI {
     })
   }
 
-  async stats(slug: string): Promise<CollectionStats> {
-    return this.client.get<CollectionStats>(
+  async stats(slug: string): Promise<CollectionStatsResponse> {
+    return this.client.get<CollectionStatsResponse>(
       `/api/v2/collections/${pathSegment(slug)}/stats`,
     )
   }
@@ -296,18 +295,22 @@ export class CollectionsAPI {
 
   /**
    * Collections ranked by verified NFT profile-picture wearer count. `limit`
-   * (1-50) is required; omit `chain` to rank across every chain.
+   * (1-50) is required. `chain` and `chains` combine; omit both to rank
+   * across every chain.
    */
   async topPfp(options: {
     limit: number
     chain?: Chain
+    chains?: Chain[]
     categories?: string[]
     minFloorPriceUsd?: number
     maxFloorPriceUsd?: number
   }): Promise<TopPfpCollectionsResponse> {
     return this.client.get("/api/v2/pfp/top-collections", {
       limit: options.limit,
-      chains: options.chain,
+      chains:
+        [options.chain, ...(options.chains ?? [])].filter(Boolean).join(",") ||
+        undefined,
       categories: options.categories?.join(","),
       min_floor_price_usd: options.minFloorPriceUsd,
       max_floor_price_usd: options.maxFloorPriceUsd,
@@ -1024,7 +1027,7 @@ class NFTsAPI {
     chain: Chain,
     address: string,
     identifier: string,
-  ): Promise<{ nft: NFT }> {
+  ): Promise<{ nft: NftDetailed }> {
     return this.client.get(
       `/api/v2/chain/${pathSegment(chain)}/contract/${pathSegment(address)}/nfts/${pathSegment(identifier)}`,
     )
@@ -1038,7 +1041,7 @@ class NFTsAPI {
       traits?: TraitFilter[]
       hasAgentBinding?: boolean
     },
-  ): Promise<{ nfts: NFT[]; next?: string }> {
+  ): Promise<{ nfts: NftDetailed[]; next?: string }> {
     return this.client.get(`/api/v2/collection/${pathSegment(slug)}/nfts`, {
       limit: options?.limit,
       next: options?.next,
@@ -1051,7 +1054,7 @@ class NFTsAPI {
     chain: Chain,
     address: string,
     options?: { limit?: number; next?: string },
-  ): Promise<{ nfts: NFT[]; next?: string }> {
+  ): Promise<{ nfts: NftDetailed[]; next?: string }> {
     return this.client.get(
       `/api/v2/chain/${pathSegment(chain)}/contract/${pathSegment(address)}/nfts`,
       {
@@ -1071,7 +1074,7 @@ class NFTsAPI {
     chain: Chain,
     address: string,
     options?: { limit?: number; next?: string; includeAutoHidden?: boolean },
-  ): Promise<{ nfts: NFT[]; next?: string }> {
+  ): Promise<{ nfts: NftDetailed[]; next?: string }> {
     return this.client.get(
       `/api/v2/chain/${pathSegment(chain)}/account/${pathSegment(address)}/nfts`,
       {
@@ -1489,12 +1492,6 @@ class EventsAPI {
     before?: number
     limit?: number
     next?: string
-    /**
-     * @deprecated Ignored and not sent. `GET /api/v2/events` has no `chain`
-     * parameter, so it never filtered. Use `byAccount` with `chain`, or
-     * `byNFT`, for chain-scoped events.
-     */
-    chain?: Chain
   }): Promise<{ asset_events: AssetEvent[]; next?: string }> {
     return this.client.get("/api/v2/events", {
       event_type: options?.eventType,
@@ -1566,7 +1563,7 @@ class EventsAPI {
 class AccountsAPI {
   constructor(private client: OpenSeaClient) {}
 
-  async get(address: string): Promise<Account> {
+  async get(address: string): Promise<AccountResponse> {
     return this.client.get(`/api/v2/accounts/${pathSegment(address)}`)
   }
 
@@ -1754,7 +1751,7 @@ class AccountsAPI {
       sortDirection?: "asc" | "desc"
       chains?: string[]
     },
-  ): Promise<{ nfts: NFT[]; next?: string }> {
+  ): Promise<{ nfts: NftDetailed[]; next?: string }> {
     return this.client.get(
       `/api/v2/account/${pathSegment(address)}/favorites`,
       {

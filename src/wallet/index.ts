@@ -10,7 +10,6 @@ export type {
   SvmTransactionRequest,
   SvmWalletAdapter,
   SvmWalletCapabilities,
-  TransactionRequest,
   TransactionResult,
   WalletAdapter,
   WalletCapabilities,
@@ -18,6 +17,7 @@ export type {
   WalletProvider,
   WalletSelector,
 } from "@opensea/wallet-adapters"
+
 export {
   BankrAdapter,
   CHAIN_TO_FIREBLOCKS_ASSET,

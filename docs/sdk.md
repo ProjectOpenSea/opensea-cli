@@ -49,7 +49,7 @@ const { profiles } = await client.collections.pfpProfiles("mfers", {
 
 const { collections: pfpRanking } = await client.collections.topPfp({
   limit: 10,
-  chain: "base",
+  chains: ["base", "ethereum"],
 })
 ```
 
@@ -214,7 +214,6 @@ call `saveItemMediaBatch("my-drop", { upload_batch_id, filenames })`.
 ```typescript
 const { asset_events, next } = await client.events.list({
   eventType: "sale",
-  chain: "ethereum",
   after: 1700000000,
   before: 1700100000,
   limit: 10,
@@ -238,6 +237,9 @@ const { asset_events, next } = await client.events.byNFT(
   { eventType: "sale", limit: 10 },
 )
 ```
+
+`events.list` has no chain filter. For events on one chain, use `byAccount`
+with `chain`, or `byNFT`.
 
 ## Accounts
 

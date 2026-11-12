@@ -30,19 +30,6 @@ export type Listing = Schemas["Listing"]
 export type ListingPrice = Schemas["ListingPrice"]
 export type Payment = Schemas["Payment"]
 export type Event = Schemas["Event"]
-/**
- * @deprecated The API spec no longer defines `EventBase`; use `Event` or a
- * specific event type such as `SaleEvent`. Kept so existing imports compile.
- */
-export interface EventBase {
-  event_type: string
-  event_timestamp: number
-  transaction?: string
-  order_hash?: string
-  protocol_address?: string
-  chain: string
-  payment?: Payment
-}
 export type SaleEvent = Schemas["SaleEvent"]
 export type TransferEvent = Schemas["TransferEvent"]
 export type OrderEvent = Schemas["OrderEvent"]
@@ -196,25 +183,6 @@ export type EventType =
   | "collection_offer"
 
 export type OrderSide = "ask" | "bid"
-
-// ── Legacy type aliases (backward compat for CLI consumers) ─────────
-// These map old CLI-specific names to the generated types.
-
-export type {
-  AccountResponse as Account,
-  CollectionDetailedResponse as Collection,
-  CollectionStatsResponse as CollectionStats,
-  NftDetailed as NFT,
-  Payment as EventPayment,
-}
-
-/**
- * The NFT shape returned inside event payloads (as `asset` on OrderEvent and
- * `nft` on SaleEvent/TransferEvent). Identical to the canonical `Nft` schema
- * from @opensea/api-types, re-exported under the legacy name for SDK
- * consumers.
- */
-export type EventAsset = Nft
 
 /**
  * A single entry from `AssetEventsResponse.asset_events`. The OpenSea events

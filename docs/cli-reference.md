@@ -130,13 +130,14 @@ opensea collections stats <slug>
 opensea collections traits <slug>
 opensea collections trait-floors <slug>
 opensea collections pfp-profiles <slug> [--limit <n>] [--next <cursor>]
-opensea collections top-pfp [--limit <n>] [--chain <chain>] [--categories <list>] [--min-floor-price-usd <usd>] [--max-floor-price-usd <usd>]
+opensea collections top-pfp [--limit <n>] [--chain <chain>] [--chains <list>] [--categories <list>] [--min-floor-price-usd <usd>] [--max-floor-price-usd <usd>]
 ```
 
 `trait-floors` prints the floor price of each text trait value with at least
 one active listing. `pfp-profiles` lists profiles whose profile picture is a
 verified NFT from the collection. `top-pfp` ranks collections by that wearer
-count. Its `--limit` takes 1 to 50 (default 20), and without `--chain` it ranks
+count. Its `--limit` takes 1 to 50 (default 20). `--chains` takes a
+comma-separated list and combines with `--chain`; without either it ranks
 across every chain.
 
 `--order-by` values: `created_date`, `one_day_change`, `seven_day_volume`, `seven_day_change`, `num_owners`, `market_cap`

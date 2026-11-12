@@ -157,6 +157,19 @@ describe("OpenSeaCLI", () => {
       })
     })
 
+    it("topPfp combines chain and chains into one chains list", async () => {
+      mockGet.mockResolvedValue({ collections: [] })
+      await sdk.collections.topPfp({
+        limit: 10,
+        chain: "base",
+        chains: ["ethereum", "shape"],
+      })
+      expect(mockGet).toHaveBeenCalledWith(
+        "/api/v2/pfp/top-collections",
+        expect.objectContaining({ chains: "base,ethereum,shape" }),
+      )
+    })
+
     it("top calls correct endpoint with options", async () => {
       mockGet.mockResolvedValue({ collections: [] })
       await sdk.collections.top({
@@ -862,8 +875,9 @@ describe("OpenSeaCLI", () => {
       })
     })
 
-    it("list does not send chain, which GET /api/v2/events ignores", async () => {
+    it("list rejects and does not send chain, which GET /api/v2/events lacks", async () => {
       mockGet.mockResolvedValue({ asset_events: [] })
+      // @ts-expect-error list() has no chain option
       await sdk.events.list({ chain: "base", limit: 10 })
       const params = mockGet.mock.calls[0][1]
       expect(params).toMatchObject({ limit: 10 })

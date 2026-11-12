@@ -53,12 +53,16 @@ describe("auth link-wallet API key", () => {
     )
   }
 
-  function sentApiKey(): unknown {
+  function sentOptions(): Record<string, unknown> {
     const call = linkWalletWithSiwx.mock.calls[0] as unknown as [
       unknown,
-      { apiKey?: string },
+      Record<string, unknown>,
     ]
-    return call[1].apiKey
+    return call[1]
+  }
+
+  function sentApiKey(): unknown {
+    return sentOptions().apiKey
   }
 
   it("uses the cached key when neither --api-key nor the env var is set", async () => {
@@ -75,5 +79,30 @@ describe("auth link-wallet API key", () => {
     await linkWallet("--api-key", "flag-key")
 
     expect(sentApiKey()).toBe("flag-key")
+  })
+
+  it("sends --api-base-url as apiBaseUrl, the base for SIWX nonces", async () => {
+    await linkWallet("--api-base-url", "https://api.example.com")
+
+    expect(sentOptions().apiBaseUrl).toBe("https://api.example.com")
+    expect(sentOptions()).not.toHaveProperty("authBaseUrl")
+  })
+
+  it("rejects the removed --statement and --auth-base-url options", async () => {
+    for (const args of [
+      ["--statement", "hello"],
+      ["--auth-base-url", "https://auth.example.com"],
+    ]) {
+      const ctx = createCommandTestContext()
+      const cmd = authCommand(() => undefined, ctx.getFormat)
+      cmd.commands
+        .find(sub => sub.name() === "link-wallet")
+        ?.exitOverride()
+        .configureOutput({ writeErr: () => {} })
+      await expect(
+        cmd.parseAsync(["link-wallet", ...args], { from: "user" }),
+      ).rejects.toThrow(/unknown option/)
+    }
+    expect(linkWalletWithSiwx).not.toHaveBeenCalled()
   })
 })
