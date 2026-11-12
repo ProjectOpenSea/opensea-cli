@@ -1,6 +1,6 @@
 # Examples
 
-Real-world examples using the [tiny dinos](https://opensea.io/collection/tiny-dinos-eth) and [mfers](https://opensea.io/collection/mfers) collections.
+Examples against the [tiny dinos](https://opensea.io/collection/tiny-dinos-eth) and [mfers](https://opensea.io/collection/mfers) collections.
 
 ## Collections
 

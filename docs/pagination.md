@@ -1,16 +1,16 @@
 # Pagination
 
-The OpenSea API uses cursor-based pagination. Paginated responses include a `next` field containing an opaque cursor string. Pass this cursor back to fetch the next page.
+The OpenSea API paginates with cursors. A paginated response has a `next` field holding an opaque cursor; pass it back to get the next page.
 
 ## CLI
 
-All paginated commands use `--next <cursor>`:
+Every paginated command takes `--next <cursor>`:
 
 ```bash
 # First page
 opensea collections list --limit 5
 
-# The response includes a "next" cursor — pass it to get the next page
+# Pass the "next" cursor from the response to get the next page
 opensea collections list --limit 5 --next "LXBrPTEwMDA..."
 
 # Tokens also use --next
@@ -36,11 +36,11 @@ opensea tokens trending --limit 5 --next "abc123..."
 - `tokens trending`
 - `tokens top`
 
-> **Note:** The `search` command does not support cursor-based pagination. The search API returns a flat list with no `next` cursor; use `--limit` to control result count (max 50).
+`search` is not paginated. The search API returns a flat list with no `next` cursor; use `--limit` to set the result count (max 50).
 
 ## SDK
 
-SDK methods return a `next` cursor in the response object:
+SDK methods return the `next` cursor in the response object:
 
 ```typescript
 const client = new OpenSeaCLI({ apiKey: process.env.OPENSEA_API_KEY })

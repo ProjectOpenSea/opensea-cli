@@ -62,7 +62,7 @@ export async function checkHealth(
         }
       }
     }
-    // Non-auth error on listings endpoint — connectivity works but auth is unverified
+    // Non-auth error from the listings endpoint: connectivity works, auth is unverified
     return {
       status: "ok",
       key_prefix: keyPrefix,

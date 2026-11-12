@@ -1,6 +1,6 @@
-# Event Types
+# Event types
 
-The `events` commands accept an `--event-type` flag to filter by event type.
+Every `events` command takes `--event-type` to filter by type.
 
 ## Valid event types
 
@@ -38,4 +38,4 @@ const { asset_events } = await client.events.byCollection("mfers", {
 })
 ```
 
-Note: The CLI uses `--event-type` (kebab-case) while the SDK uses `eventType` (camelCase).
+The CLI flag is `--event-type`; the SDK option is `eventType`.

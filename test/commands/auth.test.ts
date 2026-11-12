@@ -78,7 +78,7 @@ describe("authCommand", () => {
     ]
     expect(url).toBe("https://api.opensea.io/api/v2/auth/keys")
     expect(init.method).toBe("POST")
-    // No api-key header in any casing — endpoint is unauthenticated.
+    // No api-key header in any casing: the endpoint is unauthenticated.
     const headerKeys = Object.keys(init.headers).map(k => k.toLowerCase())
     expect(headerKeys).not.toContain("x-api-key")
 

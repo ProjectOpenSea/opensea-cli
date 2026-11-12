@@ -1824,7 +1824,7 @@ class AgentAPI {
    * means "I am an agent and this account owns me".
    *
    * Proposing something already awaiting you confirms it, so a client that
-   * cannot tell who moved first can just call this.
+   * cannot tell who moved first can call this.
    */
   async propose(
     counterpartyAddress: string,

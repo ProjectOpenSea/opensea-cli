@@ -37,7 +37,7 @@ function scopesOutsideRequested(
 }
 
 /**
- * Top-level `opensea login` — keyless OAuth 2.1 (authorization-code + PKCE)
+ * Top-level `opensea login`: keyless OAuth 2.1 (authorization-code + PKCE)
  * login against the OpenSea authorization server, or SIWE sign-in with a
  * private key for server-side agents. Falls back to the device authorization
  * flow for headless environments (`--device`, or automatically when no browser

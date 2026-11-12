@@ -211,7 +211,7 @@ export type {
 /**
  * The NFT shape returned inside event payloads (as `asset` on OrderEvent and
  * `nft` on SaleEvent/TransferEvent). Identical to the canonical `Nft` schema
- * from @opensea/api-types — re-exported under the legacy name for SDK
+ * from @opensea/api-types, re-exported under the legacy name for SDK
  * consumers.
  */
 export type EventAsset = Nft

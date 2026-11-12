@@ -8,8 +8,8 @@ const PRIVY_API_BASE = "https://api.privy.io"
 
 /**
  * `opensea wallet info` reports the security posture of the active
- * wallet adapter — what credential is in env, what hardening is in
- * place, what is missing. Read-only. Provider-aware.
+ * wallet adapter: what credential is in env, what hardening is in
+ * place, and what is missing. Read-only. Provider-aware.
  *
  * Warnings go to stderr; data goes to stdout. Exit code is 0 on
  * success regardless of warnings; nonzero only on auth/network

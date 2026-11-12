@@ -1,6 +1,6 @@
-# SDK Reference
+# SDK reference
 
-The `@opensea/cli` package exports a programmatic SDK for use in TypeScript/JavaScript applications.
+`@opensea/cli` also exports an SDK for TypeScript and JavaScript code.
 
 ## Setup
 
@@ -19,6 +19,9 @@ const client = new OpenSeaCLI({ apiKey: process.env.OPENSEA_API_KEY })
 | `chain` | `string` | `"ethereum"` | Default chain |
 | `timeout` | `number` | `30000` | Request timeout in milliseconds |
 | `verbose` | `boolean` | `false` | Log requests and responses to stderr |
+| `maxRetries` | `number` | `0` | Retries on 429, and on 5xx for GET requests |
+| `retryBaseDelay` | `number` | `1000` | Base backoff in milliseconds, doubled per retry |
+| `authToken` | `string` | none | Wallet auth token for endpoints that need a scope |
 
 ## Collections
 
@@ -150,7 +153,7 @@ const receipt = await client.transactions.receipt(mint.receipt_request)
 ```
 
 Publishing needs a wallet token with `write:drops`. `sendTransaction` refuses a
-wallet that is not the transaction's `from`, the contract's onchain owner.
+wallet that is not the transaction's `from`, which is the contract's onchain owner.
 
 ```typescript
 import { createWalletFromEnv, OpenSeaCLI, uploadToContext } from "@opensea/cli"
@@ -176,13 +179,13 @@ await uploadToContext(context, new Blob([csvBytes]), {
 })
 ```
 
-`uploadItemMedia` saves a set of item media files as the drop's items, replacing
-any it already has. It puts every file in one upload batch (a new UUID unless
-you pass `uploadBatchId`), requests upload contexts 50 files at a time and
-uploads each chunk before requesting the next, then saves the batch by filename
-with `saveItemMediaBatch`. Without a manifest, items are numbered 1 to n in the
-order of `files`. A file's `data` can be a function, so a large drop is read one
-file at a time:
+`uploadItemMedia` saves a set of media files as the drop's items, replacing any
+it already has. It puts every file in one upload batch (a new UUID unless you
+pass `uploadBatchId`), requests upload contexts 50 files at a time, uploads each
+chunk before requesting the next, then saves the batch by filename with
+`saveItemMediaBatch`. Without a manifest, items are numbered 1 to n in the order
+of `files`. A file's `data` can be a function, so a large drop is read one file
+at a time:
 
 ```typescript
 import { readFile } from "node:fs/promises"
@@ -202,7 +205,7 @@ const result = await creator.drops.uploadItemMedia(
 // { upload_batch_id: "...", item_count: 2, success: true }
 ```
 
-For the steps one at a time, pass one `upload_batch_id` to every
+To run the steps yourself, pass one `upload_batch_id` to every
 `createItemMediaUpload` call, upload each context with `uploadToContext`, then
 call `saveItemMediaBatch("my-drop", { upload_batch_id, filenames })`.
 
@@ -244,10 +247,9 @@ const account = await client.accounts.get("0x123...")
 
 ## Agent accounts
 
-An agent is an account, not a flag on a wallet, and ownership is a
-relationship between two accounts that both sides confirm. It is a
-declaration, not an authorization: naming an account as your agent grants it
-nothing. It is self-reported rather than verified by OpenSea.
+An agent is an account, not a flag on a wallet. Ownership is a relationship
+between two accounts that both sides confirm. Naming an account as your agent
+grants it nothing, and OpenSea does not verify the claim.
 
 ```typescript
 // Requires write:wallets.
@@ -266,9 +268,9 @@ const publicView = await client.agent.profile("imatestagent123")
 
 The role argument is the caller's own side: `"AGENT"` means "I am an agent and
 the counterparty owns me". Proposing a relationship that is already awaiting
-you confirms it, so a client that cannot tell who moved first can just call
-`propose`. `changed` and `created` are false when the call was a no-op, which
-makes a retry distinguishable from a real change.
+you confirms it, so a client that cannot tell who moved first can call
+`propose`. `changed` and `created` are false when the call was a no-op, so a
+retry can be told apart from a real change.
 
 Log in with both scopes or `agent.list()` returns 403:
 
@@ -301,13 +303,13 @@ const activity = await client.tokens.activityStats(
 )
 ```
 
-Token activity stats use the public REST response shape, including
-`computed_at`, `volume_usd`, and `average_trade_usd`. A requested window is
-omitted from `windows` when it has no swaps.
+`activityStats` returns the REST response shape, including `computed_at`,
+`volume_usd` and `average_trade_usd`. A requested window with no swaps is left
+out of `windows`.
 
 ## Search
 
-Search uses the unified `/api/v2/search` REST endpoint. Results are ranked by relevance and each result has a `type` discriminator (`collection`, `nft`, `token`, or `account`) with the corresponding typed object. The search endpoint does not support cursor-based pagination; use `limit` to control result count (max 50).
+Search calls `/api/v2/search`. Results are ranked by relevance, and each has a `type` (`collection`, `nft`, `token` or `account`) plus the matching object. Search is not paginated; use `limit` to set the result count (max 50).
 
 ```typescript
 const { results } = await client.search.query("mfers", {
@@ -316,7 +318,7 @@ const { results } = await client.search.query("mfers", {
   limit: 10,
 })
 
-// Each result has a type and the corresponding object
+// Each result has a type and the matching object
 for (const result of results) {
   switch (result.type) {
     case "collection":
@@ -387,9 +389,9 @@ const { quote, transactions } = await client.swaps.quote({
 })
 ```
 
-## Error Handling
+## Error handling
 
-All API errors throw `OpenSeaAPIError` with structured fields:
+API errors throw `OpenSeaAPIError`:
 
 ```typescript
 import { OpenSeaCLI, OpenSeaAPIError } from "@opensea/cli"
@@ -409,11 +411,9 @@ try {
 
 ## Exports
 
-The package exports:
-
 | Export | Description |
 |---|---|
-| `OpenSeaCLI` | Main SDK class with all API domain methods |
-| `OpenSeaClient` | Low-level HTTP client (for advanced usage) |
+| `OpenSeaCLI` | SDK class with a property per API domain |
+| `OpenSeaClient` | Low-level HTTP client |
 | `OpenSeaAPIError` | Error class thrown on API failures |
-| API response types (e.g. `Collection`) | TypeScript interfaces for all API responses, imported from `@opensea/cli` |
+| API response types (e.g. `Collection`) | TypeScript types for API responses |

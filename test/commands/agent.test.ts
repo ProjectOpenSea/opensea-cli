@@ -329,7 +329,7 @@ describe("agentCommand", () => {
     it("lets a resolve API error through untouched, and writes nothing", async () => {
       // Deliberately not wrapped. cli.ts has one top-level handler that renders
       // an OpenSeaAPIError with its status, path, and the server's own message
-      // ("Username not found: ..."), and picks the exit code from the status —
+      // ("Username not found: ..."), and picks the exit code from the status:
       // 3 for a 429, 1 otherwise. Re-throwing a generic Error here would throw
       // all of that away and report a rate-limited lookup as a plain failure.
       const apiError = Object.assign(new Error("Username not found"), {
