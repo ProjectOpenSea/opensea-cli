@@ -153,6 +153,9 @@ opensea collections get-metadata <slug>
 opensea collections update-metadata <slug> --body <path>
 opensea collections upload-page-media <slug> <placement> --content-type <mime> [--file <path>]
 opensea collections set-pricing-currency <slug> --stablecoin <true|false>
+opensea collections rarity-settings <slug>
+opensea collections set-rarity-setting <slug> --mode <frequency|exclude|higher_is_rarer> (--trait-type <name> | --trait-count)
+opensea collections revert-rarity-setting <slug> (--trait-type <name> | --trait-count)
 opensea collections creator-fee-enforcement <slug>
 opensea collections set-creator-fee-enforcement <slug> --enabled <true|false> [--send] [--wallet-provider <provider>]
 opensea collections refresh <slug>
@@ -179,6 +182,16 @@ token=$(opensea collections upload-page-media my-drop hero_desktop \
 `set-pricing-currency --stablecoin true` prices secondary sales in the chain's
 USD stablecoin (USDG on Robinhood Chain), `false` in its native currency. The
 response's `workflow_id` is null when nothing needed to change.
+
+`rarity-settings` lists the rarity setting in effect for the trait count and
+each trait that has one, with its `source`: `contract_metadata` when it comes
+from the `rarity` object in the contract's `contractURI`, `site` when it was
+set on OpenSea (site settings win). `set-rarity-setting` sets one trait
+(`--trait-type`) or the number of traits (`--trait-count`) to `frequency`
+(default scoring), `exclude` (not counted) or `higher_is_rarer` (numeric
+traits). `revert-rarity-setting` removes the OpenSea setting so the contract's
+setting or default scoring applies again. Both print the updated settings;
+rankings recompute shortly after.
 
 `set-creator-fee-enforcement` prints, in order, the transactions that set or
 remove OpenSea's transfer validator. The list is empty when the contract is
@@ -280,14 +293,17 @@ The action commands work on EVM chains and Solana. On Solana, keep base58 addres
 opensea drops list [--type <type>] [--chains <chains>] [--limit <n>] [--next <cursor>]
 opensea drops get <slug>
 opensea drops items <slug> [--limit <n>] [--next <cursor>]
-opensea drops mint <slug> --minter <address> [--quantity <n>] [--send] [--wallet-provider <provider>]
-opensea drops cross-chain-mint <slug> --payer <address> --minter <address> --payment-chain <chain> --payment-token <address> [--quantity <n>]
+opensea drops eligibility <slug>
+opensea drops mint <slug> --minter <address> [--quantity <n>] [--token-id <id>] [--send] [--wallet-provider <provider>]
+opensea drops cross-chain-mint <slug> --payer <address> --minter <address> --payment-chain <chain> --payment-token <address> [--quantity <n>] [--token-id <id>]
 ```
 
 `items` lists the drop's saved items, including a draft's, and needs a wallet
 token with `write:drops` from a collection editor.
 
-`mint` prints a ready-to-sign transaction. With `--send`, the configured EVM
+`get` returns each stage's `max_token_supply_for_stage`: on an ERC-721 drop, the collection's total minted at which an allowlist stage stops, or null when the stage has no cap. `eligibility` needs a wallet token with `read:eligibility` and returns, per stage, whether the wallet is eligible and, on ERC-721 drops, `mints_remaining`: how many more it can mint there given its past mints, the drop's remaining supply and the stage's cap. It does not check the stage's time window.
+
+`--token-id` names the token to mint on an ERC-1155 drop, which mints one token per request, and must be omitted on an ERC-721 drop. `mint` prints a ready-to-sign transaction. With `--send`, the configured EVM
 wallet signs, sends and pays for it, and the command prints the hash, chain,
 sending wallet and minter. The wallet need not be the minter: `--minter`
 receives the tokens either way.
@@ -295,6 +311,8 @@ receives the tokens either way.
 `cross-chain-mint` returns ordered transactions plus `receipt_request`. Submit
 the transactions in order, save `receipt_request` unchanged to a JSON file, and
 poll it with `transactions receipt` until the status is terminal.
+
+A paid allowlist stage whose OpenSea fee is below the drop's minimum cannot be minted until its creator publishes the stage again; `mint` and `cross-chain-mint` then fail with code `STAGE_FEE_BELOW_FLOOR`, which the error output includes.
 
 ### Deploying a drop contract
 

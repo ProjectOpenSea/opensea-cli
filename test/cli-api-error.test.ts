@@ -109,6 +109,34 @@ describe("describeApiError", () => {
     expect(payload.hint).toContain("scope")
   })
 
+  it("surfaces the error code, with a hint for a stage fee below the floor", () => {
+    const body = JSON.stringify({
+      errors: [
+        "The active stage is paid and its OpenSea fee is below the drop's minimum",
+      ],
+      code: "STAGE_FEE_BELOW_FLOOR",
+    })
+    const { exitCode, payload } = describeApiError(apiError(422, body))
+
+    expect(exitCode).toBe(1)
+    expect(payload.code).toBe("STAGE_FEE_BELOW_FLOOR")
+    expect(payload.hint).toContain("Only the drop's creator can fix it")
+  })
+
+  it("surfaces a code without a hint of its own and keeps the status hint", () => {
+    const { payload } = describeApiError(
+      apiError(403, JSON.stringify({ errors: ["nope"], code: "SOME_CODE" })),
+    )
+
+    expect(payload.code).toBe("SOME_CODE")
+    expect(payload.hint).toContain("own the collection")
+  })
+
+  it("leaves code out when the body carries none", () => {
+    const { payload } = describeApiError(apiError(400, '{"errors":["bad"]}'))
+    expect(payload).not.toHaveProperty("code")
+  })
+
   it("keeps 429 on the rate-limit exit code without a hint", () => {
     const { exitCode, payload } = describeApiError(
       apiError(429, "Rate limit exceeded"),

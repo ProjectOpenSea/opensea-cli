@@ -49,6 +49,19 @@ export function parseIntOption(value: string, name: string): number {
   return parsed
 }
 
+/**
+ * A token ID as the API takes it: a non-negative decimal integer string
+ * (uint256), passed through unchanged so IDs above 2^53 keep every digit.
+ */
+export function parseTokenIdOption(value: string, name: string): string {
+  if (!/^\d+$/.test(value)) {
+    throw new Error(
+      `${name} must be a non-negative decimal integer, got "${value}"`,
+    )
+  }
+  return value
+}
+
 export function parseBooleanOption(value: string, flag: string): boolean {
   if (value !== "true" && value !== "false") {
     throw new Error(`${flag} must be 'true' or 'false'`)

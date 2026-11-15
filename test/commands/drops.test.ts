@@ -215,6 +215,66 @@ describe("dropsCommand", () => {
     )
   })
 
+  it("mint --token-id posts token_id for an ERC-1155 drop", async () => {
+    ctx.mockClient.post.mockResolvedValue({
+      to: "0x123",
+      data: "0x",
+      value: "0",
+      chain: "base",
+    })
+
+    const cmd = dropsCommand(ctx.getClient, ctx.getFormat)
+    await cmd.parseAsync(
+      [
+        "mint",
+        "cool-1155",
+        "--minter",
+        "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+        "--token-id",
+        "115792089237316195423570985008687907853269984665640564039457584007913129639935",
+      ],
+      { from: "user" },
+    )
+
+    expect(ctx.mockClient.post).toHaveBeenCalledWith(
+      "/api/v2/drops/cool-1155/mint",
+      {
+        minter: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+        quantity: 1,
+        token_id:
+          "115792089237316195423570985008687907853269984665640564039457584007913129639935",
+      },
+    )
+  })
+
+  it("mint --token-id accepts token 0", async () => {
+    ctx.mockClient.post.mockResolvedValue({ to: "0x1", data: "0x", value: "0" })
+
+    const cmd = dropsCommand(ctx.getClient, ctx.getFormat)
+    await cmd.parseAsync(
+      ["mint", "cool-1155", "--minter", "0xm", "--token-id", "0"],
+      { from: "user" },
+    )
+
+    expect(ctx.mockClient.post).toHaveBeenCalledWith(
+      "/api/v2/drops/cool-1155/mint",
+      { minter: "0xm", quantity: 1, token_id: "0" },
+    )
+  })
+
+  it("mint rejects a --token-id that is not a decimal integer", async () => {
+    const cmd = dropsCommand(ctx.getClient, ctx.getFormat)
+    for (const bad of ["-1", "0x1", "1.5", ""]) {
+      await expect(
+        cmd.parseAsync(
+          ["mint", "cool-1155", "--minter", "0xm", "--token-id", bad],
+          { from: "user" },
+        ),
+      ).rejects.toThrow("--token-id must be a non-negative decimal integer")
+    }
+    expect(ctx.mockClient.post).not.toHaveBeenCalled()
+  })
+
   describe("mint --send", () => {
     const MINTER = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
     const mintTx = {
@@ -360,6 +420,70 @@ describe("dropsCommand", () => {
         },
       },
     )
+  })
+
+  it("cross-chain-mint --token-id posts token_id", async () => {
+    ctx.mockClient.post.mockResolvedValue({
+      transactions: [],
+      receipt_request: {},
+    })
+
+    const cmd = dropsCommand(ctx.getClient, ctx.getFormat)
+    await cmd.parseAsync(
+      [
+        "cross-chain-mint",
+        "cool-1155",
+        "--payer",
+        "0xpayer",
+        "--minter",
+        "0xminter",
+        "--payment-chain",
+        "base",
+        "--payment-token",
+        "0x0000000000000000000000000000000000000000",
+        "--token-id",
+        "7",
+      ],
+      { from: "user" },
+    )
+
+    expect(ctx.mockClient.post).toHaveBeenCalledWith(
+      "/api/v2/drops/cool-1155/cross_chain_mint",
+      {
+        payer: "0xpayer",
+        minter: "0xminter",
+        quantity: 1,
+        payment: {
+          chain: "base",
+          token_address: "0x0000000000000000000000000000000000000000",
+        },
+        token_id: "7",
+      },
+    )
+  })
+
+  it("cross-chain-mint rejects a non-decimal --token-id before calling the API", async () => {
+    const cmd = dropsCommand(ctx.getClient, ctx.getFormat)
+    await expect(
+      cmd.parseAsync(
+        [
+          "cross-chain-mint",
+          "cool-1155",
+          "--payer",
+          "0xpayer",
+          "--minter",
+          "0xminter",
+          "--payment-chain",
+          "base",
+          "--payment-token",
+          "0x0000000000000000000000000000000000000000",
+          "--token-id",
+          "abc",
+        ],
+        { from: "user" },
+      ),
+    ).rejects.toThrow("--token-id must be a non-negative decimal integer")
+    expect(ctx.mockClient.post).not.toHaveBeenCalled()
   })
 
   it("save-edits posts the request body", async () => {

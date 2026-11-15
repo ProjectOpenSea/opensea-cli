@@ -21,6 +21,22 @@ function errorText(entry: unknown): string {
   return JSON.stringify(entry)
 }
 
+// Hints for error `code` values whose fix the message alone does not make obvious.
+const CODE_HINTS: Record<string, string> = {
+  STAGE_FEE_BELOW_FLOOR:
+    "The active stage is paid and its OpenSea fee is below the drop's minimum, so no paid mint can be built. Only the drop's creator can fix it, by publishing the stage again; retrying will not help.",
+}
+
+/** The `code` of a JSON error body, or undefined. */
+function errorCode(body: string): string | undefined {
+  try {
+    const code = (JSON.parse(body) as { code?: unknown } | null)?.code
+    return typeof code === "string" ? code : undefined
+  } catch {
+    return undefined
+  }
+}
+
 /** The joined `errors` of a `{"errors": [...]}` body, or undefined. */
 function structuredMessage(body: string): string | undefined {
   let parsed: unknown
@@ -65,7 +81,10 @@ export function describeApiError(error: OpenSeaAPIError): {
     message: structured ?? error.responseBody,
   }
   if (structured !== undefined) payload.response_body = error.responseBody
-  const hint = HINTS[status]
+  const code = errorCode(error.responseBody)
+  if (code !== undefined) payload.code = code
+  const hint =
+    (code !== undefined ? CODE_HINTS[code] : undefined) ?? HINTS[status]
   if (hint) payload.hint = hint
   return { exitCode, payload }
 }

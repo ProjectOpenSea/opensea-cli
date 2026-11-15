@@ -38,6 +38,7 @@ import type {
   CollectionPageMetadataResponse,
   CollectionPaginatedResponse,
   CollectionPfpProfilesResponse,
+  CollectionRaritySettingsResponse,
   CollectionRefreshResponse,
   CollectionStatsResponse,
   CollectionTransactionResponse,
@@ -92,11 +93,13 @@ import type {
   PriceHistoryResponse,
   ProfileCollectionsResponse,
   RegisteredToolResponse,
+  RevertCollectionRaritySettingRequest,
   SaveDropItemMediaBatchRequest,
   SaveDropItemMediaResponse,
   SearchAssetType,
   SearchResponse,
   SetCollectionPricingCurrencyResponse,
+  SetCollectionRaritySettingRequest,
   SignalMutationResponse,
   SignalResponse,
   SignalsResponse,
@@ -439,6 +442,46 @@ export class CollectionsAPI {
     )
   }
 
+  /**
+   * The effective rarity setting for the trait count and each trait with one,
+   * and whether it comes from contract metadata or was set on OpenSea.
+   */
+  async raritySettings(
+    slug: string,
+  ): Promise<CollectionRaritySettingsResponse> {
+    return this.client.get(
+      `/api/v2/collections/${pathSegment(slug)}/rarity_settings`,
+    )
+  }
+
+  /**
+   * Set how one trait (`trait_type`) or the trait count (`trait_count: true`)
+   * counts toward rarity. Rankings recompute shortly after.
+   */
+  async setRaritySetting(
+    slug: string,
+    body: SetCollectionRaritySettingRequest,
+  ): Promise<CollectionRaritySettingsResponse> {
+    return this.client.post(
+      `/api/v2/collections/${pathSegment(slug)}/rarity_settings`,
+      body,
+    )
+  }
+
+  /**
+   * Remove OpenSea's setting for one trait or the trait count, so the
+   * contract metadata's setting (or default scoring) applies again.
+   */
+  async revertRaritySetting(
+    slug: string,
+    body: RevertCollectionRaritySettingRequest,
+  ): Promise<CollectionRaritySettingsResponse> {
+    return this.client.post(
+      `/api/v2/collections/${pathSegment(slug)}/rarity_settings/revert`,
+      body,
+    )
+  }
+
   async creatorFeeEnforcement(
     slug: string,
   ): Promise<CreatorFeeEnforcementStatusResponse> {
@@ -626,13 +669,19 @@ export class DropsAPI {
     })
   }
 
+  /**
+   * Build a mint transaction. `tokenId` names the token to mint on an
+   * ERC-1155 drop, which mints one token per request; omit it for an ERC-721
+   * drop, which assigns token IDs onchain.
+   */
   async mint(
     slug: string,
-    options: { minter: string; quantity?: number },
+    options: { minter: string; quantity?: number; tokenId?: string },
   ): Promise<DropMintResponse> {
     return this.client.post(`/api/v2/drops/${pathSegment(slug)}/mint`, {
       minter: options.minter,
       quantity: options.quantity ?? 1,
+      ...(options.tokenId !== undefined && { token_id: options.tokenId }),
     })
   }
 

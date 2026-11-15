@@ -405,6 +405,125 @@ describe("collectionsCommand", () => {
     })
   })
 
+  describe("rarity settings", () => {
+    const settings = {
+      settings: [
+        {
+          trait_type: "Background",
+          trait_count: false,
+          mode: "exclude",
+          source: "site",
+          hidden_from_filters: false,
+          contract_mode: null,
+        },
+      ],
+    }
+
+    it("rarity-settings prints the settings in effect", async () => {
+      ctx.mockClient.get.mockResolvedValue(settings)
+
+      const cmd = collectionsCommand(ctx.getClient, ctx.getFormat)
+      await cmd.parseAsync(["rarity-settings", "cool-cats"], { from: "user" })
+
+      expect(ctx.mockClient.get).toHaveBeenCalledWith(
+        "/api/v2/collections/cool-cats/rarity_settings",
+      )
+      expect(ctx.consoleSpy).toHaveBeenCalledWith(
+        JSON.stringify(settings, null, 2),
+      )
+    })
+
+    it("set-rarity-setting posts a trait type and mode", async () => {
+      ctx.mockClient.post.mockResolvedValue(settings)
+
+      const cmd = collectionsCommand(ctx.getClient, ctx.getFormat)
+      await cmd.parseAsync(
+        [
+          "set-rarity-setting",
+          "cool-cats",
+          "--trait-type",
+          "Background",
+          "--mode",
+          "exclude",
+        ],
+        { from: "user" },
+      )
+
+      expect(ctx.mockClient.post).toHaveBeenCalledWith(
+        "/api/v2/collections/cool-cats/rarity_settings",
+        { trait_type: "Background", mode: "exclude" },
+      )
+    })
+
+    it("set-rarity-setting posts the trait count setting", async () => {
+      ctx.mockClient.post.mockResolvedValue(settings)
+
+      const cmd = collectionsCommand(ctx.getClient, ctx.getFormat)
+      await cmd.parseAsync(
+        [
+          "set-rarity-setting",
+          "cool-cats",
+          "--trait-count",
+          "--mode",
+          "higher_is_rarer",
+        ],
+        { from: "user" },
+      )
+
+      expect(ctx.mockClient.post).toHaveBeenCalledWith(
+        "/api/v2/collections/cool-cats/rarity_settings",
+        { trait_count: true, mode: "higher_is_rarer" },
+      )
+    })
+
+    it("set-rarity-setting rejects an unknown mode", async () => {
+      const cmd = collectionsCommand(ctx.getClient, ctx.getFormat)
+      await expect(
+        cmd.parseAsync(
+          [
+            "set-rarity-setting",
+            "cool-cats",
+            "--trait-count",
+            "--mode",
+            "rare",
+          ],
+          { from: "user" },
+        ),
+      ).rejects.toThrow(
+        "--mode must be one of frequency, exclude, higher_is_rarer",
+      )
+      expect(ctx.mockClient.post).not.toHaveBeenCalled()
+    })
+
+    it.each([
+      [["--mode", "exclude"]],
+      [["--mode", "exclude", "--trait-type", "Eyes", "--trait-count"]],
+    ])("set-rarity-setting needs exactly one target (%j)", async args => {
+      const cmd = collectionsCommand(ctx.getClient, ctx.getFormat)
+      await expect(
+        cmd.parseAsync(["set-rarity-setting", "cool-cats", ...args], {
+          from: "user",
+        }),
+      ).rejects.toThrow("Pass exactly one of --trait-type or --trait-count")
+      expect(ctx.mockClient.post).not.toHaveBeenCalled()
+    })
+
+    it("revert-rarity-setting posts the trait type", async () => {
+      ctx.mockClient.post.mockResolvedValue(settings)
+
+      const cmd = collectionsCommand(ctx.getClient, ctx.getFormat)
+      await cmd.parseAsync(
+        ["revert-rarity-setting", "cool-cats", "--trait-type", "Background"],
+        { from: "user" },
+      )
+
+      expect(ctx.mockClient.post).toHaveBeenCalledWith(
+        "/api/v2/collections/cool-cats/rarity_settings/revert",
+        { trait_type: "Background" },
+      )
+    })
+  })
+
   it("set-pricing-currency posts use_stablecoin", async () => {
     ctx.mockClient.post.mockResolvedValue({ success: true, workflow_id: null })
 
@@ -670,6 +789,18 @@ describe("collectionsCommand path arguments", () => {
     [
       ["set-pricing-currency", "cats/1", "--stablecoin", "true"],
       "POST /api/v2/collections/cats%2F1/pricing_currency",
+    ],
+    [
+      ["rarity-settings", "cats/1"],
+      "GET /api/v2/collections/cats%2F1/rarity_settings",
+    ],
+    [
+      ["set-rarity-setting", "cats/1", "--mode", "exclude", "--trait-count"],
+      "POST /api/v2/collections/cats%2F1/rarity_settings",
+    ],
+    [
+      ["revert-rarity-setting", "cats/1", "--trait-count"],
+      "POST /api/v2/collections/cats%2F1/rarity_settings/revert",
     ],
     [
       ["creator-fee-enforcement", "cats/1"],

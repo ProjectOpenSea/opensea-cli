@@ -23,6 +23,8 @@ import type {
   CollectionOfferAggregatesPaginatedResponse,
   CollectionOrderBy,
   ModifyCollectionRequest,
+  RevertCollectionRaritySettingRequest,
+  SetCollectionRaritySettingRequest,
   SetCollectionVisibilityRequest,
   UpdateCollectionMetadataRequest,
 } from "../types/index.js"
@@ -38,6 +40,21 @@ const PAGE_MEDIA_PLACEMENTS = [
   "overview_background",
   "team",
 ]
+
+const RARITY_MODES = ["frequency", "exclude", "higher_is_rarer"] as const
+type RarityMode = SetCollectionRaritySettingRequest["mode"]
+
+function rarityTarget(options: {
+  traitType?: string
+  traitCount?: boolean
+}): RevertCollectionRaritySettingRequest {
+  if ((options.traitType == null) === !options.traitCount) {
+    throw new Error("Pass exactly one of --trait-type or --trait-count")
+  }
+  return options.traitCount
+    ? { trait_count: true }
+    : { trait_type: options.traitType }
+}
 
 export function collectionsCommand(
   getClient: () => OpenSeaClient,
@@ -583,6 +600,64 @@ export function collectionsCommand(
       const result = await collections.setPricingCurrency(slug, useStablecoin)
       console.log(formatOutput(result, getFormat()))
     })
+
+  cmd
+    .command("rarity-settings")
+    .description(
+      "Get how the trait count and each trait count toward rarity, and where each setting comes from",
+    )
+    .argument("<slug>", "Collection slug")
+    .action(async (slug: string) => {
+      const collections = new CollectionsAPI(getClient())
+      const result = await collections.raritySettings(slug)
+      console.log(formatOutput(result, getFormat()))
+    })
+
+  cmd
+    .command("set-rarity-setting")
+    .description("Set how one trait, or the trait count, counts toward rarity")
+    .argument("<slug>", "Collection slug")
+    .requiredOption("--mode <mode>", `One of ${RARITY_MODES.join(", ")}`)
+    .option("--trait-type <name>", "Trait type to set")
+    .option("--trait-count", "Set the number-of-traits setting instead")
+    .action(
+      async (
+        slug: string,
+        options: { mode: string; traitType?: string; traitCount?: boolean },
+      ) => {
+        if (!(RARITY_MODES as readonly string[]).includes(options.mode)) {
+          throw new Error(`--mode must be one of ${RARITY_MODES.join(", ")}`)
+        }
+        const collections = new CollectionsAPI(getClient())
+        const result = await collections.setRaritySetting(slug, {
+          ...rarityTarget(options),
+          mode: options.mode as RarityMode,
+        })
+        console.log(formatOutput(result, getFormat()))
+      },
+    )
+
+  cmd
+    .command("revert-rarity-setting")
+    .description(
+      "Remove OpenSea's rarity setting for one trait or the trait count, so the contract metadata's setting or default scoring applies again",
+    )
+    .argument("<slug>", "Collection slug")
+    .option("--trait-type <name>", "Trait type to revert")
+    .option("--trait-count", "Revert the number-of-traits setting instead")
+    .action(
+      async (
+        slug: string,
+        options: { traitType?: string; traitCount?: boolean },
+      ) => {
+        const collections = new CollectionsAPI(getClient())
+        const result = await collections.revertRaritySetting(
+          slug,
+          rarityTarget(options),
+        )
+        console.log(formatOutput(result, getFormat()))
+      },
+    )
 
   cmd
     .command("creator-fee-enforcement")

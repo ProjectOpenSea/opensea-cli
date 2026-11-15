@@ -344,6 +344,12 @@ export type CreatorFeeEnforcementStatusResponse =
   Schemas["CreatorFeeEnforcementStatusResponse"]
 export type SetCreatorFeeEnforcementRequest =
   Schemas["SetCreatorFeeEnforcementRequest"]
+export type CollectionRaritySettingsResponse =
+  Schemas["CollectionRaritySettingsResponse"]
+export type SetCollectionRaritySettingRequest =
+  Schemas["SetCollectionRaritySettingRequest"]
+export type RevertCollectionRaritySettingRequest =
+  Schemas["RevertCollectionRaritySettingRequest"]
 export type CollectionTransactionResponse =
   Schemas["CollectionTransactionResponse"]
 export type CollectionTransactionsResponse =

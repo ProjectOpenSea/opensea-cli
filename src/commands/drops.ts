@@ -10,6 +10,7 @@ import { formatOutput, outputGet } from "../output.js"
 import {
   addPaginationOptions,
   parseIntOption,
+  parseTokenIdOption,
   pathSegment,
   readJsonBodyOption,
   requireChainOption,
@@ -358,6 +359,10 @@ export function dropsCommand(
     .requiredOption("--minter <address>", "Wallet address to receive tokens")
     .option("--quantity <n>", "Number of tokens to mint", "1")
     .option(
+      "--token-id <id>",
+      "Token ID to mint (decimal). Required for an ERC-1155 drop, which mints one token per request; omit it for an ERC-721 drop",
+    )
+    .option(
       "--send",
       "Sign and send the transaction with the configured EVM wallet, which pays; --minter receives the tokens",
     )
@@ -371,17 +376,23 @@ export function dropsCommand(
         options: {
           minter: string
           quantity: string
+          tokenId?: string
           send?: boolean
           walletProvider?: string
         },
       ) => {
         const quantity = parseIntOption(options.quantity, "--quantity")
+        const tokenId =
+          options.tokenId === undefined
+            ? undefined
+            : parseTokenIdOption(options.tokenId, "--token-id")
         const drops = new DropsAPI(getClient())
         const format = getFormat()
         if (!options.send) {
           const tx: DropMintResponse = await drops.mint(slug, {
             minter: options.minter,
             quantity,
+            tokenId,
           })
           console.log(formatOutput(tx, format))
           return
@@ -394,7 +405,11 @@ export function dropsCommand(
         console.error(
           `Minting ${quantity} from ${address} to minter ${options.minter}`,
         )
-        const tx = await drops.mint(slug, { minter: options.minter, quantity })
+        const tx = await drops.mint(slug, {
+          minter: options.minter,
+          quantity,
+          tokenId,
+        })
         const result = await drops.sendMintTransaction(tx, wallet, {
           onSending: sending =>
             console.error(
@@ -427,6 +442,10 @@ export function dropsCommand(
       "Payment token contract or the null address for native currency",
     )
     .option("--quantity <n>", "Number of tokens to mint", "1")
+    .option(
+      "--token-id <id>",
+      "Token ID to mint (decimal). Required for an ERC-1155 drop, which mints one token per request; omit it for an ERC-721 drop",
+    )
     .action(
       async (
         slug: string,
@@ -436,6 +455,7 @@ export function dropsCommand(
           paymentChain: string
           paymentToken: string
           quantity: string
+          tokenId?: string
         },
       ) => {
         const client = getClient()
@@ -447,6 +467,9 @@ export function dropsCommand(
             chain: options.paymentChain,
             token_address: options.paymentToken,
           },
+          ...(options.tokenId !== undefined && {
+            token_id: parseTokenIdOption(options.tokenId, "--token-id"),
+          }),
         }
         const result = await client.post<CrossChainDropMintResponse>(
           `/api/v2/drops/${pathSegment(slug)}/cross_chain_mint`,

@@ -219,6 +219,16 @@ describe("OpenSeaCLI", () => {
       })
     })
 
+    it("mint sends tokenId as token_id", async () => {
+      mockPost.mockResolvedValue({ to: "0x1", data: "0x", value: "0" })
+      await sdk.drops.mint("cool-1155", { minter: "0xabc", tokenId: "0" })
+      expect(mockPost).toHaveBeenCalledWith("/api/v2/drops/cool-1155/mint", {
+        minter: "0xabc",
+        quantity: 1,
+        token_id: "0",
+      })
+    })
+
     it("crossChainMint calls correct endpoint", async () => {
       mockPost.mockResolvedValue({ transactions: [], receipt_request: {} })
       const request = {
@@ -1602,6 +1612,28 @@ describe("OpenSeaCLI", () => {
         "collections.setPricingCurrency",
         s => s.collections.setPricingCurrency("cats/1", true),
         "POST /api/v2/collections/cats%2F1/pricing_currency",
+      ],
+      [
+        "collections.raritySettings",
+        s => s.collections.raritySettings("cats/1"),
+        "GET /api/v2/collections/cats%2F1/rarity_settings",
+      ],
+      [
+        "collections.setRaritySetting",
+        s =>
+          s.collections.setRaritySetting("cats/1", {
+            trait_count: true,
+            mode: "exclude",
+          }),
+        "POST /api/v2/collections/cats%2F1/rarity_settings",
+      ],
+      [
+        "collections.revertRaritySetting",
+        s =>
+          s.collections.revertRaritySetting("cats/1", {
+            trait_type: "Background",
+          }),
+        "POST /api/v2/collections/cats%2F1/rarity_settings/revert",
       ],
       [
         "collections.creatorFeeEnforcement",
