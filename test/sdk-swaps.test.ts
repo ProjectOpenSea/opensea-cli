@@ -405,6 +405,7 @@ describe("SwapsAPI saved quotes", () => {
           estimated_duration_ms: 0,
           marketplace_fee_bps: 45,
           route_errors: [],
+          routes: [],
           slippage_tolerance: 0.01,
           total_cost_usd: 0.21,
           total_price_usd: 0.2,

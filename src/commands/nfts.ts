@@ -88,6 +88,26 @@ export function nftsCommand(
         .option(
           "--has-agent-binding <bool>",
           "Only NFTs that do (true) or do not (false) have an ERC-8217 agent binding",
+        )
+        .option(
+          "--is-listed <bool>",
+          "Only listed (true) or unlisted (false) NFTs",
+        )
+        .option(
+          "--price-min <price>",
+          "Minimum listing price in payment-token units (no conversion)",
+        )
+        .option(
+          "--price-max <price>",
+          "Maximum listing price in payment-token units (no conversion)",
+        )
+        .option("--rarity-min <rank>", "Minimum rarity rank, inclusive")
+        .option("--rarity-max <rank>", "Maximum rarity rank, inclusive")
+        .option("--sort-by <field>", "Sort field (price, rarity, created_date)")
+        .option("--sort-direction <direction>", "Sort direction (asc, desc)")
+        .option(
+          "--numeric-traits <json>",
+          "Numeric trait ranges as a JSON array of traitType, min, and max",
         ),
     ),
   ).action(
@@ -98,6 +118,14 @@ export function nftsCommand(
         next?: string
         traits?: string
         hasAgentBinding?: string
+        isListed?: string
+        priceMin?: string
+        priceMax?: string
+        rarityMin?: string
+        rarityMax?: string
+        sortBy?: string
+        sortDirection?: string
+        numericTraits?: string
       },
     ) => {
       const client = getClient()
@@ -108,6 +136,29 @@ export function nftsCommand(
         {
           limit: parseIntOption(options.limit, "--limit"),
           next: options.next,
+          is_listed:
+            options.isListed === undefined
+              ? undefined
+              : parseBooleanOption(options.isListed, "--is-listed"),
+          price_min:
+            options.priceMin === undefined
+              ? undefined
+              : parseFloatOption(options.priceMin, "--price-min"),
+          price_max:
+            options.priceMax === undefined
+              ? undefined
+              : parseFloatOption(options.priceMax, "--price-max"),
+          rarity_min:
+            options.rarityMin === undefined
+              ? undefined
+              : parseIntOption(options.rarityMin, "--rarity-min"),
+          rarity_max:
+            options.rarityMax === undefined
+              ? undefined
+              : parseIntOption(options.rarityMax, "--rarity-max"),
+          sort_by: options.sortBy,
+          sort_direction: options.sortDirection,
+          numeric_traits: options.numericTraits,
           traits: options.traits
             ? parseTraitsOption(options.traits)
             : undefined,

@@ -987,7 +987,7 @@ describe("OpenSeaCLI", () => {
     it("get calls correct endpoint", async () => {
       mockGet.mockResolvedValue({ address: "0xabc" })
       await sdk.accounts.get("0xabc")
-      expect(mockGet).toHaveBeenCalledWith("/api/v2/accounts/0xabc")
+      expect(mockGet).toHaveBeenCalledWith("/api/v2/accounts/0xabc", undefined)
     })
 
     it("resolve calls correct endpoint", async () => {

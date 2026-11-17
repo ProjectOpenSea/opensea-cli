@@ -26,12 +26,16 @@ export function accountsCommand(
     .command("get")
     .description("Get an account by address")
     .argument("<address>", "Wallet address")
-    .action(async (address: string) => {
+    .option("--include <fields>", "Expand public account fields (wallets)")
+    .action(async (address: string, options: { include?: string }) => {
       const client = getClient()
       await outputGet(
         client,
         getFormat(),
         `/api/v2/accounts/${pathSegment(address)}`,
+        options.include === undefined
+          ? undefined
+          : { include: options.include.split(",") },
       )
     })
 

@@ -49,6 +49,7 @@ const QUOTE_RESPONSE = {
     estimated_duration_ms: 0,
     marketplace_fee_bps: 45,
     route_errors: [],
+    routes: [],
     slippage_tolerance: 0.01,
     // As the API returns them: total_price_usd is the tokens sent,
     // total_cost_usd the tokens received.

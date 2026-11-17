@@ -338,19 +338,29 @@ export function collectionsCommand(
       cmd
         .command("offer-aggregates")
         .description("Get top offers for a collection grouped by price level")
-        .argument("<slug>", "Collection slug"),
+        .argument("<slug>", "Collection slug")
+        .option(
+          "--include-depth",
+          "Include capped two-sided listing and offer depth",
+        ),
       "Number of results (max 100)",
     ),
   ).action(
     async (
       slug: string,
-      options: { limit: string; next?: string; sortDirection?: string },
+      options: {
+        limit: string
+        next?: string
+        sortDirection?: string
+        includeDepth?: boolean
+      },
     ) => {
       const client = getClient()
       const result =
         await client.get<CollectionOfferAggregatesPaginatedResponse>(
           `/api/v2/collections/${pathSegment(slug)}/offer_aggregates`,
           {
+            include_depth: options.includeDepth,
             limit: parseIntOption(options.limit, "--limit"),
             cursor: options.next,
             sort_direction: options.sortDirection,

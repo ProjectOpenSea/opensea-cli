@@ -1,5 +1,18 @@
 # @opensea/cli
 
+## 5.2.0
+
+### Minor Changes
+
+- a3973a8: Add optional filters and analytics to existing collection NFT, offer aggregate, and account methods and CLI commands. Preserve default requests and expose generated collection P&L types. The SDK collection NFT method retains its positional arguments and accepts new filters in a trailing options object.
+
+The generated response types now require `ProfileCollectionResponse.cost_basis_coverage`, `ProfileCollectionResponse.known_basis_quantity`, `SvmTransactionDetailsResponse.requires_jito_bundle`, and `SwapQuoteDetails.routes`. Update typed response fixtures that construct these objects. Existing request arguments remain compatible.
+
+### Patch Changes
+
+- Updated dependencies [a3973a8]
+  - @opensea/sdk@14.2.0
+
 ## 5.1.0
 
 ### Minor Changes

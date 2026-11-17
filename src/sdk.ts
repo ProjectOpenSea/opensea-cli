@@ -12,6 +12,7 @@ import {
   verifySavedSwapQuoteMac,
 } from "./saved-swap-quote.js"
 import type {
+  AccountQuery,
   AccountResolveResponse,
   AccountResponse,
   AgentAccountStatusResponse,
@@ -33,7 +34,9 @@ import type {
   CollectionBatchResponse,
   CollectionDetailedResponse,
   CollectionHoldersPaginatedResponse,
+  CollectionNftQuery,
   CollectionOfferAggregatesPaginatedResponse,
+  CollectionOfferAggregatesQuery,
   CollectionOrderBy,
   CollectionPageMetadataResponse,
   CollectionPaginatedResponse,
@@ -360,7 +363,12 @@ export class CollectionsAPI {
 
   async offerAggregates(
     slug: string,
-    options?: { limit?: number; next?: string; sortDirection?: "asc" | "desc" },
+    options?: {
+      limit?: number
+      next?: string
+      sortDirection?: "asc" | "desc"
+      includeDepth?: CollectionOfferAggregatesQuery["include_depth"]
+    },
   ): Promise<CollectionOfferAggregatesPaginatedResponse> {
     return this.client.get(
       `/api/v2/collections/${pathSegment(slug)}/offer_aggregates`,
@@ -368,6 +376,7 @@ export class CollectionsAPI {
         limit: options?.limit,
         cursor: options?.next,
         sort_direction: options?.sortDirection,
+        include_depth: options?.includeDepth,
       },
     )
   }
@@ -1089,6 +1098,14 @@ class NFTsAPI {
       next?: string
       traits?: TraitFilter[]
       hasAgentBinding?: boolean
+      isListed?: CollectionNftQuery["is_listed"]
+      priceMin?: CollectionNftQuery["price_min"]
+      priceMax?: CollectionNftQuery["price_max"]
+      rarityMin?: CollectionNftQuery["rarity_min"]
+      rarityMax?: CollectionNftQuery["rarity_max"]
+      sortBy?: CollectionNftQuery["sort_by"]
+      sortDirection?: CollectionNftQuery["sort_direction"]
+      numericTraits?: CollectionNftQuery["numeric_traits"]
     },
   ): Promise<{ nfts: NftDetailed[]; next?: string }> {
     return this.client.get(`/api/v2/collection/${pathSegment(slug)}/nfts`, {
@@ -1096,6 +1113,14 @@ class NFTsAPI {
       next: options?.next,
       traits: encodeTraits(options?.traits),
       has_agent_binding: options?.hasAgentBinding,
+      is_listed: options?.isListed,
+      price_min: options?.priceMin,
+      price_max: options?.priceMax,
+      rarity_min: options?.rarityMin,
+      rarity_max: options?.rarityMax,
+      sort_by: options?.sortBy,
+      sort_direction: options?.sortDirection,
+      numeric_traits: options?.numericTraits,
     })
   }
 
@@ -1612,8 +1637,8 @@ class EventsAPI {
 class AccountsAPI {
   constructor(private client: OpenSeaClient) {}
 
-  async get(address: string): Promise<AccountResponse> {
-    return this.client.get(`/api/v2/accounts/${pathSegment(address)}`)
+  async get(address: string, options?: AccountQuery): Promise<AccountResponse> {
+    return this.client.get(`/api/v2/accounts/${pathSegment(address)}`, options)
   }
 
   async makePrivate(wallet: string): Promise<WalletVisibilityResponse> {

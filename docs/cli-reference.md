@@ -127,11 +127,14 @@ a second set of credentials apart.
 opensea collections get <slug>
 opensea collections list [--chain <chain>] [--order-by <field>] [--creator <username>] [--include-hidden] [--limit <n>] [--next <cursor>]
 opensea collections stats <slug>
+opensea collections offer-aggregates <slug> [--include-depth] [--limit <n>] [--next <cursor>] [--sort-direction <dir>]
 opensea collections traits <slug>
 opensea collections trait-floors <slug>
 opensea collections pfp-profiles <slug> [--limit <n>] [--next <cursor>]
 opensea collections top-pfp [--limit <n>] [--chain <chain>] [--chains <list>] [--categories <list>] [--min-floor-price-usd <usd>] [--max-floor-price-usd <usd>]
 ```
+
+`--include-depth` adds capped listing/offer buckets priced in their payment token, independently of offer pagination. Depth is opt-in.
 
 `trait-floors` prints the floor price of each text trait value with at least
 one active listing. `pfp-profiles` lists profiles whose profile picture is a
@@ -209,7 +212,7 @@ content the contract does not set is kept.
 
 ```bash
 opensea nfts get <chain> <contract> <token-id>
-opensea nfts list-by-collection <slug> [--limit <n>] [--next <cursor>] [--traits <json>] [--has-agent-binding <true|false>]
+opensea nfts list-by-collection <slug> [--limit <n>] [--next <cursor>] [--traits <json>] [--has-agent-binding <true|false>] [--is-listed <true|false>] [--price-min <price>] [--price-max <price>] [--rarity-min <rank>] [--rarity-max <rank>] [--sort-by <field>] [--sort-direction <dir>] [--numeric-traits <json>]
 opensea nfts list-by-contract <chain> <contract> [--limit <n>] [--next <cursor>]
 opensea nfts list-by-account <chain> <address> [--limit <n>] [--next <cursor>] [--include-auto-hidden]
 opensea nfts list-by-group <group> [--franchise <v>] [--grader <v>] [--grade <v>] [--subject <v>] [--year <v>] [--set <v>] [--language <v>] [--edition <v>] [--product-type <v>] [--collection-slug <slug>] [--query <text>] [--is-listed <true|false>] [--min-estimated-value-usd <usd>] [--max-estimated-value-usd <usd>] [--sort-by <field>] [--sort-direction <dir>] [--limit <n>] [--next <cursor>]
@@ -217,6 +220,8 @@ opensea nfts group-facets <group> [--facet-type <type>] [--collection-slug <slug
 opensea nfts refresh <chain> <contract> <token-id>
 opensea nfts contract <chain> <address>
 ```
+
+Collection filters use listing prices in payment-token units without conversion, and integer rarity ranks. Rarity sorting uses the site ordering: desc shows the rarest first. Numeric ranges use a JSON array such as `[{"traitType":"Level","min":1,"max":10}]`; they require complete indexed traits and a page limit of at most 100. Keep filters and sort unchanged while following a cursor.
 
 `--include-auto-hidden` also returns NFTs that were hidden automatically because a third party minted or sent them to the account. NFTs the holder hid stay hidden, and NFTs removed for policy violations are never returned.
 
@@ -505,7 +510,7 @@ it can drift from a quote shown earlier.
 ## Accounts
 
 ```bash
-opensea accounts get <address>
+opensea accounts get <address> [--include wallets]
 ```
 
 `mark-agent` and `remove-agent`, the old wallet-level agent flag, are gone.

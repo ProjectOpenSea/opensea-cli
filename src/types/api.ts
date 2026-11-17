@@ -5,7 +5,7 @@
  * CLI-specific types (swap, search UI, token details) are defined locally.
  */
 
-import type { components } from "@opensea/api-types"
+import type { components, OperationQueryParams } from "@opensea/api-types"
 
 // ── Re-exports from @opensea/api-types ──────────────────────────────
 // These are the canonical API types. When the spec changes, they update
@@ -373,3 +373,8 @@ export type ToolUsageResponse = Schemas["ToolUsageResponse"]
 export type ToolListPaginatedResponse = Schemas["ToolListPaginatedResponse"]
 export type ToolActivityPaginatedResponse =
   Schemas["ToolActivityPaginatedResponse"]
+
+export type CollectionNftQuery = OperationQueryParams<"get_nfts_by_collection">
+export type CollectionOfferAggregatesQuery =
+  OperationQueryParams<"get_collection_offer_aggregates">
+export type AccountQuery = OperationQueryParams<"get_account">
