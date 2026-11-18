@@ -110,12 +110,19 @@ export function collectionsCommand(
     .command("stats")
     .description("Get collection stats")
     .argument("<slug>", "Collection slug")
-    .action(async (slug: string) => {
+    .option(
+      "--volume-timeframe <window>",
+      "Include volume history (one_hour, one_day, seven_days, thirty_days, one_year)",
+    )
+    .action(async (slug: string, options: { volumeTimeframe?: string }) => {
       const client = getClient()
       await outputGet(
         client,
         getFormat(),
         `/api/v2/collections/${pathSegment(slug)}/stats`,
+        options.volumeTimeframe === undefined
+          ? undefined
+          : { volume_timeframe: options.volumeTimeframe },
       )
     })
 

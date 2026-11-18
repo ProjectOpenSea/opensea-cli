@@ -375,6 +375,8 @@ export type ToolActivityPaginatedResponse =
   Schemas["ToolActivityPaginatedResponse"]
 
 export type CollectionNftQuery = OperationQueryParams<"get_nfts_by_collection">
+export type CollectionStatsQuery = OperationQueryParams<"get_collection_stats">
 export type CollectionOfferAggregatesQuery =
   OperationQueryParams<"get_collection_offer_aggregates">
 export type AccountQuery = OperationQueryParams<"get_account">
+export type GroupNftQuery = OperationQueryParams<"list_nfts_by_group">

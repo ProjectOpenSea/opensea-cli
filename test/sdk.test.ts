@@ -100,6 +100,7 @@ describe("OpenSeaCLI", () => {
       await sdk.collections.stats("test-slug")
       expect(mockGet).toHaveBeenCalledWith(
         "/api/v2/collections/test-slug/stats",
+        undefined,
       )
     })
 

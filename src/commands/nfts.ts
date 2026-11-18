@@ -253,6 +253,10 @@ export function nftsCommand(
         "Restrict to this collection in the group (repeatable, max 10)",
         collectOption,
       )
+      .option(
+        "--include-catalog",
+        "Request catalog identities (omitted before unrestricted public launch)",
+      )
       .option("--query <text>", "Full-text match on NFT name")
       .option("--is-listed <bool>", "Only listed (true) or unlisted (false)")
       .option(
@@ -274,6 +278,7 @@ export function nftsCommand(
         limit: string
         next?: string
         collectionSlug?: string[]
+        includeCatalog?: boolean
         query?: string
         isListed?: string
         minEstimatedValueUsd?: string
@@ -289,6 +294,7 @@ export function nftsCommand(
         `/api/v2/nfts/group/${pathSegment(group)}`,
         {
           collection_slugs: options.collectionSlug,
+          include_catalog: options.includeCatalog,
           query: options.query,
           is_listed:
             options.isListed === undefined

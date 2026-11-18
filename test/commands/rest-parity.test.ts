@@ -67,11 +67,19 @@ describe("existing REST discovery options", () => {
     expect(ctx.mockClient.get).not.toHaveBeenCalled()
   })
 
-  it("forwards optional depth and public wallet expansion", async () => {
+  it("forwards optional history, depth, catalog and public wallet expansion", async () => {
     const ctx = createCommandTestContext()
     ctx.mockClient.get.mockResolvedValue({})
     await collectionsCommand(ctx.getClient, ctx.getFormat).parseAsync(
+      ["stats", "cards", "--volume-timeframe", "seven_days"],
+      { from: "user" },
+    )
+    await collectionsCommand(ctx.getClient, ctx.getFormat).parseAsync(
       ["offer-aggregates", "cards", "--include-depth"],
+      { from: "user" },
+    )
+    await nftsCommand(ctx.getClient, ctx.getFormat).parseAsync(
+      ["list-by-group", "trading_cards", "--include-catalog"],
       { from: "user" },
     )
     await accountsCommand(ctx.getClient, ctx.getFormat).parseAsync(
@@ -79,10 +87,12 @@ describe("existing REST discovery options", () => {
       { from: "user" },
     )
     expect(ctx.mockClient.get.mock.calls.map(c => c[1])).toMatchObject([
+      { volume_timeframe: "seven_days" },
       { include_depth: true },
+      { include_catalog: true },
       { include: ["wallets"] },
     ])
-    expect(ctx.mockClient.get.mock.calls[1][0]).toBe(
+    expect(ctx.mockClient.get.mock.calls[3][0]).toBe(
       "/api/v2/accounts/MixedCaseWallet",
     )
   })
@@ -99,7 +109,9 @@ describe("existing REST discovery options", () => {
       sortBy: "price",
       sortDirection: "asc",
     })
+    await api.collections.stats("cards", { volumeTimeframe: "one_day" })
     await api.collections.offerAggregates("cards", { includeDepth: true })
+    await api.nfts.listByGroup("trading_cards", { includeCatalog: true })
     await api.accounts.get("MixedCaseWallet", { include: ["wallets"] })
     const params = fetch.mock.calls.map(c =>
       Object.fromEntries(new URL(String(c[0])).searchParams),
@@ -112,12 +124,14 @@ describe("existing REST discovery options", () => {
         sort_by: "price",
         sort_direction: "asc",
       },
+      { volume_timeframe: "one_day" },
       { include_depth: "true" },
+      { include_catalog: "true" },
       { include: "wallets" },
     ])
     await api.collections.stats("cards")
     await api.accounts.get("MixedCaseWallet")
-    for (const call of fetch.mock.calls.slice(3))
+    for (const call of fetch.mock.calls.slice(5))
       expect(new URL(String(call[0])).search).toBe("")
   })
 })

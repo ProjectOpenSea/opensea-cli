@@ -126,7 +126,7 @@ a second set of credentials apart.
 ```bash
 opensea collections get <slug>
 opensea collections list [--chain <chain>] [--order-by <field>] [--creator <username>] [--include-hidden] [--limit <n>] [--next <cursor>]
-opensea collections stats <slug>
+opensea collections stats <slug> [--volume-timeframe <window>]
 opensea collections offer-aggregates <slug> [--include-depth] [--limit <n>] [--next <cursor>] [--sort-direction <dir>]
 opensea collections traits <slug>
 opensea collections trait-floors <slug>
@@ -134,7 +134,7 @@ opensea collections pfp-profiles <slug> [--limit <n>] [--next <cursor>]
 opensea collections top-pfp [--limit <n>] [--chain <chain>] [--chains <list>] [--categories <list>] [--min-floor-price-usd <usd>] [--max-floor-price-usd <usd>]
 ```
 
-`--include-depth` adds capped listing/offer buckets priced in their payment token, independently of offer pagination. Depth is opt-in.
+`--volume-timeframe` accepts `one_hour`, `one_day`, `seven_days`, `thirty_days`, or `one_year`; buckets are oldest first, with numeric Unix-seconds `time`, decimal-string `usd`, and `native` currency amounts. Absent buckets are omitted and the current bucket may be incomplete. `--include-depth` adds capped listing/offer buckets priced in their payment token, independently of offer pagination. Both expansions are opt-in.
 
 `trait-floors` prints the floor price of each text trait value with at least
 one active listing. `pfp-profiles` lists profiles whose profile picture is a
@@ -215,13 +215,13 @@ opensea nfts get <chain> <contract> <token-id>
 opensea nfts list-by-collection <slug> [--limit <n>] [--next <cursor>] [--traits <json>] [--has-agent-binding <true|false>] [--is-listed <true|false>] [--price-min <price>] [--price-max <price>] [--rarity-min <rank>] [--rarity-max <rank>] [--sort-by <field>] [--sort-direction <dir>] [--numeric-traits <json>]
 opensea nfts list-by-contract <chain> <contract> [--limit <n>] [--next <cursor>]
 opensea nfts list-by-account <chain> <address> [--limit <n>] [--next <cursor>] [--include-auto-hidden]
-opensea nfts list-by-group <group> [--franchise <v>] [--grader <v>] [--grade <v>] [--subject <v>] [--year <v>] [--set <v>] [--language <v>] [--edition <v>] [--product-type <v>] [--collection-slug <slug>] [--query <text>] [--is-listed <true|false>] [--min-estimated-value-usd <usd>] [--max-estimated-value-usd <usd>] [--sort-by <field>] [--sort-direction <dir>] [--limit <n>] [--next <cursor>]
+opensea nfts list-by-group <group> [--include-catalog] [--franchise <v>] [--grader <v>] [--grade <v>] [--subject <v>] [--year <v>] [--set <v>] [--language <v>] [--edition <v>] [--product-type <v>] [--collection-slug <slug>] [--query <text>] [--is-listed <true|false>] [--min-estimated-value-usd <usd>] [--max-estimated-value-usd <usd>] [--sort-by <field>] [--sort-direction <dir>] [--limit <n>] [--next <cursor>]
 opensea nfts group-facets <group> [--facet-type <type>] [--collection-slug <slug>] [attribute filters]
 opensea nfts refresh <chain> <contract> <token-id>
 opensea nfts contract <chain> <address>
 ```
 
-Collection filters use listing prices in payment-token units without conversion, and integer rarity ranks. Rarity sorting uses the site ordering: desc shows the rarest first. Numeric ranges use a JSON array such as `[{"traitType":"Level","min":1,"max":10}]`; they require complete indexed traits and a page limit of at most 100. Keep filters and sort unchanged while following a cursor.
+Collection filters use listing prices in payment-token units without conversion, and integer rarity ranks. Rarity sorting uses the site ordering: desc shows the rarest first. Numeric ranges use a JSON array such as `[{"traitType":"Level","min":1,"max":10}]`; they require complete indexed traits and a page limit of at most 100. Keep filters and sort unchanged while following a cursor. `--include-catalog` requests optional natural set/card/printing identities. They are omitted before unrestricted public launch or when no identity is available. The flag does not bypass lab gating.
 
 `--include-auto-hidden` also returns NFTs that were hidden automatically because a third party minted or sent them to the account. NFTs the holder hid stay hidden, and NFTs removed for policy violations are never returned.
 

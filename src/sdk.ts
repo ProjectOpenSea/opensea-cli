@@ -43,6 +43,7 @@ import type {
   CollectionPfpProfilesResponse,
   CollectionRaritySettingsResponse,
   CollectionRefreshResponse,
+  CollectionStatsQuery,
   CollectionStatsResponse,
   CollectionTransactionResponse,
   CollectionTransactionsResponse,
@@ -78,6 +79,7 @@ import type {
   FulfillListingResponse,
   GetOrderResponse,
   GetTraitsResponse,
+  GroupNftQuery,
   HealthResult,
   Listing,
   ListingFulfillmentDataRequest,
@@ -272,9 +274,13 @@ export class CollectionsAPI {
     })
   }
 
-  async stats(slug: string): Promise<CollectionStatsResponse> {
+  async stats(
+    slug: string,
+    options?: { volumeTimeframe?: CollectionStatsQuery["volume_timeframe"] },
+  ): Promise<CollectionStatsResponse> {
     return this.client.get<CollectionStatsResponse>(
       `/api/v2/collections/${pathSegment(slug)}/stats`,
+      options && { volume_timeframe: options.volumeTimeframe },
     )
   }
 
@@ -1168,6 +1174,7 @@ class NFTsAPI {
   async listByGroup(
     group: string,
     options?: NftGroupFacetFilters & {
+      includeCatalog?: GroupNftQuery["include_catalog"]
       collectionSlugs?: string[]
       query?: string
       isListed?: boolean
@@ -1180,6 +1187,7 @@ class NFTsAPI {
     },
   ): Promise<StandardizedNftListResponse> {
     return this.client.get(`/api/v2/nfts/group/${pathSegment(group)}`, {
+      include_catalog: options?.includeCatalog,
       collection_slugs: options?.collectionSlugs,
       query: options?.query,
       is_listed: options?.isListed,
