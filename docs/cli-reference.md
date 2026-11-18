@@ -493,6 +493,23 @@ opensea swaps execute --quote <file> [--max-age <seconds>] [--wallet-provider <p
 opensea swaps execute --from-chain <chain> --from-address <address> --to-chain <chain> --to-address <address> --quantity <quantity> [--slippage <slippage>] [--recipient <recipient>] [--wallet-provider <provider>] [--dry-run]
 ```
 
+Quote options also include:
+
+| Option | Meaning |
+| --- | --- |
+| `--single-transaction-only` | Require a route that fits in one transaction |
+| `--transaction-format instructions\|serialized` | Choose Solana instructions (default) or unsigned base64 v0 bytes |
+
+These controls reach the API in both direct output and `--out` mode. The API validates combinations
+and supported routes. Raw route quantities and marketplace-fee amounts remain decimal strings.
+`min_to_quantity` is the provider-reported minimum when available. Verify the onchain floor independently.
+`marketplace_fee_transfer` identifies the OpenSea transfer when reported.
+
+Solana serialized output is unsigned. An external Solana signer must sign the returned message
+without rebuilding it and submit before `last_valid_block_height`. Respect `requires_jito_bundle`.
+Both `swaps execute` forms support EVM transactions only; saving a Solana quote does not enable
+Solana execution through the CLI.
+
 `quote --out` saves the quote with its request and fetch time, plus a `mac` (HMAC-SHA256 under a
 key the CLI creates once at `${OPENSEA_CONFIG_DIR:-~/.opensea}/quote-key`, mode 0600).
 `execute --quote` prints every call, then signs exactly that quote's transactions without

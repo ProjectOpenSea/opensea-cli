@@ -1,5 +1,16 @@
 # @opensea/cli
 
+## 5.4.0
+
+### Minor Changes
+
+- 03673ea: Expose swap quote controls for single transactions and serialized Solana output. Preserve exact raw quantities and fee metadata from the API. Saved CLI quotes include selected controls in their existing MAC. CLI transaction execution remains EVM-only.
+
+### Patch Changes
+
+- Updated dependencies [03673ea]
+  - @opensea/sdk@14.4.0
+
 ## 5.3.0
 
 ### Minor Changes

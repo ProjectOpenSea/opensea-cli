@@ -1,5 +1,10 @@
 import { createHmac, timingSafeEqual } from "node:crypto"
-import type { SwapQuoteResponse } from "./types/index.js"
+import { swapQuoteParams } from "./swap-quote.js"
+import type {
+  SwapQuoteOptions,
+  SwapQuoteParams,
+  SwapQuoteResponse,
+} from "./types/index.js"
 import { resolveChainId } from "./wallet/index.js"
 
 /**
@@ -30,19 +35,7 @@ const MAC_RE = /^[0-9a-f]{64}$/
 const UNVERIFIED_MESSAGE =
   "only quote files saved by `opensea swaps quote --out` on this machine can be executed"
 
-export interface SavedSwapQuoteRequest {
-  /** Chain of the token swapped from. Every transaction must be on this chain. */
-  from_chain: string
-  from_address: string
-  to_chain: string
-  to_address: string
-  /** Amount in, in the token's smallest units. */
-  quantity: string
-  /** Wallet the quote was built for. Only this wallet may execute it. */
-  address: string
-  slippage?: number
-  recipient?: string
-}
+export type SavedSwapQuoteRequest = SwapQuoteParams
 
 export interface SavedSwapQuote {
   type: typeof SAVED_SWAP_QUOTE_TYPE
@@ -62,16 +55,7 @@ export class SavedSwapQuoteError extends Error {
 }
 
 export function createSavedSwapQuote(
-  request: {
-    fromChain: string
-    fromAddress: string
-    toChain: string
-    toAddress: string
-    quantity: string
-    address: string
-    slippage?: number
-    recipient?: string
-  },
+  request: SwapQuoteOptions,
   response: SwapQuoteResponse,
   savedAt: Date = new Date(),
 ): SavedSwapQuote {
@@ -79,16 +63,7 @@ export function createSavedSwapQuote(
     type: SAVED_SWAP_QUOTE_TYPE,
     version: SAVED_SWAP_QUOTE_VERSION,
     saved_at: savedAt.toISOString(),
-    request: {
-      from_chain: request.fromChain,
-      from_address: request.fromAddress,
-      to_chain: request.toChain,
-      to_address: request.toAddress,
-      quantity: request.quantity,
-      address: request.address,
-      ...(request.slippage !== undefined && { slippage: request.slippage }),
-      ...(request.recipient !== undefined && { recipient: request.recipient }),
-    },
+    request: swapQuoteParams(request),
     response,
   }
 }

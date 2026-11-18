@@ -11,6 +11,7 @@ import {
   signSavedSwapQuote,
   verifySavedSwapQuoteMac,
 } from "./saved-swap-quote.js"
+import { swapQuoteParams } from "./swap-quote.js"
 import type {
   AccountQuery,
   AccountResolveResponse,
@@ -113,6 +114,7 @@ import type {
   StandardizedNftListResponse,
   SwapExecuteRequest,
   SwapExecuteResponse,
+  SwapQuoteOptions,
   SwapQuoteResponse,
   SweepCollectionRequest,
   SweepCollectionResponse,
@@ -2168,26 +2170,8 @@ class SearchAPI {
 export class SwapsAPI {
   constructor(private client: OpenSeaClient) {}
 
-  async quote(options: {
-    fromChain: string
-    fromAddress: string
-    toChain: string
-    toAddress: string
-    quantity: string
-    address: string
-    slippage?: number
-    recipient?: string
-  }): Promise<SwapQuoteResponse> {
-    return this.client.get("/api/v2/swap/quote", {
-      from_chain: options.fromChain,
-      from_address: options.fromAddress,
-      to_chain: options.toChain,
-      to_address: options.toAddress,
-      quantity: options.quantity,
-      address: options.address,
-      slippage: options.slippage,
-      recipient: options.recipient,
-    })
+  async quote(options: SwapQuoteOptions): Promise<SwapQuoteResponse> {
+    return this.client.get("/api/v2/swap/quote", swapQuoteParams(options))
   }
 
   /**
@@ -2271,16 +2255,7 @@ export class SwapsAPI {
    * that `executeQuote({ macKey })` checks.
    */
   async quoteForExecution(
-    options: {
-      fromChain: string
-      fromAddress: string
-      toChain: string
-      toAddress: string
-      quantity: string
-      address: string
-      slippage?: number
-      recipient?: string
-    },
+    options: SwapQuoteOptions,
     signing?: { macKey?: Uint8Array },
   ): Promise<SavedSwapQuote> {
     const response = await this.quote(options)

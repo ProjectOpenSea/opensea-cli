@@ -11,6 +11,11 @@ import type { components, OperationQueryParams } from "@opensea/api-types"
 // These are the canonical API types. When the spec changes, they update
 // automatically after running `pnpm --filter @opensea/api-types run build`.
 
+import type { Camelize } from "@opensea/sdk"
+
+export type SwapQuoteParams = OperationQueryParams<"get_swap_quote">
+export type SwapQuoteOptions = Camelize<SwapQuoteParams>
+
 type Schemas = components["schemas"]
 
 export type Chain = Schemas["ChainIdentifier"]

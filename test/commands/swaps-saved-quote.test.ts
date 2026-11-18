@@ -15,6 +15,7 @@ import {
   signSavedSwapQuote,
   verifySavedSwapQuoteMac,
 } from "../../src/saved-swap-quote.js"
+import { SwapsAPI } from "../../src/sdk.js"
 import {
   getQuoteKeyFile,
   loadOrCreateQuoteKey,
@@ -131,6 +132,83 @@ describe("swaps saved quotes", () => {
     vi.restoreAllMocks()
     wallet.getAddress.mockReset()
     wallet.sendTransaction.mockReset()
+  })
+
+  it("saves agent controls inside the existing quote MAC", async () => {
+    ctx.mockClient.get.mockResolvedValue(QUOTE_RESPONSE)
+    const file = join(dir, "agent.json")
+    await run([
+      "quote",
+      ...QUOTE_ARGS,
+      "--address",
+      WALLET,
+      "--out",
+      file,
+      "--single-transaction-only",
+      "--transaction-format",
+      "serialized",
+    ])
+    const saved = JSON.parse(readFileSync(file, "utf8")) as SavedSwapQuote
+    const expected = {
+      single_transaction_only: true,
+      transaction_format: "serialized",
+    }
+    expect(saved.request).toMatchObject(expected)
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
+      "/api/v2/swap/quote",
+      expect.objectContaining(expected),
+    )
+    const key = loadOrCreateQuoteKey()
+    expect(() => verifySavedSwapQuoteMac(saved, key)).not.toThrow()
+    for (const name of Object.keys(expected)) {
+      const tampered = structuredClone(saved)
+      delete (tampered.request as unknown as Record<string, unknown>)[name]
+      expect(() => verifySavedSwapQuoteMac(tampered, key)).toThrow()
+    }
+    expect(wallet.sendTransaction).not.toHaveBeenCalled()
+  })
+
+  it("keeps explicit false in the wire request and signed saved quote", async () => {
+    ctx.mockClient.get.mockResolvedValue(QUOTE_RESPONSE)
+    const saved = await new SwapsAPI(ctx.getClient()).quoteForExecution(
+      {
+        fromChain: "solana",
+        fromAddress: "native",
+        toChain: "solana",
+        toAddress: "mint",
+        quantity: "1000",
+        address: "wallet",
+        singleTransactionOnly: false,
+        transactionFormat: "instructions",
+      },
+      { macKey: loadOrCreateQuoteKey() },
+    )
+
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
+      "/api/v2/swap/quote",
+      expect.objectContaining({
+        single_transaction_only: false,
+        transaction_format: "instructions",
+      }),
+    )
+    expect(saved.request.single_transaction_only).toBe(false)
+    const tampered = structuredClone(saved)
+    delete tampered.request.single_transaction_only
+    const key = loadOrCreateQuoteKey()
+    expect(() => verifySavedSwapQuoteMac(saved, key)).not.toThrow()
+    expect(() => verifySavedSwapQuoteMac(tampered, key)).toThrow()
+  })
+
+  it("accepts an existing version-one saved quote MAC", () => {
+    const previousArtifact = {
+      ...freshSaved(),
+      // Produced by the previous CLI with the same fixture and key.
+      mac: "24a655f3cf339ec2e3e9eaddd40fc8cb07d406784790a0b711dad5fcd73c79d9",
+    }
+    const saved = JSON.parse(JSON.stringify(previousArtifact)) as SavedSwapQuote
+    expect(() =>
+      verifySavedSwapQuoteMac(saved, new Uint8Array(32).fill(7)),
+    ).not.toThrow()
   })
 
   it("quote --out saves the request, response and time, and prints the response", async () => {

@@ -1,5 +1,5 @@
 import { writeFileSync } from "node:fs"
-import { Command } from "commander"
+import { Command, Option } from "commander"
 import type { OpenSeaClient } from "../client.js"
 import type { OutputFormat } from "../output.js"
 import { formatOutput, outputGet } from "../output.js"
@@ -13,7 +13,9 @@ import {
   verifySavedSwapQuoteMac,
 } from "../saved-swap-quote.js"
 import { resolveQuantity, SwapsAPI } from "../sdk.js"
+import { swapQuoteParams } from "../swap-quote.js"
 import { loadOrCreateQuoteKey, readQuoteKey } from "../swap-quote-key.js"
+import type { SwapQuoteOptions } from "../types/api.js"
 import type { WalletProvider } from "../wallet/index.js"
 import {
   createWalletForProvider,
@@ -60,21 +62,26 @@ export function swapsCommand(
       "Recipient address (defaults to sender address)",
     )
     .option(
+      "--single-transaction-only",
+      "Require an atomic single-transaction route",
+    )
+    .addOption(
+      new Option(
+        "--transaction-format <format>",
+        "Solana transaction output format",
+      ).choices(["instructions", "serialized"]),
+    )
+    .option(
       "--out <file>",
-      "Also save the quote to <file> for `swaps execute --quote <file>`",
+      "Also save the quote to <file> (CLI execution of saved quotes supports EVM only)",
     )
     .action(
-      async (options: {
-        fromChain: string
-        fromAddress: string
-        toChain: string
-        toAddress: string
-        quantity: string
-        address: string
-        slippage?: string
-        recipient?: string
-        out?: string
-      }) => {
+      async (
+        options: Omit<SwapQuoteOptions, "slippage"> & {
+          slippage?: string
+          out?: string
+        },
+      ) => {
         const client = getClient()
         const quantity = await resolveQuantity(
           client,
@@ -95,16 +102,12 @@ export function swapsCommand(
           console.log(formatOutput(saved.response, getFormat()))
           return
         }
-        await outputGet(client, getFormat(), "/api/v2/swap/quote", {
-          from_chain: options.fromChain,
-          from_address: options.fromAddress,
-          to_chain: options.toChain,
-          to_address: options.toAddress,
-          quantity,
-          address: options.address,
-          slippage,
-          recipient: options.recipient,
-        })
+        await outputGet(
+          client,
+          getFormat(),
+          "/api/v2/swap/quote",
+          swapQuoteParams({ ...options, quantity, slippage }),
+        )
       },
     )
 

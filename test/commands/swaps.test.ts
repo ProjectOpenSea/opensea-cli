@@ -20,6 +20,38 @@ describe("swapsCommand", () => {
     expect(subcommands).toContain("quote")
   })
 
+  it("forwards the Solana quote format and single-transaction constraint", async () => {
+    ctx.mockClient.get.mockResolvedValue({ quote: {}, transactions: [] })
+    await swapsCommand(ctx.getClient, ctx.getFormat).parseAsync(
+      [
+        "quote",
+        "--from-chain",
+        "solana",
+        "--to-chain",
+        "solana",
+        "--from-address",
+        "native",
+        "--to-address",
+        "mint",
+        "--quantity",
+        "1000",
+        "--address",
+        "wallet",
+        "--single-transaction-only",
+        "--transaction-format",
+        "serialized",
+      ],
+      { from: "user" },
+    )
+    expect(ctx.mockClient.get).toHaveBeenCalledWith(
+      "/api/v2/swap/quote",
+      expect.objectContaining({
+        single_transaction_only: true,
+        transaction_format: "serialized",
+      }),
+    )
+  })
+
   it("quote subcommand passes all required options", async () => {
     ctx.mockClient.get.mockResolvedValue({ quote: {}, transactions: [] })
 
